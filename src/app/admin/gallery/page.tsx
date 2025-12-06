@@ -4,14 +4,16 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 type AdminGalleryItem = {
   id: number;
   title: string;
   category: "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
-  filename: string;        // 原始档名（示意）
+  filename: string;        // 原始档名
   description?: string;    // 图片说明
-  imageUrl?: string;       // 实际图片网址（有填就会预览）
+  imageUrl?: string;       // 实际图片网址（Firebase 或外部 URL）
   showOnHome: boolean;
   createdAt?: string;
 };
@@ -25,7 +27,7 @@ const mockAdminGallery: AdminGalleryItem[] = [
     category: "设备展示",
     filename: "line-main-01.jpg",
     description: "无缝钢管机组整体外观，可用于首页主视觉。",
-    imageUrl: "/gallery/line-main-01.jpg", // 如果你在 public 放了图，可以用这个路径
+    imageUrl: "/gallery/line-main-01.jpg",
     showOnHome: true,
   },
   {
@@ -64,8 +66,10 @@ export default function AdminGalleryPage() {
   const [uploadCategory, setUploadCategory] =
     useState<AdminGalleryItem["category"] | "">("");
   const [uploadFileName, setUploadFileName] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadDescription, setUploadDescription] = useState("");
-  const [uploadImageUrl, setUploadImageUrl] = useState("");
+  const [uploadImageUrl, setUploadImageUrl] = useState(""); // 选填：若没上传档案，可直接用外部 URL
+  const [isUploading, setIsUploading] = useState(false);
 
   // 载入 / 初始化示意数据
   useEffect(() => {
@@ -99,39 +103,65 @@ export default function AdminGalleryPage() {
     }
   };
 
-  // 上传按钮（示意）：记录档名 + 标题 + 类别 + 说明 + 图片 URL
-  const handleUploadMock = () => {
-    if (!uploadFileName) {
-      alert("请先选择图片档案（示意）。");
-      return;
-    }
+  // 上传（真实：若有档案则传 Firebase，没有档案但填了 URL 就直接用 URL）
+  const handleUpload = async () => {
     if (!uploadCategory) {
-      alert("请选择图片类别（示意）。");
+      alert("请选择图片类别。");
       return;
     }
 
-    const now = new Date().toISOString();
+    if (!uploadFile && !uploadImageUrl.trim()) {
+      alert("请至少上传一张图片，或填写图片网址。");
+      return;
+    }
 
-    const newItem: AdminGalleryItem = {
-      id: Date.now(),
-      title: uploadTitle.trim() || uploadFileName,
-      category: uploadCategory as AdminGalleryItem["category"],
-      filename: uploadFileName,
-      description: uploadDescription.trim() || undefined,
-      imageUrl: uploadImageUrl.trim() || undefined,
-      showOnHome: true,
-      createdAt: now,
-    };
+    setIsUploading(true);
 
-    const next = [newItem, ...items];
-    saveItems(next);
+    try {
+      let finalUrl = uploadImageUrl.trim() || "";
+      let finalFilename = uploadFileName || "";
 
-    // 清空表单
-    setUploadTitle("");
-    setUploadCategory("");
-    setUploadFileName("");
-    setUploadDescription("");
-    setUploadImageUrl("");
+      // 有选档案时：优先上传到 Firebase Storage
+      if (uploadFile) {
+        const ext = uploadFile.name.split(".").pop() || "jpg";
+        const storagePath = `jyc-gallery/${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}.${ext}`;
+        const storageRef = ref(storage, storagePath);
+        const snap = await uploadBytes(storageRef, uploadFile);
+        finalUrl = await getDownloadURL(snap.ref);
+        finalFilename = uploadFile.name;
+      }
+
+      const now = new Date().toISOString();
+
+      const newItem: AdminGalleryItem = {
+        id: Date.now(),
+        title: uploadTitle.trim() || finalFilename || "未命名图片",
+        category: uploadCategory as AdminGalleryItem["category"],
+        filename: finalFilename || "（外部图片）",
+        description: uploadDescription.trim() || undefined,
+        imageUrl: finalUrl || undefined,
+        showOnHome: true,
+        createdAt: now,
+      };
+
+      const next = [newItem, ...items];
+      saveItems(next);
+
+      // 清空表单
+      setUploadTitle("");
+      setUploadCategory("");
+      setUploadFileName("");
+      setUploadFile(null);
+      setUploadDescription("");
+      setUploadImageUrl("");
+    } catch (err) {
+      console.error("upload error", err);
+      alert("上传图片时发生错误，请稍后再试。");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleToggleShowOnHome = (id: number) => {
@@ -141,9 +171,10 @@ export default function AdminGalleryPage() {
     saveItems(next);
   };
 
-  const handleDeleteMock = (id: number) => {
+  const handleDelete = (id: number) => {
     if (typeof window !== "undefined") {
-      if (!window.confirm("确定要删除这张图片（仅示意数据）吗？")) return;
+      if (!window.confirm("确定要删除这张图片（不会删除 Firebase 实体档案，仅删除后台记录）吗？"))
+        return;
     }
     const next = items.filter((item) => item.id !== id);
     saveItems(next);
@@ -153,8 +184,10 @@ export default function AdminGalleryPage() {
     const file = e.target.files?.[0];
     if (!file) {
       setUploadFileName("");
+      setUploadFile(null);
       return;
     }
+    setUploadFile(file);
     setUploadFileName(file.name);
   };
 
@@ -169,9 +202,9 @@ export default function AdminGalleryPage() {
           </h1>
           <p className="jyc-section-intro">
             此页面用于管理网站上的设备照片、生产线现场与工程案例图片。
-            当前版本为示意模式，图片资讯保存在浏览器 localStorage 中，方便 Demo
-            「上传 / 勾选首页轮播 / 删除」流程。正式上线时可串接真实的上传与数据库，
-            前台 Gallery 可依「显示在首页轮播」勾选状态来决定轮播内容。
+            图片档案会上传到 Firebase Storage（nooko-hub 项目），而图片资讯
+            （标题、说明、类别、是否显示在首页轮播）暂存在浏览器 localStorage
+            中，方便 Demo 使用。正式上线时可改为串接 Firestore 或其他数据库。
           </p>
 
           {/* 上传区 */}
@@ -185,7 +218,7 @@ export default function AdminGalleryPage() {
               background: "#fff",
             }}
           >
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>上传新图片（示意）</h2>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>上传新图片</h2>
             <p
               style={{
                 fontSize: 12,
@@ -193,11 +226,10 @@ export default function AdminGalleryPage() {
                 marginBottom: 12,
               }}
             >
-              目前仅记录档名与说明，图片本身不会真的上传。
-              若希望在后台立即预览，可将图片放到站点 public 目录（例如
-              <code> /public/gallery/</code>），
-              然后在「图片网址」栏填入类似 <code>/gallery/xxx.jpg</code> 的路径，
-              或填入完整的外部图片网址（如 OSS、图床等）。
+              通常建议直接选择图片档案，上传后系统会将档案存到
+              Firebase Storage 的 <code>jyc-gallery/</code> 资料夹，并自动取得网址做为预览。
+              若暂时没有档案，也可以只填「图片网址」作为外部图片来源。
+              （当两者都有时，以上传档案为主）
             </p>
 
             <div
@@ -258,7 +290,7 @@ export default function AdminGalleryPage() {
             >
               <input
                 type="text"
-                placeholder="图片网址（选填，填了就会在卡片中预览，例如 /gallery/line-main-01.jpg 或 https://...）"
+                placeholder="图片网址（选填：若未上传档案，可填 Firebase 以外的 https://... 或 /gallery/xxx.jpg）"
                 value={uploadImageUrl}
                 onChange={(e) => setUploadImageUrl(e.target.value)}
                 style={{
@@ -288,10 +320,11 @@ export default function AdminGalleryPage() {
             <button
               type="button"
               className="jyc-btn-primary"
-              style={{ fontSize: 13, padding: "8px 16px" }}
-              onClick={handleUploadMock}
+              style={{ fontSize: 13, padding: "8px 16px", minWidth: 120 }}
+              onClick={handleUpload}
+              disabled={isUploading}
             >
-              上传图片（示意）
+              {isUploading ? "上传中…" : "上传图片"}
             </button>
 
             {uploadFileName && (
@@ -303,7 +336,7 @@ export default function AdminGalleryPage() {
 
           {/* 图片列表 */}
           <div>
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>已上传图片列表（示意）</h2>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>已上传图片列表</h2>
             <p
               style={{
                 fontSize: 12,
@@ -326,7 +359,7 @@ export default function AdminGalleryPage() {
                   color: "#666",
                 }}
               >
-                目前尚未有任何图片资料。你可以透过上方示意上传区新增几笔测试数据。
+                目前尚未有任何图片资料。你可以透过上方上传区新增几笔测试数据。
               </div>
             ) : (
               <div
@@ -426,7 +459,7 @@ export default function AdminGalleryPage() {
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteMock(item.id)}
+                        onClick={() => handleDelete(item.id)}
                         style={{
                           fontSize: 12,
                           padding: "4px 8px",
@@ -436,7 +469,7 @@ export default function AdminGalleryPage() {
                           color: "#c33",
                         }}
                       >
-                        删除（示意）
+                        删除
                       </button>
                     </div>
                   </article>
