@@ -1,10 +1,64 @@
 // src/app/page.tsx
-import React from 'react';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { ChatBubble } from '@/components/ChatBubble';
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { ChatBubble } from "@/components/ChatBubble";
+
+type HomeGalleryItem = {
+  id: number;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  showOnHome?: boolean;
+  createdAt?: string;
+};
+
+const STORAGE_KEY = "jyc_admin_gallery_items";
 
 export default function Home() {
+  const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
+
+  // 从 localStorage 读取后台图库（示意）资料
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      const list: HomeGalleryItem[] = JSON.parse(raw);
+
+      const filtered = list
+        .filter((item) => item.imageUrl && item.showOnHome)
+        .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+      setHomeItems(filtered);
+    } catch (err) {
+      console.error("load home gallery items error", err);
+    }
+  }, []);
+
+  const heroItem = homeItems[0] || null;
+  const productThumbs = homeItems.slice(1, 4); // 给 3 张产品卡片用
+  const galleryItems = homeItems.slice(0, 4); // Gallery 区块最多 4 张
+
+  const products = [
+    {
+      model: "无缝钢管机组",
+      desc: "用于生产各类规格无缝钢管的成套机组设备，结构扎实、运行稳定。",
+    },
+    {
+      model: "轧钢设备",
+      desc: "适用于多种钢材成型的轧机与配套设备，可依工艺需求规划整线。",
+    },
+    {
+      model: "整线自动化方案",
+      desc: "结合输送、冷床、切割等单元，提供整线规划与自动化集成服务。",
+    },
+  ];
+
   return (
     <main className="jyc-page">
       <Header />
@@ -28,8 +82,25 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="jyc-hero-image">
-          <span>无缝钢管机组 / 轧钢生产线主视觉图片预留区（Gallery slide）</span>
+        {/* Hero 图片：有图片时用 Firebase URL，当作背景图 */}
+        <div
+          className="jyc-hero-image"
+          style={
+            heroItem?.imageUrl
+              ? {
+                  backgroundImage: `url(${heroItem.imageUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  color: "#fff",
+                }
+              : undefined
+          }
+        >
+          <span>
+            {heroItem
+              ? heroItem.title || "无缝钢管机组 / 轧钢生产线主视觉"
+              : "无缝钢管机组 / 轧钢生产线主视觉图片预留区（Gallery slide）"}
+          </span>
         </div>
       </section>
 
@@ -38,29 +109,31 @@ export default function Home() {
         <h2>主要产品一览</h2>
 
         <div className="jyc-card-grid">
-          {[
-            {
-              model: '无缝钢管机组',
-              desc: '用于生产各类规格无缝钢管的成套机组设备，结构扎实、运行稳定。',
-            },
-            {
-              model: '轧钢设备',
-              desc: '适用于多种钢材成型的轧机与配套设备，可依工艺需求规划整线。',
-            },
-            {
-              model: '整线自动化方案',
-              desc: '结合输送、冷床、切割等单元，提供整线规划与自动化集成服务。',
-            },
-          ].map((item) => (
-            <article key={item.model} className="jyc-card">
-              <div className="jyc-card-image" />
-              <h3>{item.model}</h3>
-              <p>{item.desc}</p>
-              <button type="button" className="jyc-card-btn">
-                了解更多
-              </button>
-            </article>
-          ))}
+          {products.map((item, index) => {
+            const thumb = productThumbs[index];
+
+            return (
+              <article key={item.model} className="jyc-card">
+                <div
+                  className="jyc-card-image"
+                  style={
+                    thumb?.imageUrl
+                      ? {
+                          backgroundImage: `url(${thumb.imageUrl})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : undefined
+                  }
+                />
+                <h3>{item.model}</h3>
+                <p>{item.desc}</p>
+                <button type="button" className="jyc-card-btn">
+                  了解更多
+                </button>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -78,13 +151,32 @@ export default function Home() {
       <section id="gallery" className="jyc-section">
         <h2>图片集</h2>
         <p className="jyc-section-intro">
-          设备现场、生产线布局与项目案例照片。此区域将来会与后台图库管理连动，自动更新最新实绩。
+          设备现场、生产线布局与项目案例照片。当前版本示意由后台「图片 / Gallery 管理」勾选
+          「显示在首页轮播」后，同步到此区域显示。
         </p>
 
         <div className="jyc-gallery-grid">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="jyc-gallery-item" />
-          ))}
+          {galleryItems.length === 0 ? (
+            // 没有任何资料时仍旧显示占位块
+            [1, 2, 3, 4].map((i) => <div key={i} className="jyc-gallery-item" />)
+          ) : (
+            galleryItems.map((item) => (
+              <div
+                key={item.id}
+                className="jyc-gallery-item"
+                style={
+                  item.imageUrl
+                    ? {
+                        backgroundImage: `url(${item.imageUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : undefined
+                }
+                title={item.title}
+              />
+            ))
+          )}
         </div>
       </section>
 
