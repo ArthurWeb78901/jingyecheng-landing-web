@@ -123,7 +123,7 @@ body {
   white-space: nowrap;
 }
 
-/* Hero 区块 */
+/* ================= Hero 区块 ================= */
 .jyc-hero {
   display: flex;
   align-items: center;
@@ -135,7 +135,7 @@ body {
 
 .jyc-hero-text {
   flex: 1;
-  max-width: 560px;
+  max-width: 640px;
 }
 
 .jyc-hero-text h1 {
@@ -157,12 +157,11 @@ body {
   gap: 12px;
 }
 
-/* ✅ Hero 图片：固定横幅比例 + 背景图 */
+/* ✅ Hero 图片：右侧大方图卡片，适合 500x500 */
 .jyc-hero-image {
-  flex: 1;
-  /* 固定横向 Banner 比例，避免被拉太扁或太高 */
-  aspect-ratio: 16 / 5;
-  max-height: 320px;
+  flex: 0 0 360px;          /* 固定宽度 */
+  max-width: 360px;
+  aspect-ratio: 1 / 1;      /* 正方形容器 */
   border-radius: 12px;
   border: 1px solid #dedede;
   overflow: hidden;
@@ -171,20 +170,20 @@ body {
   background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
   background-repeat: no-repeat;
   background-position: center center;
-  background-size: cover;
+  background-size: cover;   /* 不变形，只是适度裁切 */
 
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #777;
-  font-size: 14px;
-  text-align: center;
-  padding: 16px 20px;
+  align-items: flex-end;
+  justify-content: flex-start;
+  color: #fff;
+  font-size: 13px;
+  text-align: left;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  padding: 8px 10px;
 }
 
-/* Hero 内文字（标题） */
 .jyc-hero-image span {
-  max-width: 90%;
+  max-width: 95%;
   line-height: 1.6;
 }
 
@@ -506,16 +505,19 @@ body {
   .jyc-hero {
     flex-direction: column;
     padding: 32px 16px;
+    align-items: flex-start;
   }
 
   .jyc-hero-text h1 {
     font-size: 24px;
   }
 
-  /* 手机版 Hero 图：比例稍微高一点 */
+  /* 手机版 Hero 图：铺满宽度的方图 */
   .jyc-hero-image {
-    aspect-ratio: 16 / 9;
-    max-height: 240px;
+    width: 100%;
+    max-width: none;
+    flex: 0 0 auto;
+    aspect-ratio: 1 / 1;
   }
 
   .jyc-section {
