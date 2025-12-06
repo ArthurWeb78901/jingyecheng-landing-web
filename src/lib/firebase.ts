@@ -1,8 +1,7 @@
 // src/lib/firebase.ts
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps } from 'firebase/app';
+import { getStorage } from 'firebase/storage';
 
-// 用環境變數取代硬編碼
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,8 +13,16 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// 避免 Next / 熱重載重複初始化
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// 小防呆：如果 env 没设好，在 console 提示一下
+if (!firebaseConfig.storageBucket) {
+  // 只在开发环境提示，避免在浏览器 alert
+  console.warn(
+    '[Firebase] storageBucket is missing. Did you set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?'
+  );
+}
 
-// 目前只需要 Storage
+const app = !getApps().length
+  ? initializeApp(firebaseConfig)
+  : getApps()[0];
+
 export const storage = getStorage(app);
