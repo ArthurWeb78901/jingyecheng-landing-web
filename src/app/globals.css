@@ -1,0 +1,517 @@
+/* 基础重设 & 全站字体 */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background-color: #f5f5f5;
+  color: #222;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 页面整体布局 */
+.jyc-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* 顶部导航 */
+.jyc-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid #e5e5e5;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+}
+
+.jyc-logo {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  /* 强制使用中文友好字体，避免部分字不加粗 */
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+.jyc-nav {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.jyc-nav a {
+  text-decoration: none;
+  color: #555;
+}
+
+.jyc-nav a:hover {
+  color: #111;
+}
+
+/* 右侧：语言切换 + 登录按钮 */
+.jyc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 语言切换：支持 button 和 a（Link） */
+.jyc-lang-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.jyc-lang-switch button,
+.jyc-lang-switch a {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  color: #333;
+  white-space: nowrap;
+}
+
+.jyc-lang-switch button:hover,
+.jyc-lang-switch a:hover {
+  border-color: #999;
+}
+
+/* 当前语言高亮 */
+.jyc-lang-active {
+  background: #333 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* 登录状态 / 按钮 */
+.jyc-login-link {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  text-decoration: none;
+  color: #333;
+  white-space: nowrap;
+}
+
+.jyc-login-link:hover {
+  background: #333;
+  color: #fff;
+}
+
+.jyc-login-status {
+  font-size: 11px;
+  color: #0a7d32;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid #0a7d32;
+  white-space: nowrap;
+}
+
+/* Hero 区块 */
+.jyc-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 64px 32px;
+  background: #f2f2f2;
+}
+
+.jyc-hero-text {
+  flex: 1;
+  max-width: 560px;
+}
+
+.jyc-hero-text h1 {
+  font-size: 32px;
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+
+.jyc-hero-text p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #555;
+  margin-bottom: 24px;
+}
+
+.jyc-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.jyc-hero-image {
+  flex: 1;
+  min-height: 220px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+  border: 1px solid #dedede;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  font-size: 14px;
+  text-align: center;
+  padding: 16px;
+}
+
+/* 共用按钮 */
+.jyc-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: none;
+  background: #333;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.jyc-btn-primary:hover {
+  background: #111;
+}
+
+.jyc-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.jyc-btn-secondary:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* 通用区块 */
+.jyc-section {
+  padding: 56px 32px;
+  background: #fff;
+}
+
+.jyc-section-alt {
+  background: #fafafa;
+}
+
+.jyc-section h2 {
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.jyc-section-intro {
+  font-size: 14px;
+  color: #666;
+  max-width: 720px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* 产品卡片 */
+.jyc-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.jyc-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  padding: 16px;
+}
+
+.jyc-card-image {
+  height: 120px;
+  border-radius: 6px;
+  background: #f0f0f0;
+  margin-bottom: 12px;
+}
+
+.jyc-card h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.jyc-card p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.jyc-card-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.jyc-card-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Gallery */
+.jyc-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.jyc-gallery-item {
+  height: 120px;
+  border-radius: 6px;
+  background: #e0e0e0;
+}
+
+/* Contact 表单 */
+.jyc-contact-form {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jyc-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.jyc-contact-form input,
+.jyc-contact-form textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.jyc-contact-form input:focus,
+.jyc-contact-form textarea:focus {
+  outline: none;
+  border-color: #888;
+}
+
+.jyc-contact-submit {
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+/* Footer */
+.jyc-footer {
+  padding: 24px 32px;
+  border-top: 1px solid #e5e5e5;
+  background: #fff;
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+}
+
+.jyc-footer-sub {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+/* 在线助手泡泡 */
+.jyc-chat-bubble-button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #333;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.jyc-chat-bubble-button:hover {
+  background: #111;
+}
+
+.jyc-chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 80px;
+  z-index: 40;
+  width: 320px;
+  max-height: 420px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.jyc-chat-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jyc-chat-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.jyc-chat-status {
+  font-size: 11px;
+  color: #777;
+}
+
+.jyc-chat-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #777;
+}
+
+.jyc-chat-close:hover {
+  color: #111;
+}
+
+.jyc-chat-messages {
+  padding: 10px 10px 8px;
+  flex: 1;
+  overflow-y: auto;
+  background: #fafafa;
+}
+
+.jyc-chat-message {
+  max-width: 80%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.jyc-chat-message-bot {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  margin-right: auto;
+}
+
+.jyc-chat-message-user {
+  background: #333;
+  color: #fff;
+  margin-left: auto;
+}
+
+.jyc-chat-input-row {
+  padding: 8px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 6px;
+}
+
+.jyc-chat-input-row input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+}
+
+.jyc-chat-input-row input:focus {
+  outline: none;
+  border-color: #888;
+}
+
+.jyc-chat-input-row button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #333;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.jyc-chat-input-row button:hover {
+  background: #111;
+}
+
+/* 📱 手机与小平板（响应式） */
+@media (max-width: 768px) {
+  .jyc-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .jyc-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .jyc-hero {
+    flex-direction: column;
+    padding: 32px 16px;
+  }
+
+  .jyc-hero-text h1 {
+    font-size: 24px;
+  }
+
+  .jyc-section {
+    padding: 32px 16px;
+  }
+
+  .jyc-form-row {
+    flex-direction: column;
+  }
+
+  .jyc-chat-panel {
+    right: 12px;
+    bottom: 72px;
+    width: 260px;
+  }
+
+  .jyc-chat-bubble-button {
+    right: 12px;
+    bottom: 16px;
+  }
+}

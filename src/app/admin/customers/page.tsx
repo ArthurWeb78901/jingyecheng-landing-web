@@ -1,0 +1,175 @@
+// src/app/admin/customers/page.tsx
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+
+type Lead = {
+  id: number;
+  name: string;
+  company: string;
+  contact: string;
+  need: string;
+  createdAt: string;
+  source?: string;
+};
+
+export default function AdminCustomersPage() {
+  const [leads, setLeads] = useState<Lead[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem("jyc_crm_leads");
+      const list: Lead[] = raw ? JSON.parse(raw) : [];
+      // 按时间新到旧排序
+      list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+      setLeads(list);
+    } catch (err) {
+      console.error("load leads error", err);
+    }
+  }, []);
+
+  const handleClear = () => {
+    if (typeof window === "undefined") return;
+    if (!window.confirm("确定要清空当前浏览器中保存的客户资料示意数据吗？")) return;
+
+    window.localStorage.removeItem("jyc_crm_leads");
+    setLeads([]);
+  };
+
+  return (
+    <main className="jyc-page">
+      <Header />
+
+      <section className="jyc-section jyc-section-alt">
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>客户资料 / CRM（示意）</h1>
+          <p className="jyc-section-intro">
+            本页面汇总由前台「在线助手」在
+            <strong>客服未登入后台（离线模式）</strong>
+            时自动收集到的客户基础资讯，包括称呼、公司、联络方式与需求说明。
+            当前资料仅保存在当前浏览器的 localStorage 中，方便 Demo 使用；正式上线时可改为储存于服务器端数据库，
+            并与正式 CRM / 业务跟进流程整合。
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 12,
+              fontSize: 13,
+            }}
+          >
+            <div>
+              共 {leads.length} 笔记录
+              {leads.length > 0 && "（依建立时间由新到旧排列）"}
+            </div>
+            <button
+              type="button"
+              style={{
+                padding: "4px 10px",
+                borderRadius: 4,
+                border: "1px solid #c33",
+                background: "#fff",
+                color: "#c33",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+              onClick={handleClear}
+            >
+              清空示意资料
+            </button>
+          </div>
+
+          {leads.length === 0 ? (
+            <div
+              style={{
+                padding: 16,
+                borderRadius: 8,
+                border: "1px solid #e5e5e5",
+                background: "#fff",
+                fontSize: 13,
+                color: "#666",
+              }}
+            >
+              目前尚无从在线助手收集到的客户资料。
+              <br />
+              你可以在
+              <strong>未登入后台</strong>
+              的情况下，前往前台首页打开右下角「在线助手」，依照流程输入称呼、公司、联络方式与需求；
+              完成后再回到此页面查看效果。
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              {leads.map((lead) => (
+                <article
+                  key={lead.id}
+                  style={{
+                    borderRadius: 8,
+                    border: "1px solid #e5e5e5",
+                    padding: 12,
+                    background: "#fff",
+                    fontSize: 13,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <div>
+                      <strong>{lead.name || "（未填写称呼）"}</strong>
+                      {lead.company && (
+                        <span style={{ marginLeft: 8, color: "#777" }}>
+                          ｜{lead.company}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#999", textAlign: "right" }}>
+                      <div>
+                        {lead.createdAt
+                          ? new Date(lead.createdAt).toLocaleString()
+                          : ""}
+                      </div>
+                      <div>
+                        {lead.source === "chat-bubble"
+                          ? "来源：在线助手（离线自动收集）"
+                          : lead.source || ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: "#555" }}>
+                      联络方式：{lead.contact || "（未填写）"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: 12, color: "#555" }}>
+                      需求说明：{lead.need || "（未填写）"}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+    </main>
+  );
+}
