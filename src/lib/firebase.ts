@@ -1,21 +1,21 @@
 // src/lib/firebase.ts
-import { initializeApp, getApps } from 'firebase/app';
-import { getStorage } from 'firebase/storage';
-// 之后如果要用 Firestore，可以顺便 export getFirestore
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getStorage } from "firebase/storage";
 
+// 用環境變數取代硬編碼
 const firebaseConfig = {
-  apiKey: "AIzaSyCYF_rrzyWrkjp4q2-3uJNPVP_3b1tBkdQ",
-  authDomain: "nooko-hub.firebaseapp.com",
-  databaseURL: "https://nooko-hub-default-rtdb.firebaseio.com",
-  projectId: "nooko-hub",
-  storageBucket: "nooko-hub.firebasestorage.app",
-  messagingSenderId: "46349385457",
-  appId: "1:46349385457:web:f0de24be165829abccf350",
-  measurementId: "G-LRP7PSXN2E"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// 避免在 Next / 热重载时重复初始化
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+// 避免 Next / 熱重載重複初始化
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+// 目前只需要 Storage
 export const storage = getStorage(app);
-// 如果以后要 Firestore：export const db = getFirestore(app);
