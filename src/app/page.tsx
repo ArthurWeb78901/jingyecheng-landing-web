@@ -81,9 +81,6 @@ export default function Home() {
               </a>
             </div>
 
-            <div className="jyc-hero-caption">
-              无缝钢管生产线现场（示意）
-            </div>
           </div>
         </div>
       </section>

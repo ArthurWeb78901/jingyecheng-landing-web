@@ -9,7 +9,7 @@ export default function HomeEn() {
     <main className="jyc-page">
       <Header />
 
-      {/* Hero */}
+      {/* Hero：背景图已经在全局 CSS 的 .jyc-hero 里用 /background-image.png 设定 */}
       <section className="jyc-hero">
         <div className="jyc-hero-text">
           <h1>Turn-key Solutions for Seamless Pipe Mills & Rolling Equipment</h1>
@@ -28,13 +28,18 @@ export default function HomeEn() {
               View Products
             </a>
           </div>
-        </div>
 
-        <div className="jyc-hero-image">
-          <span>
-            Main visual placeholder for seamless pipe mill / rolling line
-            (Gallery slide)
-          </span>
+          {/* 背景照片说明文字（反白显示在左下角） */}
+          <p
+            style={{
+              marginTop: 16,
+              fontSize: 12,
+              color: "#f5f5f5",
+              opacity: 0.9,
+            }}
+          >
+            Seamless pipe mill production line (sample photo)
+          </p>
         </div>
       </section>
 
@@ -116,7 +121,10 @@ export default function HomeEn() {
             <input type="email" placeholder="Email" />
             <input type="tel" placeholder="Phone" />
           </div>
-          <textarea rows={4} placeholder="Please describe your needs or project idea..." />
+          <textarea
+            rows={4}
+            placeholder="Please describe your needs or project idea..."
+          />
           <button type="submit" className="jyc-btn-primary jyc-contact-submit">
             Submit Inquiry
           </button>
