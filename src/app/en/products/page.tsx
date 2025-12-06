@@ -1,5 +1,7 @@
 // src/app/en/products/page.tsx
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
@@ -8,6 +10,28 @@ type Product = {
   name: string;
   brief: string;
   features: string[];
+};
+
+type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
+
+type AdminGalleryItem = {
+  id: number;
+  title: string;
+  category: GalleryCategory;
+  filename: string;
+  description?: string;
+  imageUrl?: string;
+  showOnHome: boolean;
+  createdAt?: string;
+};
+
+const STORAGE_KEY = "jyc_admin_gallery_items";
+
+/** 英文产品 key → 对应图库类别 */
+const PRODUCT_CATEGORY_MAP_EN: Record<string, GalleryCategory> = {
+  "seamless-mill": "设备展示",
+  "rolling-equipment": "设备展示",
+  "finishing-line": "生产线现场",
 };
 
 const products: Product[] = [
@@ -47,6 +71,40 @@ const products: Product[] = [
 ];
 
 export default function ProductsEnPage() {
+  const [imageMap, setImageMap] = useState<Record<string, string | undefined>>(
+    {}
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      const list: AdminGalleryItem[] = JSON.parse(raw);
+      if (!Array.isArray(list) || list.length === 0) return;
+
+      const map: Record<string, string | undefined> = {};
+
+      products.forEach((p) => {
+        const cat = PRODUCT_CATEGORY_MAP_EN[p.key];
+        if (!cat) return;
+
+        const found = list.find(
+          (item) => item.category === cat && item.imageUrl
+        );
+        if (found?.imageUrl) {
+          map[p.key] = found.imageUrl;
+        }
+      });
+
+      setImageMap(map);
+    } catch (err) {
+      console.error("load gallery items for products (EN) error", err);
+    }
+  }, []);
+
   return (
     <main className="jyc-page">
       <Header />
@@ -65,41 +123,53 @@ export default function ProductsEnPage() {
           </p>
 
           <div className="jyc-card-grid">
-            {products.map((p) => (
-              <article key={p.key} className="jyc-card">
-                <div className="jyc-card-image" />
-                <h2 style={{ fontSize: "18px", marginBottom: "4px" }}>
-                  {p.name}
-                </h2>
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: "#555",
-                    marginBottom: "10px",
-                  }}
-                >
-                  {p.brief}
-                </p>
+            {products.map((p) => {
+              const bgUrl = imageMap[p.key];
 
-                <ul
-                  style={{
-                    paddingLeft: "18px",
-                    margin: "0 0 12px 0",
-                    fontSize: "13px",
-                    color: "#555",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {p.features.map((f) => (
-                    <li key={f}>{f}</li>
-                  ))}
-                </ul>
+              return (
+                <article key={p.key} className="jyc-card">
+                  <div
+                    className="jyc-card-image"
+                    style={{
+                      backgroundColor: "#f0f0f0",
+                      backgroundImage: bgUrl ? `url(${bgUrl})` : undefined,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  />
+                  <h2 style={{ fontSize: "18px", marginBottom: "4px" }}>
+                    {p.name}
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      color: "#555",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {p.brief}
+                  </p>
 
-                <button type="button" className="jyc-card-btn">
-                  Ask About This Category
-                </button>
-              </article>
-            ))}
+                  <ul
+                    style={{
+                      paddingLeft: "18px",
+                      margin: "0 0 12px 0",
+                      fontSize: "13px",
+                      color: "#555",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {p.features.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+
+                  <button type="button" className="jyc-card-btn">
+                    Ask About This Category
+                  </button>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
