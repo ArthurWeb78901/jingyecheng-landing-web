@@ -121,7 +121,6 @@ body {
   white-space: nowrap;
 }
 
-/* ================= Hero 区块 ================= */
 /* ================= Hero 区块：整块背景图 ================= */
 .jyc-hero {
   position: relative;
@@ -146,13 +145,22 @@ body {
   line-height: 1.3;
   margin-bottom: 16px;
   color: #fff;
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
 }
 
 .jyc-hero-text p {
   font-size: 15px;
   line-height: 1.7;
-  color: #f3f3f3;
+  color: rgba(243, 243, 243, 0.96);
   margin-bottom: 24px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.75);
+}
+
+/* 英文版 Hero：标题稍微放大、字距拉一点 */
+.jyc-hero-en .jyc-hero-text h1 {
+  font-size: 34px;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
 }
 
 /* 按钮行 */
@@ -163,29 +171,51 @@ body {
   margin-bottom: 16px;
 }
 
+/* Hero 内的按钮配色（适合深色背景） */
+.jyc-hero .jyc-btn-primary {
+  background: #ffffff;
+  color: #111;
+  border: none;
+}
+
+.jyc-hero .jyc-btn-primary:hover {
+  background: #f5f5f5;
+}
+
+.jyc-hero .jyc-btn-secondary {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.jyc-hero .jyc-btn-secondary:hover {
+  background: #ffffff;
+  color: #111;
+}
+
 /* 图片说明（反白小字） */
 .jyc-hero-caption {
   font-size: 12px;
   color: #f5f5f5;
   opacity: 0.9;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
 }
 
-/* 左侧加一层暗色渐层，让字比较清楚 */
+/* 左侧加一层暗色渐层，让字比较清楚（中英文共用） */
 .jyc-hero::before {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to right,
-    rgba(0, 0, 0, 0.7),
-    rgba(0, 0, 0, 0.35),
+    rgba(0, 0, 0, 0.85),
+    rgba(0, 0, 0, 0.65),
+    rgba(0, 0, 0, 0.3),
     rgba(0, 0, 0, 0.05)
   );
   z-index: 0;
 }
 
-
-/* 共用按钮 */
+/* 共用按钮（非 Hero 场景的默认样式） */
 .jyc-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -506,15 +536,6 @@ body {
 
   .jyc-hero-text h1 {
     font-size: 24px;
-  }
-
-  /* 手机版 Hero 图：宽度 100%，比例略高一点 */
-  .jyc-hero-image {
-    width: 100%;
-    max-width: none;
-    flex: 0 0 auto;
-    aspect-ratio: 16 / 9;
-    max-height: 240px;
   }
 
   .jyc-section {
