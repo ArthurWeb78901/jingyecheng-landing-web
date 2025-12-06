@@ -40,7 +40,6 @@ body {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  /* 强制使用中文友好的字体，避免部分字不加粗 */
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
     -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
@@ -67,7 +66,6 @@ body {
   gap: 12px;
 }
 
-/* 语言切换：支持 button 和 a（Link） */
 .jyc-lang-switch {
   display: flex;
   gap: 8px;
@@ -135,7 +133,7 @@ body {
 
 .jyc-hero-text {
   flex: 1;
-  max-width: 640px;
+  max-width: 560px;
 }
 
 .jyc-hero-text h1 {
@@ -157,33 +155,32 @@ body {
   gap: 12px;
 }
 
-/* ✅ Hero 图片：右侧大方图卡片，适合 500x500 */
+/* ✅ Hero 图片：横向 Banner */
 .jyc-hero-image {
-  flex: 0 0 360px;          /* 固定宽度 */
-  max-width: 360px;
-  aspect-ratio: 1 / 1;      /* 正方形容器 */
+  flex: 1;
+  aspect-ratio: 16 / 5;
+  max-height: 320px;
   border-radius: 12px;
   border: 1px solid #dedede;
   overflow: hidden;
 
-  /* 没有图片时仍显示灰色渐层背景 */
   background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
   background-repeat: no-repeat;
   background-position: center center;
-  background-size: cover;   /* 不变形，只是适度裁切 */
+  background-size: cover;
 
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  font-size: 13px;
-  text-align: left;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-  padding: 8px 10px;
+  font-size: 14px;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  padding: 16px 20px;
 }
 
 .jyc-hero-image span {
-  max-width: 95%;
+  max-width: 90%;
   line-height: 1.6;
 }
 
@@ -505,19 +502,19 @@ body {
   .jyc-hero {
     flex-direction: column;
     padding: 32px 16px;
-    align-items: flex-start;
   }
 
   .jyc-hero-text h1 {
     font-size: 24px;
   }
 
-  /* 手机版 Hero 图：铺满宽度的方图 */
+  /* 手机版 Hero 图：宽度 100%，比例略高一点 */
   .jyc-hero-image {
     width: 100%;
     max-width: none;
     flex: 0 0 auto;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 16 / 9;
+    max-height: 240px;
   }
 
   .jyc-section {

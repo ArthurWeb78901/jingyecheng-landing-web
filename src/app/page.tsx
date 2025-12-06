@@ -82,24 +82,19 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Hero 图片：有图片时用 Firebase URL，当作背景图 */}
+        {/* Hero 图片：不再使用 Firebase 图片，固定用 public/background image.png */}
         <div
           className="jyc-hero-image"
-          style={
-            heroItem?.imageUrl
-              ? {
-                  backgroundImage: `url(${heroItem.imageUrl})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  color: "#fff",
-                }
-              : undefined
-          }
+          style={{
+            backgroundImage: 'url("/background image.png")',
+            backgroundSize: "cover",
+            backgroundPosition: "center center",
+          }}
         >
           <span>
             {heroItem
               ? heroItem.title || "无缝钢管机组 / 轧钢生产线主视觉"
-              : "无缝钢管机组 / 轧钢生产线主视觉图片预留区（Gallery slide）"}
+              : "无缝钢管机组 / 轧钢生产线主视觉"}
           </span>
         </div>
       </section>
@@ -157,7 +152,6 @@ export default function Home() {
 
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0 ? (
-            // 没有任何资料时仍旧显示占位块
             [1, 2, 3, 4].map((i) => <div key={i} className="jyc-gallery-item" />)
           ) : (
             galleryItems.map((item) => (
