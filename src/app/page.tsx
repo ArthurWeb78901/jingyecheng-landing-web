@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -40,8 +39,8 @@ export default function Home() {
     }
   }, []);
 
-  const heroItem = homeItems[0] || null;
-  const productThumbs = homeItems.slice(1, 4); // 给 3 张产品卡片用
+  // 这两个区块还是用后台勾选出来的图片
+  const productThumbs = homeItems.slice(0, 3); // 给 3 张产品卡片用
   const galleryItems = homeItems.slice(0, 4); // Gallery 区块最多 4 张
 
   const products = [
@@ -63,39 +62,29 @@ export default function Home() {
     <main className="jyc-page">
       <Header />
 
-      {/* Hero 区块 */}
+      {/* Hero：整块背景图 + 文字反白叠在左侧 */}
       <section className="jyc-hero">
-        <div className="jyc-hero-text">
-          <h1>无缝钢管机组与轧钢设备整体解决方案提供商</h1>
-          <p>
-            山西太矿钢管设备有限公司成立于 1993 年，深耕无缝钢管机组设备与轧钢设备领域，
-            以专业设计、制造与服务能力，为客户提供稳定可靠的生产线与完善的技术支持。
-          </p>
+        <div className="jyc-hero-inner">
+          <div className="jyc-hero-text">
+            <h1>无缝钢管机组与轧钢设备整体解决方案提供商</h1>
+            <p>
+              山西太矿钢管设备有限公司成立于 1993 年，深耕无缝钢管机组设备与轧钢设备领域，
+              以专业设计、制造与服务能力，为客户提供稳定可靠的生产线与完善的技术支持。
+            </p>
 
-          <div className="jyc-hero-actions">
-            <a href="#contact" className="jyc-btn-primary">
-              立即咨询
-            </a>
-            <a href="/products" className="jyc-btn-secondary">
-              查看产品一览
-            </a>
+            <div className="jyc-hero-actions">
+              <a href="#contact" className="jyc-btn-primary">
+                立即咨询
+              </a>
+              <a href="/products" className="jyc-btn-secondary">
+                查看产品一览
+              </a>
+            </div>
+
+            <div className="jyc-hero-caption">
+              无缝钢管生产线现场（示意）
+            </div>
           </div>
-        </div>
-
-        {/* Hero 图片：不再使用 Firebase 图片，固定用 public/background image.png */}
-        <div
-          className="jyc-hero-image"
-          style={{
-            backgroundImage: 'url("/background image.png")',
-            backgroundSize: "cover",
-            backgroundPosition: "center center",
-          }}
-        >
-          <span>
-            {heroItem
-              ? heroItem.title || "无缝钢管机组 / 轧钢生产线主视觉"
-              : "无缝钢管机组 / 轧钢生产线主视觉"}
-          </span>
         </div>
       </section>
 
@@ -151,26 +140,26 @@ export default function Home() {
         </p>
 
         <div className="jyc-gallery-grid">
-          {galleryItems.length === 0 ? (
-            [1, 2, 3, 4].map((i) => <div key={i} className="jyc-gallery-item" />)
-          ) : (
-            galleryItems.map((item) => (
-              <div
-                key={item.id}
-                className="jyc-gallery-item"
-                style={
-                  item.imageUrl
-                    ? {
-                        backgroundImage: `url(${item.imageUrl})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : undefined
-                }
-                title={item.title}
-              />
-            ))
-          )}
+          {galleryItems.length === 0
+            ? [1, 2, 3, 4].map((i) => (
+                <div key={i} className="jyc-gallery-item" />
+              ))
+            : galleryItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="jyc-gallery-item"
+                  style={
+                    item.imageUrl
+                      ? {
+                          backgroundImage: `url(${item.imageUrl})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : undefined
+                  }
+                  title={item.title}
+                />
+              ))}
         </div>
       </section>
 
