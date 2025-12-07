@@ -191,12 +191,12 @@ body {
   inset: 0;
   background: linear-gradient(
     to right,
-    rgba(0, 0, 0, 0.55),
-    rgba(0, 0, 0, 0.22),
+    rgba(0, 0, 0, 0.45),  /* 左侧 0.45 比中文 0.7 更亮 */
+    rgba(0, 0, 0, 0.18),
     rgba(0, 0, 0, 0)
   );
   z-index: 0;
-  pointer-events: none; /* ✅ 同样不拦截点击 */
+  pointer-events: none; /* 不挡按钮点击 */
 }
 
 /* 共用按钮 */

@@ -55,9 +55,14 @@ export default function HomeEn() {
               model: "Turn-key Automation",
               desc: "Integrated solutions combining conveying, cooling bed, cutting and packaging units for automated production lines.",
             },
-          ].map((item) => (
+          ].map((item, index) => (
             <article key={item.model} className="jyc-card">
-              <div className="jyc-card-image" />
+              {/* 第一张卡片加上 jyc-card-image-1，复用中文版的背景图样式 */}
+              <div
+                className={`jyc-card-image${
+                  index === 0 ? " jyc-card-image-1" : ""
+                }`}
+              />
               <h3>{item.model}</h3>
               <p>{item.desc}</p>
               <button type="button" className="jyc-card-btn">
