@@ -9,37 +9,31 @@ export default function HomeEn() {
     <main className="jyc-page">
       <Header />
 
-      {/* Hero：背景图已经在全局 CSS 的 .jyc-hero 里用 /background-image.png 设定 */}
-      <section className="jyc-hero">
-        <div className="jyc-hero-text">
-          <h1>Turn-key Solutions for Seamless Pipe Mills & Rolling Equipment</h1>
-          <p>
-            Founded in 1993, Shanxi Taikuang Steel Pipe Equipment Co., Ltd.
-            focuses on seamless steel pipe mill lines and rolling equipment,
-            providing reliable production lines and technical support with
-            professional design, manufacturing and service capabilities.
-          </p>
+      {/* Hero - 和中文共用背景图，英文加 jyc-hero-en 让渐层更浅 */}
+      <section className="jyc-hero jyc-hero-en">
+        <div className="jyc-hero-inner">
+          <div className="jyc-hero-text">
+            <h1>Turn-key Solutions for Seamless Pipe Mills &amp; Rolling Equipment</h1>
+            <p>
+              Founded in 1993, Shanxi Taikuang Steel Pipe Equipment Co., Ltd.
+              focuses on seamless steel pipe mill lines and rolling equipment,
+              providing reliable production lines and technical support with
+              professional design, manufacturing and service capabilities.
+            </p>
 
-          <div className="jyc-hero-actions">
-            <a href="#contact" className="jyc-btn-primary">
-              Contact Us
-            </a>
-            <a href="/en/products" className="jyc-btn-secondary">
-              View Products
-            </a>
+            <div className="jyc-hero-actions">
+              <a href="#contact" className="jyc-btn-primary">
+                Contact Us
+              </a>
+              <a href="/en/products" className="jyc-btn-secondary">
+                View Products
+              </a>
+            </div>
+
+            <p className="jyc-hero-caption">
+              Seamless pipe mill production line (sample photo)
+            </p>
           </div>
-
-          {/* 背景照片说明文字（反白显示在左下角） */}
-          <p
-            style={{
-              marginTop: 16,
-              fontSize: 12,
-              color: "#f5f5f5",
-              opacity: 0.9,
-            }}
-          >
-            Seamless pipe mill production line (sample photo)
-          </p>
         </div>
       </section>
 
