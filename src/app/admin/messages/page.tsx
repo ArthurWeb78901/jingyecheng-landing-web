@@ -1,89 +1,136 @@
 // src/app/admin/messages/page.tsx
-import React from 'react';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import React from "react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { db } from "@/lib/firebaseAdmin"; 
+
+type MessageStatus = "new" | "in_progress" | "closed";
 
 type Message = {
-  id: number;
+  id: string;
   name: string;
-  company?: string;
-  createdAt: string;
+  company?: string | null;
+  email?: string | null;
+  phone?: string | null;
   content: string;
+  source: "contact-form" | "chatbot";
+  status: MessageStatus;
+  createdAt: string; // 我們在 API 裡存的是 ISO string
 };
 
-const mockMessages: Message[] = [
-  {
-    id: 1,
-    name: '张先生',
-    company: '某钢管厂',
-    createdAt: '2025-03-12',
-    content: '目前规划新增一条中小规格无缝钢管生产线，想了解完整机组配置与现场勘查服务。',
-  },
-  {
-    id: 2,
-    name: '李工程师',
-    company: '设备技术部',
-    createdAt: '2025-02-28',
-    content: '现有产线部分设备年限较久，想评估局部改造与自动化升级的可行性与预算范围。',
-  },
-  {
-    id: 3,
-    name: '王经理',
-    createdAt: '2025-01-15',
-    content: '近期有参加行业展会计划，想了解公司是否有现场展示或技术交流活动安排。',
-  },
-];
+async function getMessages(): Promise<Message[]> {
+  const snapshot = await db
+    .collection("messages")
+    .orderBy("createdAt", "desc")
+    .limit(100)
+    .get();
 
-export default function AdminMessagesPage() {
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as any),
+  }));
+}
+
+function renderStatusLabel(status: MessageStatus) {
+  switch (status) {
+    case "new":
+      return "待处理";
+    case "in_progress":
+      return "跟进中";
+    case "closed":
+      return "已结案";
+    default:
+      return "";
+  }
+}
+
+export default async function AdminMessagesPage() {
+  const messages = await getMessages();
+
   return (
     <main className="jyc-page">
       <Header />
 
       <section className="jyc-section jyc-section-alt">
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
-          <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>留言管理（内部）</h1>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>
+            留言管理（内部）
+          </h1>
           <p className="jyc-section-intro">
             本页面仅供公司内部人员使用，用于浏览与管理通过网站提交的在线留言。
-            正式上线后，可将资料改为从数据库读取，并依处理状态进行筛选与标记。
+            当前版本会从 Firestore 读取 messages 集合资料，日后可再增加依状态筛选、
+            指派负责人与导出报表等功能。
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
-            {mockMessages.map((msg) => (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              marginTop: 16,
+            }}
+          >
+            {messages.map((msg) => (
               <article
                 key={msg.id}
                 style={{
                   borderRadius: 8,
-                  border: '1px solid #e5e5e5',
+                  border: "1px solid #e5e5e5",
                   padding: 16,
-                  background: '#fff',
+                  background: "#fff",
                 }}
               >
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: "flex",
+                    justifyContent: "space-between",
                     marginBottom: 6,
                     fontSize: 13,
-                    color: '#555',
+                    color: "#555",
                   }}
                 >
                   <div>
                     <strong>{msg.name}</strong>
-                    {msg.company ? <span style={{ marginLeft: 8 }}>｜{msg.company}</span> : null}
+                    {msg.company ? (
+                      <span style={{ marginLeft: 8 }}>｜{msg.company}</span>
+                    ) : null}
+                    {msg.email ? (
+                      <span style={{ marginLeft: 8, color: "#777" }}>
+                        ｜{msg.email}
+                      </span>
+                    ) : null}
                   </div>
-                  <span style={{ color: '#999', fontSize: 12 }}>{msg.createdAt}</span>
+                  <span style={{ color: "#999", fontSize: 12 }}>
+                    {msg.createdAt?.slice(0, 10)}
+                  </span>
                 </div>
 
                 <p
                   style={{
                     fontSize: 14,
-                    color: '#444',
+                    color: "#444",
                     lineHeight: 1.7,
                     margin: 0,
                   }}
                 >
                   {msg.content}
                 </p>
+
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: "#777",
+                    display: "flex",
+                    gap: 12,
+                  }}
+                >
+                  <span>
+                    来源：
+                    {msg.source === "contact-form" ? "联系表单" : "在线助手"}
+                  </span>
+                  <span>状态：{renderStatusLabel(msg.status)}</span>
+                </div>
               </article>
             ))}
           </div>
