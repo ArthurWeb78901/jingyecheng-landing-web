@@ -276,9 +276,12 @@ body {
 }
 
 .jyc-card-image {
-  height: 120px;
+  width: 100%;
+  aspect-ratio: 4 / 3;          /* ✅ 改用 4:3，比現在好看很多 */
   border-radius: 6px;
   background: #f0f0f0;
+  background-size: cover;       /* 保持鋪滿 */
+  background-position: center;  /* 以中間為對齊，不會只顯示上半段 */
   margin-bottom: 12px;
 }
 
