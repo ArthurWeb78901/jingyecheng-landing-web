@@ -13,12 +13,17 @@ export default function HomeEn() {
       <section className="jyc-hero jyc-hero-en">
         <div className="jyc-hero-inner">
           <div className="jyc-hero-text">
-            <h1>Turn-key Solutions for Seamless Pipe Mills &amp; Rolling Equipment</h1>
+            <h1>
+              Turn-key Solutions for Seamless Pipe Mills &amp; Rolling Equipment
+            </h1>
             <p>
               Founded in 1993, Shanxi Taikuang Steel Pipe Equipment Co., Ltd.
-              focuses on seamless steel pipe mill lines and rolling equipment,
-              providing reliable production lines and technical support with
-              professional design, manufacturing and service capabilities.
+              specializes in equipment for hot-rolled seamless steel pipe
+              production, including piercing mills, pipe rolling mills, sizing
+              and reducing mills, straightening machines, cooling beds, hot
+              centering machines and cold drawing machines. We provide reliable
+              production lines and technical support with professional design,
+              manufacturing and service capabilities.
             </p>
 
             <div className="jyc-hero-actions">
@@ -44,16 +49,16 @@ export default function HomeEn() {
         <div className="jyc-card-grid">
           {[
             {
-              model: "Seamless Pipe Mill",
-              desc: "Complete mill lines for producing various sizes of seamless steel pipes with robust structure and stable operation.",
+              model: "Seamless Pipe Mill Lines",
+              desc: "Turn-key hot rolling lines for seamless steel pipes, covering billet piercing, pipe rolling, sizing / reducing, straightening, cooling and finishing for tube diameters of approximately φ50–φ325 mm.",
             },
             {
-              model: "Rolling Mill Equipment",
-              desc: "Rolling stands and auxiliary equipment for different steel profiles, with line layout tailored to process requirements.",
+              model: "Piercing & Pipe Rolling Mills",
+              desc: "Mannesmann piercing mills, horizontal cone-type piercing mills and automatic / Accu-Roll pipe mills, including our proprietary two-roll mandrel mills with guide plates for high dimensional accuracy, large elongation and uniform wall thickness of hollow shells (typically φ50–φ280 mm).",
             },
             {
-              model: "Turn-key Automation",
-              desc: "Integrated solutions combining conveying, cooling bed, cutting and packaging units for automated production lines.",
+              model: "Finishing & Auxiliary Equipment",
+              desc: "Two-roll and three-roll sizing / reducing mills, six-roll and seven-roll straightening machines, chain and walking-beam cooling beds, hot centering machines and cold drawing machines for precise, straight and clean tubes in the φ10–φ325 mm range.",
             },
           ].map((item, index) => (
             <article key={item.model} className="jyc-card">
@@ -79,10 +84,13 @@ export default function HomeEn() {
         <p>
           Shanxi Taikuang Steel Pipe Equipment Co., Ltd. is located in Taiyuan,
           Shanxi Province, with a site area of about 70,000 m². The company is a
-          heavy industry manufacturer specialized in rolling equipment, focusing
-          on seamless pipe mill lines. We integrate design, manufacturing and
-          sales, and provide complete services from line planning, equipment
-          supply to installation, commissioning and after-sales support.
+          heavy industry manufacturer specialized in rolling equipment for
+          seamless steel pipes, covering piercing mills, pipe rolling mills,
+          sizing / reducing mills, straightening machines, cooling beds, hot
+          centering machines and cold drawing machines. We integrate design,
+          manufacturing and sales, and provide complete services from line
+          planning and equipment supply to installation, commissioning and
+          after-sales support.
         </p>
       </section>
 
@@ -90,12 +98,15 @@ export default function HomeEn() {
       <section id="gallery" className="jyc-section">
         <h2>Gallery</h2>
         <p className="jyc-section-intro">
-          Photos of equipment installation, production line layouts and project
-          references. This section can be connected to the backend gallery
-          management in the future to auto-update latest cases.
+          Photos of key equipment such as piercing mills, pipe rolling mills,
+          sizing / reducing mills, straightening machines, cooling beds, hot
+          centering machines and cold drawing machines, as well as production
+          line layouts and project references. This section can be connected to
+          the backend gallery management in the future to auto-update the latest
+          cases.
         </p>
 
-        <div className="jyc-gallery-grid">
+      <div className="jyc-gallery-grid">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="jyc-gallery-item" />
           ))}
