@@ -2,7 +2,9 @@
 import React from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { db } from "@/lib/firebaseAdmin"; 
+import { db } from "@/lib/firebaseAdmin";
+
+export const dynamic = "force-dynamic";
 
 type MessageStatus = "new" | "in_progress" | "closed";
 
@@ -15,20 +17,25 @@ type Message = {
   content: string;
   source: "contact-form" | "chatbot";
   status: MessageStatus;
-  createdAt: string; // 我們在 API 裡存的是 ISO string
+  createdAt: string;
 };
 
 async function getMessages(): Promise<Message[]> {
-  const snapshot = await db
-    .collection("messages")
-    .orderBy("createdAt", "desc")
-    .limit(100)
-    .get();
+  try {
+    const snap = await db
+      .collection("jyc_messages")
+      .orderBy("createdAt", "desc")
+      .limit(100)
+      .get();
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as any),
-  }));
+    return snap.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as any),
+    }));
+  } catch (err) {
+    console.error("Admin getMessages error:", err);
+    return [];
+  }
 }
 
 function renderStatusLabel(status: MessageStatus) {
@@ -58,8 +65,8 @@ export default async function AdminMessagesPage() {
           </h1>
           <p className="jyc-section-intro">
             本页面仅供公司内部人员使用，用于浏览与管理通过网站提交的在线留言。
-            当前版本会从 Firestore 读取 messages 集合资料，日后可再增加依状态筛选、
-            指派负责人与导出报表等功能。
+            当前版本会从 Firestore 的 jyc_messages 集合读取资料；若读取失败，
+            页面会先显示为空列表，并在主机端记录错误日志以便排查。
           </p>
 
           <div
@@ -70,6 +77,12 @@ export default async function AdminMessagesPage() {
               marginTop: 16,
             }}
           >
+            {messages.length === 0 && (
+              <p style={{ fontSize: 13, color: "#777" }}>
+                目前尚未查询到留言资料，或读取权限尚未完成设定。
+              </p>
+            )}
+
             {messages.map((msg) => (
               <article
                 key={msg.id}

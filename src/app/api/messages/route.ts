@@ -1,4 +1,4 @@
-// src/app/api/messages/route.ts
+// src/app/api/jyc/messages/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 
@@ -24,9 +24,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const now = new Date();
+    const now = new Date().toISOString();
 
-    const docRef = await db.collection("messages").add({
+    const docRef = await db.collection("jyc_messages").add({
       name: body.name,
       company: body.company || null,
       email: body.email || null,
@@ -34,38 +34,33 @@ export async function POST(req: Request) {
       content: body.content,
       source: body.source || "contact-form",
       status: "new" as MessageStatus,
-      createdAt: now.toISOString(), // 前端好處理；要 serverTimestamp 也可以再加一個欄位
+      createdAt: now,
     });
 
     return NextResponse.json({ id: docRef.id }, { status: 201 });
   } catch (err) {
-    console.error("Create message error", err);
-    return NextResponse.json(
-      { error: "internal_error" },
-      { status: 500 }
-    );
+    console.error("Create jyc message error", err);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }
 
 export async function GET() {
+  // 给后台用的列表接口（之后 Admin 页会用到）
   try {
-    const snapshot = await db
-      .collection("messages")
+    const snap = await db
+      .collection("jyc_messages")
       .orderBy("createdAt", "desc")
       .limit(100)
       .get();
 
-    const messages = snapshot.docs.map((doc) => ({
+    const data = snap.docs.map((doc) => ({
       id: doc.id,
       ...(doc.data() as any),
     }));
 
-    return NextResponse.json(messages);
+    return NextResponse.json(data);
   } catch (err) {
-    console.error("List messages error", err);
-    return NextResponse.json(
-      { error: "internal_error" },
-      { status: 500 }
-    );
+    console.error("List jyc messages error", err);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
+import { ContactFormCn } from "@/components/ContactFormCN";
 
 type HomeGalleryItem = {
   id: number;
@@ -19,7 +20,7 @@ const STORAGE_KEY = "jyc_admin_gallery_items";
 export default function Home() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
 
-  // 从 localStorage 读取后台图库（示意）资料
+  // 暂时仍从 localStorage 读取后台图库（示意），后续可改为 Firestore / 后台管理
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -39,22 +40,22 @@ export default function Home() {
     }
   }, []);
 
-  // 这两个区块还是用后台勾选出来的图片
+  // 这两个区块还是用后台勾选出来的图片（之后可改为 Firestore）
   const productThumbs = homeItems.slice(0, 3); // 给 3 张产品卡片用
   const galleryItems = homeItems.slice(0, 4); // Gallery 区块最多 4 张
 
   const products = [
     {
-      model: "无缝钢管机组",
-      desc: "用于生产各类规格无缝钢管的成套机组设备，结构扎实、运行稳定。",
+      model: "热轧无缝钢管生产线",
+      desc: "覆盖加热、穿孔、轧管、定径 / 减径、冷床、矫直、锯切等工序的整线机组，用于生产 φ50–φ325 mm 范围内的热轧无缝钢管，结构扎实、运行稳定。",
     },
     {
-      model: "轧钢设备",
-      desc: "适用于多种钢材成型的轧机与配套设备，可依工艺需求规划整线。",
+      model: "穿孔与轧管机组",
+      desc: "包括曼内斯曼穿孔机、卧式锥形辊穿孔机、自动 / Accu-Roll 轧管机以及自研导板式二辊限动芯棒轧管机，适用于生产高尺寸精度、大延伸系数、壁厚均匀的空心坯与钢管。",
     },
     {
-      model: "整线自动化方案",
-      desc: "结合输送、冷床、切割等单元，提供整线规划与自动化集成服务。",
+      model: "精整与辅助设备",
+      desc: "提供二辊 / 三辊定径减径机、六辊 / 七辊矫直机、链式与步进式冷床、热定心机、冷拔机及相关输送辅助设备，用于 φ10–φ325 mm 钢管的定径、矫直、冷却与后续精整。",
     },
   ];
 
@@ -69,6 +70,7 @@ export default function Home() {
             <h1>无缝钢管机组与轧钢设备整体解决方案提供商</h1>
             <p>
               山西太矿钢管设备有限公司成立于 1993 年，深耕无缝钢管机组设备与轧钢设备领域，
+              覆盖穿孔机、轧管机、定径 / 减径机、矫直机、冷床、热定心机及冷拔机等关键设备，
               以专业设计、制造与服务能力，为客户提供稳定可靠的生产线与完善的技术支持。
             </p>
 
@@ -80,7 +82,6 @@ export default function Home() {
                 查看产品一览
               </a>
             </div>
-
           </div>
         </div>
       </section>
@@ -133,7 +134,7 @@ export default function Home() {
         <h2>图片集</h2>
         <p className="jyc-section-intro">
           设备现场、生产线布局与项目案例照片。当前版本示意由后台「图片 / Gallery 管理」勾选
-          「显示在首页轮播」后，同步到此区域显示。
+          「显示在首页轮播」后，同步到此区域与首页产品卡片显示；后续可改由 Firestore / 后台系统统一管理。
         </p>
 
         <div className="jyc-gallery-grid">
@@ -167,20 +168,7 @@ export default function Home() {
           请留下您的联络资讯与需求，我们会尽快由相关人员与您联系，也可直接拨打电话或来信洽询。
         </p>
 
-        <form className="jyc-contact-form">
-          <div className="jyc-form-row">
-            <input type="text" placeholder="姓名" />
-            <input type="text" placeholder="公司 / 单位" />
-          </div>
-          <div className="jyc-form-row">
-            <input type="email" placeholder="Email" />
-            <input type="tel" placeholder="电话 / 手机" />
-          </div>
-          <textarea rows={4} placeholder="请输入您的需求或问题…" />
-          <button type="submit" className="jyc-btn-primary jyc-contact-submit">
-            送出咨询
-          </button>
-        </form>
+        <ContactFormCn />
       </section>
 
       <Footer />
