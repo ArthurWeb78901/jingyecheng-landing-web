@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
-import { ContactFormCn } from "@/components/ContactFormCn";
+import { ContactFormCn } from "@/components/ContactFormCN";
 
 type HomeGalleryItem = {
   id: number;
@@ -19,6 +19,7 @@ const STORAGE_KEY = "jyc_admin_gallery_items";
 
 export default function Home() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // 暂时仍从 localStorage 读取后台图库（示意），后续可改为 Firestore / 后台管理
   useEffect(() => {
@@ -40,6 +41,17 @@ export default function Home() {
     }
   }, []);
 
+  // 简单自动轮播：每 5 秒切一张（有 1 张图时不轮播）
+  useEffect(() => {
+    if (homeItems.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % homeItems.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [homeItems.length]);
+
   // 这两个区块还是用后台勾选出来的图片（之后可改为 Firestore）
   const productThumbs = homeItems.slice(0, 3); // 给 3 张产品卡片用
   const galleryItems = homeItems.slice(0, 4); // Gallery 区块最多 4 张
@@ -58,6 +70,8 @@ export default function Home() {
       desc: "提供二辊 / 三辊定径减径机、六辊 / 七辊矫直机、链式与步进式冷床、热定心机、冷拔机及相关输送辅助设备，用于 φ10–φ325 mm 钢管的定径、矫直、冷却与后续精整。",
     },
   ];
+
+  const currentItem = homeItems[currentSlide];
 
   return (
     <main className="jyc-page">
@@ -136,6 +150,41 @@ export default function Home() {
           设备现场、生产线布局与项目案例照片。当前版本示意由后台「图片 / Gallery 管理」勾选
           「显示在首页轮播」后，同步到此区域与首页产品卡片显示；后续可改由 Firestore / 后台系统统一管理。
         </p>
+
+        {/* 首页轮播（根据 showOnHome 勾选） */}
+        {homeItems.length > 0 && (
+          <div className="jyc-home-slideshow">
+            <div className="jyc-home-slideshow-main">
+              <div
+                className="jyc-home-slideshow-main-inner"
+                style={
+                  currentItem?.imageUrl
+                    ? { backgroundImage: `url(${currentItem.imageUrl})` }
+                    : undefined
+                }
+              />
+            </div>
+            <div className="jyc-home-slideshow-caption">
+              {currentItem?.title}
+            </div>
+            <div className="jyc-home-slideshow-dots">
+              {homeItems.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={
+                    "jyc-home-slideshow-dot" +
+                    (idx === currentSlide
+                      ? " jyc-home-slideshow-dot-active"
+                      : "")
+                  }
+                  onClick={() => setCurrentSlide(idx)}
+                  aria-label={`切换到第 ${idx + 1} 张`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0

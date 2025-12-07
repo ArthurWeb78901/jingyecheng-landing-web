@@ -191,7 +191,7 @@ body {
   inset: 0;
   background: linear-gradient(
     to right,
-    rgba(0, 0, 0, 0.45),  /* 左侧 0.45 比中文 0.7 更亮 */
+    rgba(0, 0, 0, 0.45), /* 左侧 0.45 比中文 0.7 更亮 */
     rgba(0, 0, 0, 0.18),
     rgba(0, 0, 0, 0)
   );
@@ -307,7 +307,58 @@ body {
   color: #fff;
 }
 
-/* Gallery */
+/* ===== Gallery & 首页轮播 ===== */
+
+/* 首页轮播（Gallery 上方） */
+.jyc-home-slideshow {
+  margin-bottom: 24px;
+}
+
+.jyc-home-slideshow-main {
+  position: relative;
+  width: 100%;
+  padding-top: 40%; /* 约 2.5:1 比例，可视实际照片调整 */
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e0e0e0;
+}
+
+.jyc-home-slideshow-main-inner {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: background-image 0.4s ease-out;
+}
+
+.jyc-home-slideshow-caption {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+.jyc-home-slideshow-dots {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.jyc-home-slideshow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #999;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.jyc-home-slideshow-dot-active {
+  background: #333;
+  border-color: #333;
+}
+
+/* Gallery 四宫格 */
 .jyc-gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
