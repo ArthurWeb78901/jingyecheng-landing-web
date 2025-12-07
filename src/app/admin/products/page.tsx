@@ -46,14 +46,15 @@ export default function AdminProductsPage() {
       <section className="jyc-section jyc-section-alt">
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>
-            产品资讯管理（内部）
+            产品资讯管理
           </h1>
           <p className="jyc-section-intro">
-            此页面用于维护网站上显示的产品类别与说明文字，例如热轧无缝钢管生产线、穿孔与轧管机组、
-            精整与辅助设备等。 目前为示意画面，正式上线时可串接数据库，并提供新增、编辑与删除功能。
+            用于维护网站上显示的产品类别与说明文字，例如热轧无缝钢管生产线、穿孔与轧管机组、
+            精整与辅助设备等。可作为公司内部的产品目录，方便与首页及中英文产品页面保持一致。
+            之后若接上数据库，只需在此维护一次即可同步到前台。
           </p>
 
-          {/* 新增 / 编辑表单（UI 示意） */}
+          {/* 新增 / 编辑表单（UI） */}
           <div
             style={{
               marginTop: 16,
@@ -64,9 +65,7 @@ export default function AdminProductsPage() {
               background: "#fff",
             }}
           >
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>
-              新增 / 编辑产品（示意）
-            </h2>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>新增 / 编辑产品</h2>
             <p
               style={{
                 fontSize: 12,
@@ -74,8 +73,8 @@ export default function AdminProductsPage() {
                 marginBottom: 12,
               }}
             >
-              正式上线时，可在此输入产品名称、分类与简介，并储存到后台系统（数据库 /
-              后台管理）。 当前仅为版面示意，按钮不会真正写入资料。
+              正式接上后台系统后，可在此输入产品名称、分类与简介，并储存到数据库。
+              目前版本仍写在程式码中，如需调整内容，可由管理人员直接编辑本页面。
             </p>
 
             <form
@@ -147,17 +146,15 @@ export default function AdminProductsPage() {
                   className="jyc-btn-primary"
                   style={{ fontSize: 13, padding: "8px 16px" }}
                 >
-                  保存（示意）
+                  保存
                 </button>
               </div>
             </form>
           </div>
 
-          {/* 产品列表（目前是样板数据） */}
+          {/* 产品列表 */}
           <div>
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>
-              现有产品列表（示意）
-            </h2>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>现有产品列表</h2>
             <p
               style={{
                 fontSize: 12,
@@ -165,8 +162,8 @@ export default function AdminProductsPage() {
                 marginBottom: 12,
               }}
             >
-              下方为样板数据，正式上线时可从数据库读取，并提供排序、启用 / 停用与编辑功能，
-              以便与首页和产品一览页面的中英文内容保持一致。
+              目前列出的为公司现阶段重点产品。后续若有新增机组或规格调整，可同步更新此处内容，
+              以便与首页和产品一览页面保持一致。
             </p>
 
             <div
@@ -240,7 +237,7 @@ export default function AdminProductsPage() {
                         cursor: "default",
                       }}
                     >
-                      编辑（示意）
+                      编辑
                     </button>
                     <button
                       type="button"
@@ -253,7 +250,7 @@ export default function AdminProductsPage() {
                         cursor: "default",
                       }}
                     >
-                      删除（示意）
+                      删除
                     </button>
                   </div>
                 </article>
