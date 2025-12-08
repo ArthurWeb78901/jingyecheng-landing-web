@@ -20,14 +20,17 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 「展开/收起」状态
+  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
+
+  // 超过这个字数就只显示前面一段
+  const MAX_CHARS = 420;
+
   useEffect(() => {
     async function fetchProducts() {
       try {
-        // ✅ 跟首頁一樣，用 name 排序，避免 createdAt 造成查詢問題
-        const q = query(
-          collection(db, "jyc_products"),
-          orderBy("name", "asc")
-        );
+        // 和首页一样，用 name 排序，避免 createdAt 带来的查询问题
+        const q = query(collection(db, "jyc_products"), orderBy("name", "asc"));
         const snap = await getDocs(q);
 
         const list: ProductDoc[] = snap.docs.map((d) => {
@@ -38,14 +41,12 @@ export default function ProductsPage() {
             name: data.name || "",
             brief: data.brief || "",
             heroImageUrl: data.heroImageUrl || data.imageUrl || "",
-            // ✅ 和首頁邏輯統一：沒填 enabled 就當作 true
+            // 没填 enabled 就当作 true
             enabled: data.enabled ?? true,
           };
         });
 
-        // 只显示启用（前台显示）的产品
         const enabledList = list.filter((p) => p.enabled);
-
         setProducts(enabledList);
       } catch (err) {
         console.error("load products from Firestore error", err);
@@ -80,50 +81,86 @@ export default function ProductsPage() {
             </p>
           ) : (
             <div className="jyc-card-grid">
-              {products.map((p) => (
-                <article key={p.id} className="jyc-card">
-                  <div
-                    className="jyc-card-image"
-                    style={{
-                      backgroundColor: "#f0f0f0",
-                      backgroundImage: p.heroImageUrl
-                        ? `url(${p.heroImageUrl})`
-                        : undefined,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                  />
+              {products.map((p) => {
+                const isExpanded = !!expandedMap[p.id];
+                const isLong = p.brief && p.brief.length > MAX_CHARS;
 
-                  <h2 style={{ fontSize: "18px", marginBottom: "4px" }}>
-                    {p.name}
-                  </h2>
+                const shownText =
+                  !isLong || isExpanded
+                    ? p.brief
+                    : p.brief.slice(0, MAX_CHARS) + "…";
 
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      color: "#999",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    类别：{p.category}
-                  </div>
+                return (
+                  <article key={p.id} className="jyc-card">
+                    <div
+                      className="jyc-card-image"
+                      style={{
+                        backgroundColor: "#f0f0f0",
+                        backgroundImage: p.heroImageUrl
+                          ? `url(${p.heroImageUrl})`
+                          : undefined,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
 
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      color: "#555",
-                      marginBottom: "10px",
-                      whiteSpace: "pre-line", // 如果简介有分行，可以正确换行
-                    }}
-                  >
-                    {p.brief}
-                  </p>
+                    <h2 style={{ fontSize: "18px", marginBottom: "4px" }}>
+                      {p.name}
+                    </h2>
 
-                  <button type="button" className="jyc-card-btn">
-                    询问此类设备
-                  </button>
-                </article>
-              ))}
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#999",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      类别：{p.category}
+                    </div>
+
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: "#555",
+                        marginBottom: isLong ? "4px" : "10px",
+                        whiteSpace: "pre-line",
+                      }}
+                    >
+                      {shownText}
+                    </p>
+
+                    {isLong && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedMap((prev) => ({
+                            ...prev,
+                            [p.id]: !prev[p.id],
+                          }))
+                        }
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          color: "#0066cc",
+                          fontSize: 13,
+                          padding: 0,
+                          marginBottom: 10,
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          textUnderlineOffset: 2,
+                          alignSelf: "flex-start",
+                        }}
+                      >
+                        {isExpanded ? "收起全文" : "展开更多介绍"}
+                      </button>
+                    )}
+
+                    <button type="button" className="jyc-card-btn">
+                      询问此类设备
+                    </button>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
