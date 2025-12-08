@@ -641,7 +641,7 @@ body {
   /* 手機版 slide show 高度稍微縮小 */
   .jyc-home-slideshow-main {
     padding-top: 42%;
-    max-height: 260px;
+    max-height: 300px;
   }
 
   .jyc-gallery-grid {
@@ -651,7 +651,7 @@ body {
   }
 
   .jyc-gallery-item {
-    height: 56px;              /* 原本 80px → 現在更矮，大約再小 30% */
+    height: 40px;              /* 原本 80px → 現在更矮，大約再小 30% */
     border-radius: 6px;
     background-size: cover;
     background-position: center;
