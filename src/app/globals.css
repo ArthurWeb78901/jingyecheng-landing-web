@@ -644,15 +644,14 @@ body {
     max-height: 260px;
   }
 
-  /* ⭐ 手機版 Gallery 縮略圖再縮小，大約佔 slide show 寬度 ~1/3 */
   .jyc-gallery-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4 欄，比原來更小 */
+    gap: 6px;
+    margin-top: 10px;
   }
 
   .jyc-gallery-item {
-    height: 80px; /* 相比目前大圖，大約縮小到原本的 40–50% */
+    height: 56px;              /* 原本 80px → 現在更矮，大約再小 30% */
     border-radius: 6px;
     background-size: cover;
     background-position: center;
