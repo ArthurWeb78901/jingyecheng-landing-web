@@ -9,10 +9,12 @@ type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "�
 
 type AdminGalleryItem = {
   id: number;
-  title: string;
+  title: string;              // 中文標題
+  titleEn?: string;           // 英文標題（可選）
   category: GalleryCategory;
   filename: string;
   description?: string;
+  descriptionEn?: string;     // 英文描述（可選，先預留）
   imageUrl?: string;
   showOnHome: boolean;
   createdAt?: string;
@@ -90,13 +92,17 @@ export default function GalleryEnPage() {
     return {
       title: meta.title,
       description: meta.description,
-      items: list.map((it) => ({
-        id: it.id,
-        // 目前后台标题是中文，这里先直接沿用；未来可以在后台加英文标题字段
-        label: it.title,
-        imageUrl: it.imageUrl,
-        filename: it.filename,
-      })),
+      items: list.map((it) => {
+        const label =
+          it.titleEn && it.titleEn.trim().length > 0 ? it.titleEn : it.title;
+
+        return {
+          id: it.id,
+          label,
+          imageUrl: it.imageUrl,
+          filename: it.filename,
+        };
+      }),
     };
   }).filter((sec) => sec.items.length > 0);
 
@@ -164,7 +170,6 @@ export default function GalleryEnPage() {
               </div>
             ))
           ) : (
-            // 没有资料时，维持原本的 6 格示意布局
             <div className="jyc-gallery-grid">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="jyc-gallery-item" />
