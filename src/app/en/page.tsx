@@ -123,7 +123,9 @@ export default function HomeEn() {
   }, [homeItems.length]);
 
   const currentItem = homeItems[currentSlide];
-  const productThumbs = homeItems.slice(0, 3);
+
+  // thumbs 數量與產品數同步，不足時只是一個備用來源
+  const productThumbs = homeItems.slice(0, products.length || 3);
   const galleryItems = homeItems.slice(0, 4);
 
   return (
@@ -175,7 +177,7 @@ export default function HomeEn() {
 
         {products.length > 0 && (
           <div className="jyc-card-grid">
-            {products.slice(0, 3).map((p, index) => {
+            {products.map((p, index) => {
               const thumb = productThumbs[index];
               const bgUrl = p.imageUrl || thumb?.imageUrl || "";
 
@@ -186,7 +188,11 @@ export default function HomeEn() {
                 <article key={p.id} className="jyc-card">
                   <div
                     className="jyc-card-image"
-                    style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined}
+                    style={
+                      bgUrl
+                        ? { backgroundImage: `url(${bgUrl})` }
+                        : undefined
+                    }
                   />
                   <h3>{displayName}</h3>
                   <p>{displayBrief}</p>

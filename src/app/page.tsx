@@ -116,7 +116,8 @@ export default function Home() {
   const currentItem = homeItems[currentSlide];
 
   // 首页要用到的图
-  const productThumbs = homeItems.slice(0, 3); // 給產品卡片用
+  // thumbs 數量跟產品數同步，不夠時也只是 fallback，用不到也沒關係
+  const productThumbs = homeItems.slice(0, products.length || 3);
   const galleryItems = homeItems.slice(0, 4); // Gallery 區塊最多 4 張
 
   return (
@@ -158,7 +159,7 @@ export default function Home() {
 
         {products.length > 0 && (
           <div className="jyc-card-grid">
-            {products.slice(0, 3).map((p, index) => {
+            {products.map((p, index) => {
               const thumb = productThumbs[index];
               const bgUrl = p.imageUrl || thumb?.imageUrl || "";
 
@@ -166,7 +167,11 @@ export default function Home() {
                 <article key={p.id} className="jyc-card">
                   <div
                     className="jyc-card-image"
-                    style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined}
+                    style={
+                      bgUrl
+                        ? { backgroundImage: `url(${bgUrl})` }
+                        : undefined
+                    }
                   />
                   <h3>{p.name}</h3>
                   <p>{p.brief}</p>
