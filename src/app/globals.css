@@ -641,9 +641,10 @@ body {
   /* 手機版 slide show 高度稍微縮小 */
   .jyc-home-slideshow-main {
     padding-top: 42%;
-    max-height: 300px;
+    max-height: 400px;
   }
 
+  /* 手機版 Gallery：縮小縮圖尺寸 */
   .jyc-gallery-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4 欄，比原來更小 */
     gap: 6px;
@@ -651,9 +652,32 @@ body {
   }
 
   .jyc-gallery-item {
-    height: 40px;              /* 原本 80px → 現在更矮，大約再小 30% */
+    height: 30px;              /* 原本 80px → 現在更矮，大約再小 30% */
     border-radius: 6px;
     background-size: cover;
     background-position: center;
   }
+
+  /* 手機版「主要產品一覽」改成橫向滑動卡片 */
+  .jyc-card-grid {
+    display: flex;              /* 橫向排列 */
+    overflow-x: auto;
+    gap: 16px;
+    margin-top: 16px;
+    margin-left: -16px;         /* 讓卡片貼齊左右邊框 */
+    margin-right: -16px;
+    padding: 0 16px 8px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .jyc-card-grid::-webkit-scrollbar {
+    display: none;              /* 隱藏橫向捲軸 */
+  }
+
+  .jyc-card {
+    flex: 0 0 80%;              /* 每張大約佔畫面 80% 寬 */
+    max-width: 80%;
+    scroll-snap-align: start;
+  }
 }
+
