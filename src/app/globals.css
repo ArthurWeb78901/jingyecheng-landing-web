@@ -181,7 +181,7 @@ body {
     rgba(0, 0, 0, 0.05)
   );
   z-index: 0;
-  pointer-events: none; /* 不挡住按钮点击 */
+  pointer-events: none;
 }
 
 /* 英文首页：渐层比中文稍浅一点 */
@@ -275,9 +275,10 @@ body {
   padding: 16px;
 }
 
+/* 默認：16:9，手機看圖比較清楚 */
 .jyc-card-image {
   width: 100%;
-  aspect-ratio: 5 / 2;         /* 行動端維持原本高度比例 */
+  aspect-ratio: 16 / 9;
   border-radius: 6px;
   background: #f0f0f0;
   background-size: cover;
@@ -317,11 +318,11 @@ body {
   margin-bottom: 24px;
 }
 
+/* 默認：滿寬、16:9，高度給手機用比較大一點 */
 .jyc-home-slideshow-main {
   position: relative;
-  width: 50%;
-  /* 手機預設：16:9，方便看清楚圖片 */
-  padding-top: 56.25%;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 */
   border-radius: 8px;
   overflow: hidden;
   background: #e0e0e0;
@@ -376,10 +377,10 @@ body {
   background: #e0e0e0;
 }
 
-/* 前台使用的小縮圖（thumbnail 用） */
+/* 縮圖：正方形 */
 .jyc-gallery-thumb {
   width: 100%;
-  aspect-ratio: 5 / 1;          /* 正方形縮圖 */
+  aspect-ratio: 1 / 1;
   border-radius: 6px;
   background: #e0e0e0;
   background-size: cover;
@@ -564,33 +565,40 @@ body {
   background: #111;
 }
 
-/* 🖥 桌机：让首页产品卡和轮播更「矮」一点（约小 30%），不影响手机 */
-/* 🖥 桌机：缩小产品图片与 Gallery 缩图，不影响手机 */
+/* 🖥 桌机：只在大螢幕調整尺寸，手機維持原樣 */
 @media (min-width: 1024px) {
-  /* 首頁產品卡片圖片：比原來矮一截 */
+  /* 首頁產品卡片圖片：固定高度，避免變成超長橫幅 */
   .jyc-card-image {
-    height: 220px;            /* 可以再往下調 180 或 200，看你喜歡 */
+    aspect-ratio: auto;   /* 取消比例，改用固定高度 */
+    height: 220px;
   }
 
-  /* Gallery 縮圖：改成固定 140x140 的小正方形 */
+  /* 產品區塊本身稍微收窄一點，視覺比較集中 */
+  .jyc-card-grid {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Gallery 縮圖：真正的小正方形 */
   .jyc-gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 140px); /* 每格 140px 寬 */
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, 150px);
     justify-content: flex-start;
   }
 
   .jyc-gallery-item {
-    width: 140px;
-    height: 140px;            /* 正方形縮圖 */
+    width: 150px;
+    height: 150px;
     border-radius: 6px;
     background-size: cover;
     background-position: center;
   }
 
-  /* 首頁上方輪播：再矮一點，不佔那麼多高度 */
+  /* 上方輪播：高度再矮一點，也不會佔滿整個畫面 */
   .jyc-home-slideshow-main {
-    padding-top: 40%;         /* 從 56.25% 改成 40%，約矮 30% */
+    max-width: 960px;
+    margin: 0 auto;
+    padding-top: 36%; /* 比 16:9 再矮約 30% */
   }
 }
 
