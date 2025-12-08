@@ -27,9 +27,10 @@ export default function ProductsEnPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
+        // ✅ 和首頁邏輯統一：用 name 排序，不再依賴 createdAt
         const q = query(
           collection(db, "jyc_products"),
-          orderBy("createdAt", "desc")
+          orderBy("name", "asc")
         );
         const snap = await getDocs(q);
 
@@ -44,7 +45,8 @@ export default function ProductsEnPage() {
             briefEn: data.briefEn || "",
             heroImageUrl: data.heroImageUrl || data.imageUrl || "",
             imageUrl: data.imageUrl || "",
-            enabled: data.enabled !== false,
+            // ✅ 沒填 enabled 就當作 true
+            enabled: data.enabled ?? true,
             createdAt: data.createdAt || "",
           };
         });
@@ -88,12 +90,13 @@ export default function ProductsEnPage() {
           ) : (
             <div className="jyc-card-grid">
               {products.map((p) => {
-                const displayName = p.nameEn && p.nameEn.trim().length > 0
-                  ? p.nameEn
-                  : p.name;
+                const displayName =
+                  p.nameEn && p.nameEn.trim().length > 0 ? p.nameEn : p.name;
 
                 const displayBrief =
-                  p.briefEn && p.briefEn.trim().length > 0 ? p.briefEn : p.brief;
+                  p.briefEn && p.briefEn.trim().length > 0
+                    ? p.briefEn
+                    : p.brief;
 
                 const bgUrl = p.heroImageUrl || p.imageUrl || "";
 

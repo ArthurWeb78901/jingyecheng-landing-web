@@ -8,13 +8,12 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type ProductDoc = {
-  id: string;          // Firestore doc id
-  category: string;    // 产品分类（穿孔机、轧钢生产线设备…）
-  name: string;        // 产品名称
-  brief: string;       // 简短简介
+  id: string;            // Firestore doc id
+  category: string;      // 产品分类
+  name: string;          // 产品名称
+  brief: string;         // 简短简介
   heroImageUrl?: string; // 列表 / 首页用的主图
-  enabled: boolean;    // 是否在前台显示
-  createdAt?: string;  // 排序用（ISO 字串，可选）
+  enabled: boolean;      // 是否在前台显示
 };
 
 export default function ProductsPage() {
@@ -24,10 +23,10 @@ export default function ProductsPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        // 按 createdAt 新到旧排，集合名和后端保持一致：jyc_products
+        // ✅ 跟首頁一樣，用 name 排序，避免 createdAt 造成查詢問題
         const q = query(
           collection(db, "jyc_products"),
-          orderBy("createdAt", "desc")
+          orderBy("name", "asc")
         );
         const snap = await getDocs(q);
 
@@ -39,15 +38,15 @@ export default function ProductsPage() {
             name: data.name || "",
             brief: data.brief || "",
             heroImageUrl: data.heroImageUrl || data.imageUrl || "",
-            enabled: data.enabled !== false, // 没填就当作 true
-            createdAt: data.createdAt || "",
+            // ✅ 和首頁邏輯統一：沒填 enabled 就當作 true
+            enabled: data.enabled ?? true,
           };
         });
 
         // 只显示启用（前台显示）的产品
-        const enabled = list.filter((p) => p.enabled);
+        const enabledList = list.filter((p) => p.enabled);
 
-        setProducts(enabled);
+        setProducts(enabledList);
       } catch (err) {
         console.error("load products from Firestore error", err);
       } finally {
