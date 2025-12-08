@@ -24,10 +24,13 @@ export default function ProductsEnPage() {
   const [products, setProducts] = useState<ProductDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 每個產品的「展開 / 收合」狀態
+  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     async function fetchProducts() {
       try {
-        // ✅ 和首頁邏輯統一：用 name 排序，不再依賴 createdAt
+        // 和首頁邏輯統一：用 name 排序
         const q = query(
           collection(db, "jyc_products"),
           orderBy("name", "asc")
@@ -45,7 +48,7 @@ export default function ProductsEnPage() {
             briefEn: data.briefEn || "",
             heroImageUrl: data.heroImageUrl || data.imageUrl || "",
             imageUrl: data.imageUrl || "",
-            // ✅ 沒填 enabled 就當作 true
+            // 沒填 enabled 就當作 true
             enabled: data.enabled ?? true,
             createdAt: data.createdAt || "",
           };
@@ -62,6 +65,9 @@ export default function ProductsEnPage() {
 
     fetchProducts();
   }, []);
+
+  // 最大顯示字數（超過就顯示「Read more」）
+  const MAX_CHARS = 420;
 
   return (
     <main className="jyc-page">
@@ -93,12 +99,20 @@ export default function ProductsEnPage() {
                 const displayName =
                   p.nameEn && p.nameEn.trim().length > 0 ? p.nameEn : p.name;
 
-                const displayBrief =
+                const fullBrief =
                   p.briefEn && p.briefEn.trim().length > 0
                     ? p.briefEn
                     : p.brief;
 
                 const bgUrl = p.heroImageUrl || p.imageUrl || "";
+
+                const isExpanded = !!expandedMap[p.id];
+                const isLong = fullBrief && fullBrief.length > MAX_CHARS;
+
+                const shownText =
+                  !isLong || isExpanded
+                    ? fullBrief
+                    : fullBrief.slice(0, MAX_CHARS) + "…";
 
                 return (
                   <article key={p.id} className="jyc-card">
@@ -111,9 +125,11 @@ export default function ProductsEnPage() {
                         backgroundPosition: "center",
                       }}
                     />
+
                     <h2 style={{ fontSize: "18px", marginBottom: "4px" }}>
                       {displayName}
                     </h2>
+
                     {p.category && (
                       <div
                         style={{
@@ -125,16 +141,43 @@ export default function ProductsEnPage() {
                         Category (CN): {p.category}
                       </div>
                     )}
+
                     <p
                       style={{
                         fontSize: "14px",
                         color: "#555",
-                        marginBottom: "10px",
+                        marginBottom: isLong ? "4px" : "10px",
                         whiteSpace: "pre-line",
                       }}
                     >
-                      {displayBrief}
+                      {shownText}
                     </p>
+
+                    {isLong && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedMap((prev) => ({
+                            ...prev,
+                            [p.id]: !prev[p.id],
+                          }))
+                        }
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          color: "#0066cc",
+                          fontSize: 13,
+                          padding: 0,
+                          marginBottom: 10,
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          textUnderlineOffset: 2,
+                          alignSelf: "flex-start",
+                        }}
+                      >
+                        {isExpanded ? "Show less" : "Read more"}
+                      </button>
+                    )}
 
                     <button type="button" className="jyc-card-btn">
                       Ask About This Product
