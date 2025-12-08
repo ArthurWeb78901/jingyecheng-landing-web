@@ -22,7 +22,7 @@ export function ContactFormCn() {
       content: formData.get("content") as string,
       source: "contact-form" as const,
     };
-
+// update //
     try {
       const res = await fetch("/api/jyc/messages", {
         method: "POST",
