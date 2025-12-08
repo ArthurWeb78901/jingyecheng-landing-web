@@ -1,5 +1,7 @@
 // src/app/admin/products/page.tsx
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
@@ -11,7 +13,7 @@ type AdminProduct = {
   enabled: boolean;
 };
 
-const mockAdminProducts: AdminProduct[] = [
+const INITIAL_PRODUCTS: AdminProduct[] = [
   {
     id: 1,
     category: "无缝钢管生产线",
@@ -38,7 +40,117 @@ const mockAdminProducts: AdminProduct[] = [
   },
 ];
 
+const STORAGE_KEY = "jyc_admin_products";
+
 export default function AdminProductsPage() {
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // 表單欄位
+  const [formCategory, setFormCategory] = useState("");
+  const [formName, setFormName] = useState("");
+  const [formBrief, setFormBrief] = useState("");
+  const [formEnabled, setFormEnabled] = useState(true);
+
+  // 初始化：從 localStorage 讀取，沒有的話就用預設三筆
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        setProducts(INITIAL_PRODUCTS);
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(INITIAL_PRODUCTS)
+        );
+        return;
+      }
+      const list: AdminProduct[] = JSON.parse(raw);
+      setProducts(list);
+    } catch (e) {
+      console.error("load products error", e);
+      setProducts(INITIAL_PRODUCTS);
+    }
+  }, []);
+
+  const saveProducts = (next: AdminProduct[]) => {
+    setProducts(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    }
+  };
+
+  // 讓「新增」與「編輯」共用同一組表單
+  const resetForm = () => {
+    setEditingId(null);
+    setFormCategory("");
+    setFormName("");
+    setFormBrief("");
+    setFormEnabled(true);
+  };
+
+  const handleEditClick = (p: AdminProduct) => {
+    setEditingId(p.id);
+    setFormCategory(p.category);
+    setFormName(p.name);
+    setFormBrief(p.brief);
+    setFormEnabled(p.enabled);
+
+    // 滾回表單區（可選）
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleDeleteClick = (id: number) => {
+    if (typeof window !== "undefined") {
+      if (!window.confirm("确定要删除这条产品资讯吗？")) return;
+    }
+    const next = products.filter((p) => p.id !== id);
+    saveProducts(next);
+
+    if (editingId === id) {
+      resetForm();
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (!formCategory.trim() || !formName.trim() || !formBrief.trim()) {
+      alert("请填写产品分类、名称与简介。");
+      return;
+    }
+
+    if (editingId == null) {
+      // 新增
+      const newItem: AdminProduct = {
+        id: Date.now(),
+        category: formCategory.trim(),
+        name: formName.trim(),
+        brief: formBrief.trim(),
+        enabled: formEnabled,
+      };
+      const next = [newItem, ...products];
+      saveProducts(next);
+    } else {
+      // 更新
+      const next = products.map((p) =>
+        p.id === editingId
+          ? {
+              ...p,
+              category: formCategory.trim(),
+              name: formName.trim(),
+              brief: formBrief.trim(),
+              enabled: formEnabled,
+            }
+          : p
+      );
+      saveProducts(next);
+    }
+
+    resetForm();
+  };
+
   return (
     <main className="jyc-page">
       <Header />
@@ -54,7 +166,7 @@ export default function AdminProductsPage() {
             之后若接上数据库，只需在此维护一次即可同步到前台。
           </p>
 
-          {/* 新增 / 编辑表单（UI） */}
+          {/* 新增 / 编辑表单 */}
           <div
             style={{
               marginTop: 16,
@@ -65,7 +177,9 @@ export default function AdminProductsPage() {
               background: "#fff",
             }}
           >
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>新增 / 编辑产品</h2>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>
+              {editingId ? "编辑产品" : "新增产品"}
+            </h2>
             <p
               style={{
                 fontSize: 12,
@@ -73,11 +187,15 @@ export default function AdminProductsPage() {
                 marginBottom: 12,
               }}
             >
-              正式接上后台系统后，可在此输入产品名称、分类与简介，并储存到数据库。
-              目前版本仍写在程式码中，如需调整内容，可由管理人员直接编辑本页面。
+              在此填写产品资讯并保存。资料目前暂存于浏览器 localStorage，正式上线时可以改为
+              Firestore 或其他后台系统。
             </p>
 
             <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveClick();
+              }}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -89,6 +207,8 @@ export default function AdminProductsPage() {
                 <input
                   type="text"
                   placeholder="产品分类（例如：无缝钢管生产线 / 穿孔与轧管机组）"
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
                   style={{
                     flex: 1,
                     minWidth: 200,
@@ -101,6 +221,8 @@ export default function AdminProductsPage() {
                 <input
                   type="text"
                   placeholder="产品名称（例如：热轧无缝钢管生产机组）"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
                   style={{
                     flex: 1,
                     minWidth: 200,
@@ -115,6 +237,8 @@ export default function AdminProductsPage() {
               <textarea
                 placeholder="产品简介（前台页面将显示在产品卡片中，可简要说明适用规格、工艺范围与设备特点）"
                 rows={3}
+                value={formBrief}
+                onChange={(e) => setFormBrief(e.target.value)}
                 style={{
                   padding: "8px 10px",
                   borderRadius: 4,
@@ -132,22 +256,38 @@ export default function AdminProductsPage() {
                   marginTop: 4,
                   fontSize: 12,
                   color: "#555",
+                  flexWrap: "wrap",
                 }}
               >
                 <label
                   style={{ display: "flex", alignItems: "center", gap: 4 }}
                 >
-                  <input type="checkbox" defaultChecked />
+                  <input
+                    type="checkbox"
+                    checked={formEnabled}
+                    onChange={(e) => setFormEnabled(e.target.checked)}
+                  />
                   <span>在前台显示此产品</span>
                 </label>
 
                 <button
-                  type="button"
+                  type="submit"
                   className="jyc-btn-primary"
                   style={{ fontSize: 13, padding: "8px 16px" }}
                 >
-                  保存
+                  {editingId ? "保存修改" : "新增产品"}
                 </button>
+
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="jyc-btn-secondary"
+                    style={{ fontSize: 13, padding: "8px 16px" }}
+                  >
+                    取消编辑
+                  </button>
+                )}
               </div>
             </form>
           </div>
@@ -173,7 +313,7 @@ export default function AdminProductsPage() {
                 gap: 10,
               }}
             >
-              {mockAdminProducts.map((p) => (
+              {products.map((p) => (
                 <article
                   key={p.id}
                   style={{
@@ -229,25 +369,27 @@ export default function AdminProductsPage() {
                   >
                     <button
                       type="button"
+                      onClick={() => handleEditClick(p)}
                       style={{
                         padding: "4px 10px",
                         borderRadius: 4,
                         border: "1px solid #333",
                         background: "#fff",
-                        cursor: "default",
+                        cursor: "pointer",
                       }}
                     >
                       编辑
                     </button>
                     <button
                       type="button"
+                      onClick={() => handleDeleteClick(p.id)}
                       style={{
                         padding: "4px 10px",
                         borderRadius: 4,
                         border: "1px solid #c33",
                         background: "#fff",
                         color: "#c33",
-                        cursor: "default",
+                        cursor: "pointer",
                       }}
                     >
                       删除
