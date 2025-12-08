@@ -75,7 +75,7 @@ export default function ProductsPage() {
     {}
   );
 
-  // 从后台 Gallery（目前存在 localStorage）取图，当成产品卡片背景
+  // 从后台 Gallery 取图，当成产品卡片背景（图片本体在 Firebase，URL 暂存在 localStorage）
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -86,15 +86,21 @@ export default function ProductsPage() {
       const list: AdminGalleryItem[] = JSON.parse(raw);
       if (!Array.isArray(list) || list.length === 0) return;
 
+      // 按时间新到旧排一下，优先用最近新增的图片
+      const sorted = [...list].sort((a, b) =>
+        (b.createdAt || "").localeCompare(a.createdAt || "")
+      );
+
       const map: Record<string, string | undefined> = {};
 
       products.forEach((p) => {
         const cat = PRODUCT_CATEGORY_MAP[p.model];
         if (!cat) return;
 
-        const found = list.find(
+        const found = sorted.find(
           (item) => item.category === cat && item.imageUrl
         );
+
         if (found?.imageUrl) {
           map[p.model] = found.imageUrl;
         }

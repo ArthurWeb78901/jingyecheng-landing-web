@@ -1,15 +1,83 @@
 // src/app/en/page.tsx
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
+import { ContactFormEn } from "@/components/ContactFormEn";
+
+type HomeGalleryItem = {
+  id: number;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  showOnHome?: boolean;
+  createdAt?: string;
+};
+
+const STORAGE_KEY = "jyc_admin_gallery_items";
 
 export default function HomeEn() {
+  const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // 从后台 Gallery 资料读取要在首页用的图片（目前还是 localStorage）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      const list: HomeGalleryItem[] = JSON.parse(raw);
+
+      const filtered = list
+        .filter((item) => item.imageUrl && item.showOnHome)
+        .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+      setHomeItems(filtered);
+    } catch (err) {
+      console.error("load home gallery items error (en)", err);
+    }
+  }, []);
+
+  // 简单轮播
+  useEffect(() => {
+    if (homeItems.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % homeItems.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [homeItems.length]);
+
+  // 首页要用到的图：前三张给产品卡片、前四张给 gallery
+  const productThumbs = homeItems.slice(0, 3);
+  const galleryItems = homeItems.slice(0, 4);
+  const currentItem = homeItems[currentSlide];
+
+  const products = [
+    {
+      model: "Seamless Pipe Mill Lines",
+      desc: "Turn-key hot rolling lines for seamless steel pipes, covering billet heating and piercing, pipe rolling, sizing / reducing, straightening, cooling and cutting, typically for tube diameters of approximately φ50–φ325 mm.",
+    },
+    {
+      model: "Piercing & Pipe Rolling Mills",
+      desc: "Mannesmann piercing mills, horizontal cone-type piercing mills and automatic / Accu-Roll pipe mills, including our proprietary two-roll mandrel mills with guide plates, designed for high dimensional accuracy, large elongation and uniform wall thickness of hollow shells and pipes.",
+    },
+    {
+      model: "Finishing & Auxiliary Equipment",
+      desc: "Two-roll and three-roll sizing / reducing mills, six-roll and seven-roll straightening machines, chain and walking-beam cooling beds, hot centering machines, cold drawing machines and related conveying equipment for tube diameters of approx. φ10–φ325 mm.",
+    },
+  ];
+
   return (
     <main className="jyc-page">
       <Header />
 
-      {/* Hero - 和中文共用背景图，英文加 jyc-hero-en 让渐层更浅 */}
+      {/* Hero - 和中文共用背景图，英文用 jyc-hero-en 渐层较浅 */}
       <section className="jyc-hero jyc-hero-en">
         <div className="jyc-hero-inner">
           <div className="jyc-hero-text">
@@ -36,7 +104,7 @@ export default function HomeEn() {
             </div>
 
             <p className="jyc-hero-caption">
-              Seamless pipe mill production line (sample photo)
+              Sample view of a seamless pipe mill line
             </p>
           </div>
         </div>
@@ -47,34 +115,31 @@ export default function HomeEn() {
         <h2>Main Products</h2>
 
         <div className="jyc-card-grid">
-          {[
-            {
-              model: "Seamless Pipe Mill Lines",
-              desc: "Turn-key hot rolling lines for seamless steel pipes, covering billet piercing, pipe rolling, sizing / reducing, straightening, cooling and finishing for tube diameters of approximately φ50–φ325 mm.",
-            },
-            {
-              model: "Piercing & Pipe Rolling Mills",
-              desc: "Mannesmann piercing mills, horizontal cone-type piercing mills and automatic / Accu-Roll pipe mills, including our proprietary two-roll mandrel mills with guide plates for high dimensional accuracy, large elongation and uniform wall thickness of hollow shells (typically φ50–φ280 mm).",
-            },
-            {
-              model: "Finishing & Auxiliary Equipment",
-              desc: "Two-roll and three-roll sizing / reducing mills, six-roll and seven-roll straightening machines, chain and walking-beam cooling beds, hot centering machines and cold drawing machines for precise, straight and clean tubes in the φ10–φ325 mm range.",
-            },
-          ].map((item, index) => (
-            <article key={item.model} className="jyc-card">
-              {/* 第一张卡片加上 jyc-card-image-1，复用中文版的背景图样式 */}
-              <div
-                className={`jyc-card-image${
-                  index === 0 ? " jyc-card-image-1" : ""
-                }`}
-              />
-              <h3>{item.model}</h3>
-              <p>{item.desc}</p>
-              <button type="button" className="jyc-card-btn">
-                Learn More
-              </button>
-            </article>
-          ))}
+          {products.map((item, index) => {
+            const thumb = productThumbs[index];
+
+            return (
+              <article key={item.model} className="jyc-card">
+                <div
+                  className="jyc-card-image"
+                  style={
+                    thumb?.imageUrl
+                      ? {
+                          backgroundImage: `url(${thumb.imageUrl})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : undefined
+                  }
+                />
+                <h3>{item.model}</h3>
+                <p>{item.desc}</p>
+                <button type="button" className="jyc-card-btn">
+                  Learn More
+                </button>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -98,18 +163,68 @@ export default function HomeEn() {
       <section id="gallery" className="jyc-section">
         <h2>Gallery</h2>
         <p className="jyc-section-intro">
-          Photos of key equipment such as piercing mills, pipe rolling mills,
-          sizing / reducing mills, straightening machines, cooling beds, hot
-          centering machines and cold drawing machines, as well as production
-          line layouts and project references. This section can be connected to
-          the backend gallery management in the future to auto-update the latest
-          cases.
+          Photos of key equipment and production lines, such as piercing mills,
+          pipe rolling mills, sizing / reducing mills, straightening machines,
+          cooling beds, hot centering machines and cold drawing machines, as
+          well as typical project references.
         </p>
 
-      <div className="jyc-gallery-grid">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="jyc-gallery-item" />
-          ))}
+        {/* 首页轮播（与中文逻辑相同） */}
+        {homeItems.length > 0 && (
+          <div className="jyc-home-slideshow">
+            <div className="jyc-home-slideshow-main">
+              <div
+                className="jyc-home-slideshow-main-inner"
+                style={
+                  currentItem?.imageUrl
+                    ? { backgroundImage: `url(${currentItem.imageUrl})` }
+                    : undefined
+                }
+              />
+            </div>
+            <div className="jyc-home-slideshow-caption">
+              {currentItem?.title}
+            </div>
+            <div className="jyc-home-slideshow-dots">
+              {homeItems.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={
+                    "jyc-home-slideshow-dot" +
+                    (idx === currentSlide
+                      ? " jyc-home-slideshow-dot-active"
+                      : "")
+                  }
+                  onClick={() => setCurrentSlide(idx)}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="jyc-gallery-grid">
+          {galleryItems.length === 0
+            ? [1, 2, 3, 4].map((i) => (
+                <div key={i} className="jyc-gallery-item" />
+              ))
+            : galleryItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="jyc-gallery-item"
+                  style={
+                    item.imageUrl
+                      ? {
+                          backgroundImage: `url(${item.imageUrl})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : undefined
+                  }
+                  title={item.title}
+                />
+              ))}
         </div>
       </section>
 
@@ -122,23 +237,7 @@ export default function HomeEn() {
           or email us directly.
         </p>
 
-        <form className="jyc-contact-form">
-          <div className="jyc-form-row">
-            <input type="text" placeholder="Name" />
-            <input type="text" placeholder="Company / Organization" />
-          </div>
-          <div className="jyc-form-row">
-            <input type="email" placeholder="Email" />
-            <input type="tel" placeholder="Phone" />
-          </div>
-          <textarea
-            rows={4}
-            placeholder="Please describe your needs or project idea..."
-          />
-          <button type="submit" className="jyc-btn-primary jyc-contact-submit">
-            Submit Inquiry
-          </button>
-        </form>
+        <ContactFormEn />
       </section>
 
       <Footer />

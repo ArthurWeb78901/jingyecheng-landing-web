@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 
-export function ContactForm() {
+export function ContactFormEn() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -4,18 +4,35 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { db, storage } from "@/lib/firebase";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-type AdminProduct = {
-  id: number;
+// Firestore 中實際存的欄位
+type FirestoreProduct = {
   category: string;
   name: string;
   brief: string;
   enabled: boolean;
+  imageUrl?: string;
 };
 
-const INITIAL_PRODUCTS: AdminProduct[] = [
+// 前端用的型別（多一個 id）
+type AdminProduct = FirestoreProduct & {
+  id: string;
+};
+
+const INITIAL_PRODUCTS: FirestoreProduct[] = [
   {
-    id: 1,
     category: "无缝钢管生产线",
     name: "热轧无缝钢管生产机组",
     brief:
@@ -23,7 +40,6 @@ const INITIAL_PRODUCTS: AdminProduct[] = [
     enabled: true,
   },
   {
-    id: 2,
     category: "穿孔与轧管机组",
     name: "穿孔机与轧管机组设备",
     brief:
@@ -31,7 +47,6 @@ const INITIAL_PRODUCTS: AdminProduct[] = [
     enabled: true,
   },
   {
-    id: 3,
     category: "精整与辅助设备",
     name: "定径减径机、矫直机及冷床等精整设备",
     brief:
@@ -40,54 +55,70 @@ const INITIAL_PRODUCTS: AdminProduct[] = [
   },
 ];
 
-const STORAGE_KEY = "jyc_admin_products";
+const PRODUCTS_COLLECTION = "jyc_products";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // 表單欄位
+  // 表单字段
   const [formCategory, setFormCategory] = useState("");
   const [formName, setFormName] = useState("");
   const [formBrief, setFormBrief] = useState("");
   const [formEnabled, setFormEnabled] = useState(true);
+  const [formImageUrl, setFormImageUrl] = useState<string | undefined>(
+    undefined
+  ); // 目前已設定的圖片網址（編輯時保留）
 
-  // 初始化：從 localStorage 讀取，沒有的話就用預設三筆
+  // 上傳用暫存
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFileName, setUploadFileName] = useState("");
+
+  // 讀取 Firestore 產品列表；如為空則自動 seed 初始三筆
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const fetchProducts = async () => {
+      try {
+        const colRef = collection(db, PRODUCTS_COLLECTION);
+        const q = query(colRef, orderBy("name", "asc"));
+        const snap = await getDocs(q);
 
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        setProducts(INITIAL_PRODUCTS);
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(INITIAL_PRODUCTS)
-        );
-        return;
+        if (snap.empty) {
+          // 第一次：寫入預設三筆
+          const created: AdminProduct[] = [];
+          for (const base of INITIAL_PRODUCTS) {
+            const docRef = await addDoc(colRef, base);
+            created.push({ id: docRef.id, ...base });
+          }
+          setProducts(created);
+          return;
+        }
+
+        const list: AdminProduct[] = snap.docs.map((d) => {
+          const data = d.data() as FirestoreProduct;
+          return {
+            id: d.id,
+            ...data,
+          };
+        });
+        setProducts(list);
+      } catch (err) {
+        console.error("load products error", err);
       }
-      const list: AdminProduct[] = JSON.parse(raw);
-      setProducts(list);
-    } catch (e) {
-      console.error("load products error", e);
-      setProducts(INITIAL_PRODUCTS);
-    }
+    };
+
+    fetchProducts();
   }, []);
 
-  const saveProducts = (next: AdminProduct[]) => {
-    setProducts(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    }
-  };
-
-  // 讓「新增」與「編輯」共用同一組表單
   const resetForm = () => {
     setEditingId(null);
     setFormCategory("");
     setFormName("");
     setFormBrief("");
     setFormEnabled(true);
+    setFormImageUrl(undefined);
+    setUploadFile(null);
+    setUploadFileName("");
   };
 
   const handleEditClick = (p: AdminProduct) => {
@@ -96,59 +127,87 @@ export default function AdminProductsPage() {
     setFormName(p.name);
     setFormBrief(p.brief);
     setFormEnabled(p.enabled);
+    setFormImageUrl(p.imageUrl);
+    setUploadFile(null);
+    setUploadFileName("");
 
-    // 滾回表單區（可選）
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = async (id: string) => {
     if (typeof window !== "undefined") {
       if (!window.confirm("确定要删除这条产品资讯吗？")) return;
     }
-    const next = products.filter((p) => p.id !== id);
-    saveProducts(next);
 
-    if (editingId === id) {
-      resetForm();
+    try {
+      await deleteDoc(doc(db, PRODUCTS_COLLECTION, id));
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      if (editingId === id) resetForm();
+    } catch (err) {
+      console.error("delete product error", err);
+      alert("删除产品时发生错误，请稍后再试。");
     }
   };
 
-  const handleSaveClick = () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setUploadFile(file);
+    setUploadFileName(file ? file.name : "");
+  };
+
+  const handleSave = async () => {
     if (!formCategory.trim() || !formName.trim() || !formBrief.trim()) {
       alert("请填写产品分类、名称与简介。");
       return;
     }
 
-    if (editingId == null) {
-      // 新增
-      const newItem: AdminProduct = {
-        id: Date.now(),
+    setIsSaving(true);
+    try {
+      const colRef = collection(db, PRODUCTS_COLLECTION);
+
+      // 1) 先处理图片上传（若有选档案）
+      let finalImageUrl = formImageUrl;
+      if (uploadFile) {
+        const ext = uploadFile.name.split(".").pop() || "jpg";
+        const storagePath = `jyc-products/${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}.${ext}`;
+        const storageRef = ref(storage, storagePath);
+        const snap = await uploadBytes(storageRef, uploadFile);
+        finalImageUrl = await getDownloadURL(snap.ref);
+      }
+
+      const payload: FirestoreProduct = {
         category: formCategory.trim(),
         name: formName.trim(),
         brief: formBrief.trim(),
         enabled: formEnabled,
+        imageUrl: finalImageUrl,
       };
-      const next = [newItem, ...products];
-      saveProducts(next);
-    } else {
-      // 更新
-      const next = products.map((p) =>
-        p.id === editingId
-          ? {
-              ...p,
-              category: formCategory.trim(),
-              name: formName.trim(),
-              brief: formBrief.trim(),
-              enabled: formEnabled,
-            }
-          : p
-      );
-      saveProducts(next);
-    }
 
-    resetForm();
+      if (editingId) {
+        // 更新
+        const docRef = doc(db, PRODUCTS_COLLECTION, editingId);
+        await updateDoc(docRef, payload);
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingId ? { id: editingId, ...payload } : p))
+        );
+      } else {
+        // 新增
+        const docRef = await addDoc(colRef, payload);
+        const created: AdminProduct = { id: docRef.id, ...payload };
+        setProducts((prev) => [created, ...prev]);
+      }
+
+      resetForm();
+    } catch (err) {
+      console.error("save product error", err);
+      alert("保存产品资讯时发生错误，请稍后再试。");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -162,8 +221,8 @@ export default function AdminProductsPage() {
           </h1>
           <p className="jyc-section-intro">
             用于维护网站上显示的产品类别与说明文字，例如热轧无缝钢管生产线、穿孔与轧管机组、
-            精整与辅助设备等。可作为公司内部的产品目录，方便与首页及中英文产品页面保持一致。
-            之后若接上数据库，只需在此维护一次即可同步到前台。
+            精整与辅助设备等。资料会集中存放在 Firebase Firestore 的
+            <code> jyc_products </code>集合中，方便与首页及中英文产品页面保持一致。
           </p>
 
           {/* 新增 / 编辑表单 */}
@@ -187,14 +246,15 @@ export default function AdminProductsPage() {
                 marginBottom: 12,
               }}
             >
-              在此填写产品资讯并保存。资料目前暂存于浏览器 localStorage，正式上线时可以改为
-              Firestore 或其他后台系统。
+              在此维护产品资讯与缩略图。保存后会写入 Firestore，并可在首页与产品一览页复用。
+              若上传产品图片，将存入 Firebase Storage 的
+              <code> jyc-products/</code>资料夹中。
             </p>
 
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSaveClick();
+                handleSave();
               }}
               style={{
                 display: "flex",
@@ -235,7 +295,7 @@ export default function AdminProductsPage() {
               </div>
 
               <textarea
-                placeholder="产品简介（前台页面将显示在产品卡片中，可简要说明适用规格、工艺范围与设备特点）"
+                placeholder="产品简介（将显示在前台产品卡片中，可说明适用规格、工艺范围与设备特点）"
                 rows={3}
                 value={formBrief}
                 onChange={(e) => setFormBrief(e.target.value)}
@@ -248,12 +308,58 @@ export default function AdminProductsPage() {
                 }}
               />
 
+              {/* 图片上传 */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  fontSize: 13,
+                  marginTop: 4,
+                }}
+              >
+                <label>
+                  产品图片（选填，建议用在首页产品卡片缩略图）：
+                </label>
+                <input type="file" onChange={handleFileChange} />
+                {uploadFileName && (
+                  <div style={{ fontSize: 12, color: "#777" }}>
+                    已选择档案：{uploadFileName}
+                  </div>
+                )}
+                {formImageUrl && !uploadFile && (
+                  <div
+                    style={{
+                      marginTop: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 80,
+                        height: 60,
+                        borderRadius: 4,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundImage: `url(${formImageUrl})`,
+                        border: "1px solid #ddd",
+                      }}
+                    />
+                    <span style={{ fontSize: 12, color: "#777" }}>
+                      当前已设定的图片（如需更换，可重新选择档案上传）
+                    </span>
+                  </div>
+                )}
+              </div>
+
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
-                  marginTop: 4,
+                  marginTop: 8,
                   fontSize: 12,
                   color: "#555",
                   flexWrap: "wrap",
@@ -274,8 +380,13 @@ export default function AdminProductsPage() {
                   type="submit"
                   className="jyc-btn-primary"
                   style={{ fontSize: 13, padding: "8px 16px" }}
+                  disabled={isSaving}
                 >
-                  {editingId ? "保存修改" : "新增产品"}
+                  {isSaving
+                    ? "保存中…"
+                    : editingId
+                    ? "保存修改"
+                    : "新增产品"}
                 </button>
 
                 {editingId && (
@@ -302,8 +413,8 @@ export default function AdminProductsPage() {
                 marginBottom: 12,
               }}
             >
-              目前列出的为公司现阶段重点产品。后续若有新增机组或规格调整，可同步更新此处内容，
-              以便与首页和产品一览页面保持一致。
+              下方列表直接对应 Firestore 中的产品资料。后续要让首页、产品一览页或英文站共用，
+              只要从 <code>jyc_products</code> 集合读取即可。
             </p>
 
             <div
@@ -330,13 +441,30 @@ export default function AdminProductsPage() {
                       justifyContent: "space-between",
                       alignItems: "center",
                       marginBottom: 6,
+                      gap: 12,
                     }}
                   >
-                    <div>
-                      <strong>{p.name}</strong>
-                      <span style={{ marginLeft: 8, color: "#777" }}>
-                        （{p.category}）
-                      </span>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {p.imageUrl && (
+                        <div
+                          style={{
+                            width: 72,
+                            height: 54,
+                            borderRadius: 4,
+                            marginRight: 8,
+                            backgroundImage: `url(${p.imageUrl})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            border: "1px solid #ddd",
+                          }}
+                        />
+                      )}
+                      <div>
+                        <strong>{p.name}</strong>
+                        <span style={{ marginLeft: 8, color: "#777" }}>
+                          （{p.category}）
+                        </span>
+                      </div>
                     </div>
                     <span
                       style={{
