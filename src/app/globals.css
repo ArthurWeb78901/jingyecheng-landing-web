@@ -379,7 +379,7 @@ body {
 /* 前台使用的小縮圖（thumbnail 用） */
 .jyc-gallery-thumb {
   width: 100%;
-  aspect-ratio: 3 / 1;          /* 正方形縮圖 */
+  aspect-ratio: 5 / 1;          /* 正方形縮圖 */
   border-radius: 6px;
   background: #e0e0e0;
   background-size: cover;
@@ -565,13 +565,32 @@ body {
 }
 
 /* 🖥 桌机：让首页产品卡和轮播更「矮」一点（约小 30%），不影响手机 */
+/* 🖥 桌机：缩小产品图片与 Gallery 缩图，不影响手机 */
 @media (min-width: 1024px) {
+  /* 首頁產品卡片圖片：比原來矮一截 */
   .jyc-card-image {
-    height: 220px;            /* 控制 desktop 高度，手机仍用 aspect-ratio */
+    height: 220px;            /* 可以再往下調 180 或 200，看你喜歡 */
   }
 
+  /* Gallery 縮圖：改成固定 140x140 的小正方形 */
+  .jyc-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 140px); /* 每格 140px 寬 */
+    gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .jyc-gallery-item {
+    width: 140px;
+    height: 140px;            /* 正方形縮圖 */
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* 首頁上方輪播：再矮一點，不佔那麼多高度 */
   .jyc-home-slideshow-main {
-    padding-top: 40%;         /* 从 56.25% 降到 40%，桌机高度明显减小 */
+    padding-top: 40%;         /* 從 56.25% 改成 40%，約矮 30% */
   }
 }
 
