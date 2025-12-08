@@ -181,7 +181,7 @@ body {
     rgba(0, 0, 0, 0.05)
   );
   z-index: 0;
-  pointer-events: none; /* ✅ 不挡住按钮点击 */
+  pointer-events: none; /* 不挡住按钮点击 */
 }
 
 /* 英文首页：渐层比中文稍浅一点 */
@@ -191,12 +191,12 @@ body {
   inset: 0;
   background: linear-gradient(
     to right,
-    rgba(0, 0, 0, 0.45), /* 左侧 0.45 比中文 0.7 更亮 */
+    rgba(0, 0, 0, 0.45),
     rgba(0, 0, 0, 0.18),
     rgba(0, 0, 0, 0)
   );
   z-index: 0;
-  pointer-events: none; /* 不挡按钮点击 */
+  pointer-events: none;
 }
 
 /* 共用按钮 */
@@ -277,7 +277,7 @@ body {
 
 .jyc-card-image {
   width: 100%;
-  aspect-ratio: 16 / 9;         /* 👉 改為 16:9，高度會明顯矮一截 */
+  aspect-ratio: 5 / 2;         /* 行動端維持原本高度比例 */
   border-radius: 6px;
   background: #f0f0f0;
   background-size: cover;
@@ -320,7 +320,8 @@ body {
 .jyc-home-slideshow-main {
   position: relative;
   width: 100%;
-  padding-top: 40%; /* 约 2.5:1 比例，可视实际照片调整 */
+  /* 手機預設：16:9，方便看清楚圖片 */
+  padding-top: 56.25%;
   border-radius: 8px;
   overflow: hidden;
   background: #e0e0e0;
@@ -373,6 +374,16 @@ body {
   height: 120px;
   border-radius: 6px;
   background: #e0e0e0;
+}
+
+/* 前台使用的小縮圖（thumbnail 用） */
+.jyc-gallery-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;          /* 正方形縮圖 */
+  border-radius: 6px;
+  background: #e0e0e0;
+  background-size: cover;
+  background-position: center;
 }
 
 /* Contact 表单 */
@@ -551,6 +562,17 @@ body {
 
 .jyc-chat-input-row button:hover {
   background: #111;
+}
+
+/* 🖥 桌机：让首页产品卡和轮播更「矮」一点（约小 30%），不影响手机 */
+@media (min-width: 1024px) {
+  .jyc-card-image {
+    height: 220px;            /* 控制 desktop 高度，手机仍用 aspect-ratio */
+  }
+
+  .jyc-home-slideshow-main {
+    padding-top: 40%;         /* 从 56.25% 降到 40%，桌机高度明显减小 */
+  }
 }
 
 /* 📱 手机与小平板（响应式） */

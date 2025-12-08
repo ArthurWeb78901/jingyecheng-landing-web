@@ -152,8 +152,7 @@ export default function GalleryPage() {
             图片集 / Gallery
           </h1>
           <p className="jyc-section-intro">
-            以下为山西太矿钢管设备有限公司相关设备、生产线现场与工程案例的示意排版。
-            当前页面会优先读取后台 Gallery 管理资料；若尚未建档，则显示基础示意布局。
+            以下为山西太矿钢管设备有限公司相关设备、生产线现场与工程案例图片
           </p>
 
           {sectionsToRender.map((section) => (

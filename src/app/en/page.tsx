@@ -7,12 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormEn } from "@/components/ContactFormEn";
 import { db } from "@/lib/firebase";
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-} from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type HomeGalleryItem = {
   id: string;
@@ -191,15 +186,7 @@ export default function HomeEn() {
                 <article key={p.id} className="jyc-card">
                   <div
                     className="jyc-card-image"
-                    style={
-                      bgUrl
-                        ? {
-                            backgroundImage: `url(${bgUrl})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }
-                        : undefined
-                    }
+                    style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined}
                   />
                   <h3>{displayName}</h3>
                   <p>{displayBrief}</p>
@@ -276,19 +263,15 @@ export default function HomeEn() {
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0
             ? [1, 2, 3, 4].map((i) => (
-                <div key={i} className="jyc-gallery-item" />
+                <div key={i} className="jyc-gallery-thumb" />
               ))
             : galleryItems.map((item) => (
                 <div
                   key={item.id}
-                  className="jyc-gallery-item"
+                  className="jyc-gallery-thumb"
                   style={
                     item.imageUrl
-                      ? {
-                          backgroundImage: `url(${item.imageUrl})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }
+                      ? { backgroundImage: `url(${item.imageUrl})` }
                       : undefined
                   }
                   title={item.title}

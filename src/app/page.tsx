@@ -7,12 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormCn } from "@/components/ContactFormCn";
 import { db } from "@/lib/firebase";
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-} from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type HomeGalleryItem = {
   id: string;
@@ -38,7 +33,7 @@ export default function Home() {
 
   const [products, setProducts] = useState<HomeProduct[]>([]);
 
-  // ✅ 從 Firestore 讀取 jyc_gallery，而不是 localStorage
+  // ✅ 從 Firestore 讀取 jyc_gallery
   useEffect(() => {
     async function loadHomeGallery() {
       try {
@@ -67,10 +62,7 @@ export default function Home() {
         setHomeItems(filtered);
         setCurrentSlide(0);
       } catch (err) {
-        console.error(
-          "load home gallery items from Firestore error",
-          err
-        );
+        console.error("load home gallery items from Firestore error", err);
       }
     }
 
@@ -95,7 +87,7 @@ export default function Home() {
               category: data.category || "",
               name: data.name || "",
               brief: data.brief || "",
-              enabled: data.enabled ?? true, // 沒寫就當作 true
+              enabled: data.enabled ?? true,
               imageUrl: data.imageUrl || "",
             };
           })
@@ -168,22 +160,13 @@ export default function Home() {
           <div className="jyc-card-grid">
             {products.slice(0, 3).map((p, index) => {
               const thumb = productThumbs[index];
-
               const bgUrl = p.imageUrl || thumb?.imageUrl || "";
 
               return (
                 <article key={p.id} className="jyc-card">
                   <div
                     className="jyc-card-image"
-                    style={
-                      bgUrl
-                        ? {
-                            backgroundImage: `url(${bgUrl})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }
-                        : undefined
-                    }
+                    style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined}
                   />
                   <h3>{p.name}</h3>
                   <p>{p.brief}</p>
@@ -252,19 +235,15 @@ export default function Home() {
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0
             ? [1, 2, 3, 4].map((i) => (
-                <div key={i} className="jyc-gallery-item" />
+                <div key={i} className="jyc-gallery-thumb" />
               ))
             : galleryItems.map((item) => (
                 <div
                   key={item.id}
-                  className="jyc-gallery-item"
+                  className="jyc-gallery-thumb"
                   style={
                     item.imageUrl
-                      ? {
-                          backgroundImage: `url(${item.imageUrl})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }
+                      ? { backgroundImage: `url(${item.imageUrl})` }
                       : undefined
                   }
                   title={item.title}
