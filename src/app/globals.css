@@ -565,40 +565,35 @@ body {
   background: #111;
 }
 
-/* 🖥 桌机：只在大螢幕調整尺寸，手機維持原樣 */
+/* 🖥 桌机：缩小产品图片与 Gallery 缩图，不影响手机 */
 @media (min-width: 1024px) {
-  /* 首頁產品卡片圖片：固定高度，避免變成超長橫幅 */
+  /* 首頁產品卡片圖片：再矮一點 */
   .jyc-card-image {
-    aspect-ratio: auto;   /* 取消比例，改用固定高度 */
-    height: 220px;
-  }
-
-  /* 產品區塊本身稍微收窄一點，視覺比較集中 */
-  .jyc-card-grid {
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  /* Gallery 縮圖：真正的小正方形 */
-  .jyc-gallery-grid {
-    grid-template-columns: repeat(auto-fit, 150px);
-    justify-content: flex-start;
-  }
-
-  .jyc-gallery-item {
-    width: 150px;
-    height: 150px;
+    height: 150px;            /* 原本 220px，現在變矮很多 */
     border-radius: 6px;
     background-size: cover;
     background-position: center;
   }
 
-  /* 上方輪播：高度再矮一點，也不會佔滿整個畫面 */
+  /* Gallery 縮圖：固定小正方形 */
+  .jyc-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 140px);
+    gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .jyc-gallery-item {
+    width: 140px;
+    height: 140px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* 首頁上方輪播：再矮一點 */
   .jyc-home-slideshow-main {
-    max-width: 960px;
-    margin: 0 auto;
-    padding-top: 36%; /* 比 16:9 再矮約 30% */
+    padding-top: 40%;
   }
 }
 
@@ -642,5 +637,11 @@ body {
   .jyc-chat-bubble-button {
     right: 12px;
     bottom: 16px;
+  }
+
+  /* 👉 手機版 slide show 高度縮小一點 */
+  .jyc-home-slideshow-main {
+    padding-top: 42%;   /* 原本 56.25%，現在大約矮 1/4 */
+    max-height: 260px;  /* 防止超高，讓它再矮一些 */
   }
 }
