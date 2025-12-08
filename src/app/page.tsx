@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
-import { ContactFormCn } from "@/components/ContactFormCN";
+import { ContactFormCn } from "@/components/ContactFormCn";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
