@@ -67,7 +67,7 @@ export default function ProductsEnPage() {
   }, []);
 
   // 最大顯示字數（超過就顯示「Read more」）
-  const MAX_CHARS = 420;
+  const MAX_CHARS = 300;
 
   return (
     <main className="jyc-page">
