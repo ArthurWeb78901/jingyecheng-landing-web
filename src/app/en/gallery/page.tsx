@@ -4,36 +4,19 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
 
-type AdminGalleryItem = {
-  id: number;
-  title: string;              // 中文標題
-  titleEn?: string;           // 英文標題（可選）
+type GalleryDoc = {
+  id: string;
+  title: string;
+  titleEn?: string;
   category: GalleryCategory;
-  filename: string;
-  description?: string;
-  descriptionEn?: string;     // 英文描述（可選，先預留）
   imageUrl?: string;
-  showOnHome: boolean;
   createdAt?: string;
 };
-
-type EnGalleryItem = {
-  id: number;
-  label: string;
-  imageUrl?: string;
-  filename?: string;
-};
-
-type EnGallerySection = {
-  title: string;
-  description: string;
-  items: EnGalleryItem[];
-};
-
-const STORAGE_KEY = "jyc_admin_gallery_items";
 
 const CATEGORY_META_EN: {
   key: GalleryCategory;
@@ -67,44 +50,57 @@ const CATEGORY_META_EN: {
 ];
 
 export default function GalleryEnPage() {
-  const [items, setItems] = useState<AdminGalleryItem[]>([]);
+  const [items, setItems] = useState<GalleryDoc[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    async function loadGallery() {
+      try {
+        const q = query(
+          collection(db, "jyc_gallery"),
+          orderBy("createdAt", "desc")
+        );
 
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+        const snap = await getDocs(q);
 
-      const parsed: AdminGalleryItem[] = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setItems(parsed);
+        const list: GalleryDoc[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+
+          let category = data.category as GalleryCategory;
+          if (
+            category !== "设备展示" &&
+            category !== "生产线现场" &&
+            category !== "工程案例" &&
+            category !== "展会与交流"
+          ) {
+            category = "设备展示";
+          }
+
+          return {
+            id: d.id,
+            title: data.title || "",
+            titleEn: data.titleEn || "",
+            category,
+            imageUrl: data.imageUrl || "",
+            createdAt: data.createdAt || "",
+          };
+        });
+
+        setItems(list);
+      } catch (err) {
+        console.error("load gallery items from Firestore (EN) error", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("load gallery items error (EN)", err);
     }
+
+    loadGallery();
   }, []);
 
-  const hasData = items.length > 0;
-
-  const dynamicSections: EnGallerySection[] = CATEGORY_META_EN.map((meta) => {
-    const list = items.filter((it) => it.category === meta.key);
-    return {
-      title: meta.title,
-      description: meta.description,
-      items: list.map((it) => {
-        const label =
-          it.titleEn && it.titleEn.trim().length > 0 ? it.titleEn : it.title;
-
-        return {
-          id: it.id,
-          label,
-          imageUrl: it.imageUrl,
-          filename: it.filename,
-        };
-      }),
-    };
-  }).filter((sec) => sec.items.length > 0);
+  const sections = CATEGORY_META_EN.map((meta) => ({
+    ...meta,
+    items: items.filter((it) => it.category === meta.key),
+  })).filter((sec) => sec.items.length > 0);
 
   return (
     <main className="jyc-page">
@@ -118,9 +114,17 @@ export default function GalleryEnPage() {
             project references.
           </p>
 
-          {hasData ? (
-            dynamicSections.map((section) => (
-              <div key={section.title} style={{ marginTop: 32 }}>
+          {loading ? (
+            <p style={{ fontSize: 14, color: "#777" }}>Loading…</p>
+          ) : sections.length === 0 ? (
+            <div className="jyc-gallery-grid">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="jyc-gallery-item" />
+              ))}
+            </div>
+          ) : (
+            sections.map((section) => (
+              <div key={section.key} style={{ marginTop: 32 }}>
                 <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
                   {section.title}
                 </h2>
@@ -136,45 +140,48 @@ export default function GalleryEnPage() {
                 </p>
 
                 <div className="jyc-gallery-grid">
-                  {section.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="jyc-gallery-item"
-                      style={{
-                        position: "relative",
-                        backgroundColor: "#e0e0e0",
-                        backgroundImage: item.imageUrl
-                          ? `url(${item.imageUrl})`
-                          : undefined,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
-                    >
-                      <span
+                  {section.items.map((item) => {
+                    const label =
+                      item.titleEn && item.titleEn.trim().length > 0
+                        ? item.titleEn
+                        : item.title;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="jyc-gallery-item"
                         style={{
-                          position: "absolute",
-                          left: 8,
-                          bottom: 8,
-                          fontSize: 12,
-                          color: "#555",
-                          background: "rgba(255,255,255,0.88)",
-                          padding: "2px 6px",
-                          borderRadius: 4,
+                          position: "relative",
+                          backgroundColor: "#e0e0e0",
+                          backgroundImage: item.imageUrl
+                            ? `url(${item.imageUrl})`
+                            : undefined,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
                         }}
                       >
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
+                        {label && (
+                          <span
+                            style={{
+                              position: "absolute",
+                              left: 8,
+                              bottom: 8,
+                              fontSize: 12,
+                              color: "#555",
+                              background: "rgba(255,255,255,0.9)",
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                            }}
+                          >
+                            {label}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))
-          ) : (
-            <div className="jyc-gallery-grid">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="jyc-gallery-item" />
-              ))}
-            </div>
           )}
         </div>
       </section>
