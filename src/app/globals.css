@@ -319,7 +319,7 @@ body {
 
 .jyc-home-slideshow-main {
   position: relative;
-  width: 100%;
+  width: 50%;
   /* 手機預設：16:9，方便看清楚圖片 */
   padding-top: 56.25%;
   border-radius: 8px;
@@ -379,7 +379,7 @@ body {
 /* 前台使用的小縮圖（thumbnail 用） */
 .jyc-gallery-thumb {
   width: 100%;
-  aspect-ratio: 1 / 1;          /* 正方形縮圖 */
+  aspect-ratio: 3 / 1;          /* 正方形縮圖 */
   border-radius: 6px;
   background: #e0e0e0;
   background-size: cover;
