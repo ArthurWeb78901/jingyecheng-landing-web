@@ -6,40 +6,103 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormEn } from "@/components/ContactFormEn";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type HomeGalleryItem = {
-  id: number;
+  id: string; // Firestore doc id
   title: string;
   description?: string;
   imageUrl?: string;
-  showOnHome?: boolean;
+  showOnHome: boolean;
   createdAt?: string;
 };
 
-const STORAGE_KEY = "jyc_admin_gallery_items";
+type HomeProduct = {
+  id: string;
+  category: string;
+  name: string;
+  brief: string;
+  heroImageUrl?: string;
+  enabled: boolean;
+  createdAt?: string;
+};
 
 export default function HomeEn() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 从后台 Gallery 资料读取要在首页用的图片（目前还是 localStorage）
+  // 首页产品卡片数据（来自 jyc_products）
+  const [products, setProducts] = useState<HomeProduct[]>([]);
+
+  // 从 Firestore 读取 jycGallery（英文页与中文共用同一批图片）
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    async function loadHomeGallery() {
+      try {
+        const q = query(
+          collection(db, "jycGallery"),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
 
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+        const all: HomeGalleryItem[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            title: data.title || "",
+            description: data.description || "",
+            imageUrl: data.imageUrl || "",
+            showOnHome: !!data.showOnHome,
+            createdAt: data.createdAt || "",
+          };
+        });
 
-      const list: HomeGalleryItem[] = JSON.parse(raw);
+        const filtered = all.filter(
+          (item) => item.imageUrl && item.showOnHome
+        );
 
-      const filtered = list
-        .filter((item) => item.imageUrl && item.showOnHome)
-        .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-
-      setHomeItems(filtered);
-    } catch (err) {
-      console.error("load home gallery items error (en)", err);
+        setHomeItems(filtered);
+        setCurrentSlide(0);
+      } catch (err) {
+        console.error("load home gallery items error (en)", err);
+      }
     }
+
+    loadHomeGallery();
+  }, []);
+
+  // 从 Firestore 读取 jyc_products（Main Products 不再写死）
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const q = query(
+          collection(db, "jyc_products"),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+
+        const list: HomeProduct[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            // 如果你未来有写入 categoryEn / nameEn / briefEn，可以优先用英文
+            category: data.categoryEn || data.category || "",
+            name: data.nameEn || data.name || "",
+            brief: data.briefEn || data.brief || "",
+            heroImageUrl: data.heroImageUrl || data.imageUrl || "",
+            enabled: data.enabled !== false,
+            createdAt: data.createdAt || "",
+          };
+        });
+
+        const enabled = list.filter((p) => p.enabled);
+        setProducts(enabled);
+      } catch (err) {
+        console.error("load products from Firestore error (en)", err);
+      }
+    }
+
+    loadProducts();
   }, []);
 
   // 简单轮播
@@ -53,25 +116,8 @@ export default function HomeEn() {
     return () => clearInterval(timer);
   }, [homeItems.length]);
 
-  // 首页要用到的图：前三张给产品卡片、前四张给 gallery
-  const productThumbs = homeItems.slice(0, 3);
-  const galleryItems = homeItems.slice(0, 4);
   const currentItem = homeItems[currentSlide];
-
-  const products = [
-    {
-      model: "Seamless Pipe Mill Lines",
-      desc: "Turn-key hot rolling lines for seamless steel pipes, covering billet heating and piercing, pipe rolling, sizing / reducing, straightening, cooling and cutting, typically for tube diameters of approximately φ50–φ325 mm.",
-    },
-    {
-      model: "Piercing & Pipe Rolling Mills",
-      desc: "Mannesmann piercing mills, horizontal cone-type piercing mills and automatic / Accu-Roll pipe mills, including our proprietary two-roll mandrel mills with guide plates, designed for high dimensional accuracy, large elongation and uniform wall thickness of hollow shells and pipes.",
-    },
-    {
-      model: "Finishing & Auxiliary Equipment",
-      desc: "Two-roll and three-roll sizing / reducing mills, six-roll and seven-roll straightening machines, chain and walking-beam cooling beds, hot centering machines, cold drawing machines and related conveying equipment for tube diameters of approx. φ10–φ325 mm.",
-    },
-  ];
+  const galleryItems = homeItems.slice(0, 4);
 
   return (
     <main className="jyc-page">
@@ -110,37 +156,50 @@ export default function HomeEn() {
         </div>
       </section>
 
-      {/* Products overview */}
+      {/* Products overview - 数据来自 jyc_products */}
       <section id="products" className="jyc-section">
         <h2>Main Products</h2>
 
-        <div className="jyc-card-grid">
-          {products.map((item, index) => {
-            const thumb = productThumbs[index];
-
-            return (
-              <article key={item.model} className="jyc-card">
+        {products.length === 0 ? (
+          <p className="jyc-section-intro">
+            No products have been published yet. Once you add products in
+            “产品资讯管理” and enable them for front-end display, they will
+            automatically appear here.
+          </p>
+        ) : (
+          <div className="jyc-card-grid">
+            {products.map((item) => (
+              <article key={item.id} className="jyc-card">
                 <div
                   className="jyc-card-image"
                   style={
-                    thumb?.imageUrl
+                    item.heroImageUrl
                       ? {
-                          backgroundImage: `url(${thumb.imageUrl})`,
+                          backgroundImage: `url(${item.heroImageUrl})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }
                       : undefined
                   }
                 />
-                <h3>{item.model}</h3>
-                <p>{item.desc}</p>
+                <h3>{item.name}</h3>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "#999",
+                    marginBottom: 8,
+                  }}
+                >
+                  Category: {item.category}
+                </div>
+                <p>{item.brief}</p>
                 <button type="button" className="jyc-card-btn">
                   Learn More
                 </button>
               </article>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* About (short) */}
@@ -166,7 +225,8 @@ export default function HomeEn() {
           Photos of key equipment and production lines, such as piercing mills,
           pipe rolling mills, sizing / reducing mills, straightening machines,
           cooling beds, hot centering machines and cold drawing machines, as
-          well as typical project references.
+          well as typical project references. Images are managed via the
+          back-office “图片 / Gallery 管理” and shared with the Chinese site.
         </p>
 
         {/* 首页轮播（与中文逻辑相同） */}

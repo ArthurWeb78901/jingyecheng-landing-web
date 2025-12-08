@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -10,7 +9,7 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type HomeGalleryItem = {
-  id: string;            // Firestore doc id
+  id: string; // Firestore doc id
   title: string;
   description?: string;
   imageUrl?: string;
@@ -18,16 +17,29 @@ type HomeGalleryItem = {
   createdAt?: string;
 };
 
+type HomeProduct = {
+  id: string;
+  category: string;
+  name: string;
+  brief: string;
+  heroImageUrl?: string;
+  enabled: boolean;
+  createdAt?: string;
+};
+
 export default function Home() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // ✅ 從 Firestore 讀取 jycGallery，而不是 localStorage
+  // 🔹 首頁產品卡片資料（完全來自 jyc_products）
+  const [products, setProducts] = useState<HomeProduct[]>([]);
+
+  // ✅ 從 Firestore 讀取 jycGallery（給圖片集 & 輪播用）
   useEffect(() => {
     async function loadHomeGallery() {
       try {
         const q = query(
-          collection(db, "jyc_gallery"),
+          collection(db, "jycGallery"),
           orderBy("createdAt", "desc")
         );
         const snap = await getDocs(q);
@@ -59,6 +71,40 @@ export default function Home() {
     loadHomeGallery();
   }, []);
 
+  // ✅ 從 Firestore 讀取 jyc_products（給首頁「主要產品一覽」用）
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const q = query(
+          collection(db, "jyc_products"),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+
+        const list: HomeProduct[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            category: data.category || "",
+            name: data.name || "",
+            brief: data.brief || "",
+            heroImageUrl: data.heroImageUrl || data.imageUrl || "",
+            enabled: data.enabled !== false, // 預設視為 true
+            createdAt: data.createdAt || "",
+          };
+        });
+
+        // 只顯示「在前台顯示」的產品
+        const enabled = list.filter((p) => p.enabled);
+        setProducts(enabled);
+      } catch (err) {
+        console.error("load products from Firestore error", err);
+      }
+    }
+
+    loadProducts();
+  }, []);
+
   // 简单自动轮播：每 5 秒切一张（有 1 张图时不轮播）
   useEffect(() => {
     if (homeItems.length <= 1) return;
@@ -69,25 +115,6 @@ export default function Home() {
 
     return () => clearInterval(timer);
   }, [homeItems.length]);
-
-  // 这两个区块用勾选出来的图片
-  const productThumbs = homeItems.slice(0, 3); // 给 3 张产品卡片用
-  const galleryItems = homeItems.slice(0, 4); // Gallery 区块最多 4 张
-
-  const products = [
-    {
-      model: "热轧无缝钢管生产线",
-      desc: "覆盖加热、穿孔、轧管、定径 / 减径、冷床、矫直、锯切等工序的整线机组，用于生产 φ50–φ325 mm 范围内的热轧无缝钢管，结构扎实、运行稳定。",
-    },
-    {
-      model: "穿孔与轧管机组",
-      desc: "包括曼内斯曼穿孔机、卧式锥形辊穿孔机、自动 / Accu-Roll 轧管机以及自研导板式二辊限动芯棒轧管机，适用于生产高尺寸精度、大延伸系数、壁厚均匀的空心坯与钢管。",
-    },
-    {
-      model: "精整与辅助设备",
-      desc: "提供二辊 / 三辊定径减径机、六辊 / 七辊矫直机、链式与步进式冷床、热定心机、冷拔机及相关输送辅助设备，用于 φ10–φ325 mm 钢管的定径、矫直、冷却与后续精整。",
-    },
-  ];
 
   const currentItem = homeItems[currentSlide];
 
@@ -118,37 +145,49 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 产品概要区块 */}
+      {/* 🔹 产品概要区块：完全依照 jyc_products 集合顯示現有產品 */}
       <section id="products" className="jyc-section">
         <h2>主要产品一览</h2>
 
-        <div className="jyc-card-grid">
-          {products.map((item, index) => {
-            const thumb = productThumbs[index];
-
-            return (
-              <article key={item.model} className="jyc-card">
+        {products.length === 0 ? (
+          <p className="jyc-section-intro">
+            目前尚未在后台「产品资讯管理」新增任何产品。新增产品并勾选「在前台显示此产品」后，
+            将自动显示在此区块。
+          </p>
+        ) : (
+          <div className="jyc-card-grid">
+            {products.map((p) => (
+              <article key={p.id} className="jyc-card">
                 <div
                   className="jyc-card-image"
                   style={
-                    thumb?.imageUrl
+                    p.heroImageUrl
                       ? {
-                          backgroundImage: `url(${thumb.imageUrl})`,
+                          backgroundImage: `url(${p.heroImageUrl})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }
                       : undefined
                   }
                 />
-                <h3>{item.model}</h3>
-                <p>{item.desc}</p>
+                <h3>{p.name}</h3>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "#999",
+                    marginBottom: 8,
+                  }}
+                >
+                  类别：{p.category}
+                </div>
+                <p>{p.brief}</p>
                 <button type="button" className="jyc-card-btn">
                   了解更多
                 </button>
               </article>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 公司介绍（首页简版） */}
@@ -166,7 +205,7 @@ export default function Home() {
         <h2>图片集</h2>
         <p className="jyc-section-intro">
           设备现场、生产线布局与项目案例照片。后台「图片 / Gallery 管理」中勾选
-          「显示在首页轮播」的图片，会同步显示在此处与首页产品卡片缩略图，并统一由 Firestore 管理。
+          「显示在首页轮播」的图片，会同步显示在此处与首页图片轮播，并统一由 Firestore 管理。
         </p>
 
         {/* 首页轮播（根据 showOnHome 勾选） */}
@@ -205,11 +244,11 @@ export default function Home() {
         )}
 
         <div className="jyc-gallery-grid">
-          {galleryItems.length === 0
+          {homeItems.slice(0, 4).length === 0
             ? [1, 2, 3, 4].map((i) => (
                 <div key={i} className="jyc-gallery-item" />
               ))
-            : galleryItems.map((item) => (
+            : homeItems.slice(0, 4).map((item) => (
                 <div
                   key={item.id}
                   className="jyc-gallery-item"
@@ -239,8 +278,6 @@ export default function Home() {
       </section>
 
       <Footer />
-
-      {/* 右下角在线助手泡泡 */}
       <ChatBubble />
     </main>
   );
