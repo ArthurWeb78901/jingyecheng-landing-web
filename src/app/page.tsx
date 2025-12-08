@@ -27,7 +27,7 @@ export default function Home() {
     async function loadHomeGallery() {
       try {
         const q = query(
-          collection(db, "jycGallery"),
+          collection(db, "jyc_gallery"),
           orderBy("createdAt", "desc")
         );
         const snap = await getDocs(q);
