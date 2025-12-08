@@ -7,40 +7,46 @@ import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormEn } from "@/components/ContactFormEn";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+} from "firebase/firestore";
 
 type HomeGalleryItem = {
-  id: string; // Firestore doc id
+  id: string;
   title: string;
   description?: string;
   imageUrl?: string;
-  showOnHome: boolean;
+  showOnHome?: boolean;
   createdAt?: string;
 };
 
 type HomeProduct = {
   id: string;
   category: string;
+  categoryEn?: string;
   name: string;
+  nameEn?: string;
   brief: string;
-  heroImageUrl?: string;
+  briefEn?: string;
   enabled: boolean;
-  createdAt?: string;
+  imageUrl?: string;
 };
 
 export default function HomeEn() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 首页产品卡片数据（来自 jyc_products）
   const [products, setProducts] = useState<HomeProduct[]>([]);
 
-  // 从 Firestore 读取 jycGallery（英文页与中文共用同一批图片）
+  // gallery from jyc_gallery
   useEffect(() => {
     async function loadHomeGallery() {
       try {
         const q = query(
-          collection(db, "jycGallery"),
+          collection(db, "jyc_gallery"),
           orderBy("createdAt", "desc")
         );
         const snap = await getDocs(q);
@@ -64,48 +70,53 @@ export default function HomeEn() {
         setHomeItems(filtered);
         setCurrentSlide(0);
       } catch (err) {
-        console.error("load home gallery items error (en)", err);
+        console.error(
+          "load home gallery items from Firestore error (en)",
+          err
+        );
       }
     }
 
     loadHomeGallery();
   }, []);
 
-  // 从 Firestore 读取 jyc_products（Main Products 不再写死）
+  // products from jyc_products
   useEffect(() => {
     async function loadProducts() {
       try {
         const q = query(
           collection(db, "jyc_products"),
-          orderBy("createdAt", "desc")
+          orderBy("name", "asc")
         );
         const snap = await getDocs(q);
 
-        const list: HomeProduct[] = snap.docs.map((d) => {
-          const data = d.data() as any;
-          return {
-            id: d.id,
-            // 如果你未来有写入 categoryEn / nameEn / briefEn，可以优先用英文
-            category: data.categoryEn || data.category || "",
-            name: data.nameEn || data.name || "",
-            brief: data.briefEn || data.brief || "",
-            heroImageUrl: data.heroImageUrl || data.imageUrl || "",
-            enabled: data.enabled !== false,
-            createdAt: data.createdAt || "",
-          };
-        });
+        const list: HomeProduct[] = snap.docs
+          .map((d) => {
+            const data = d.data() as any;
+            return {
+              id: d.id,
+              category: data.category || "",
+              categoryEn: data.categoryEn || "",
+              name: data.name || "",
+              nameEn: data.nameEn || "",
+              brief: data.brief || "",
+              briefEn: data.briefEn || "",
+              enabled: data.enabled ?? true,
+              imageUrl: data.imageUrl || "",
+            };
+          })
+          .filter((p) => p.enabled);
 
-        const enabled = list.filter((p) => p.enabled);
-        setProducts(enabled);
+        setProducts(list);
       } catch (err) {
-        console.error("load products from Firestore error (en)", err);
+        console.error("load home products from Firestore error (en)", err);
       }
     }
 
     loadProducts();
   }, []);
 
-  // 简单轮播
+  // slideshow
   useEffect(() => {
     if (homeItems.length <= 1) return;
 
@@ -117,13 +128,14 @@ export default function HomeEn() {
   }, [homeItems.length]);
 
   const currentItem = homeItems[currentSlide];
+  const productThumbs = homeItems.slice(0, 3);
   const galleryItems = homeItems.slice(0, 4);
 
   return (
     <main className="jyc-page">
       <Header />
 
-      {/* Hero - 和中文共用背景图，英文用 jyc-hero-en 渐层较浅 */}
+      {/* Hero - EN */}
       <section className="jyc-hero jyc-hero-en">
         <div className="jyc-hero-inner">
           <div className="jyc-hero-text">
@@ -156,48 +168,47 @@ export default function HomeEn() {
         </div>
       </section>
 
-      {/* Products overview - 数据来自 jyc_products */}
+      {/* Products overview from Firestore */}
       <section id="products" className="jyc-section">
         <h2>Main Products</h2>
 
-        {products.length === 0 ? (
-          <p className="jyc-section-intro">
-            No products have been published yet. Once you add products in
-            “产品资讯管理” and enable them for front-end display, they will
-            automatically appear here.
-          </p>
-        ) : (
+        <p className="jyc-section-intro">
+          {products.length === 0
+            ? "No products have been configured yet in the admin “Product Management” page. Once you add products and tick “Show on website”, they will automatically appear here."
+            : "Below are the main product categories currently configured. Detailed line configurations and technical specifications are available on the Products page."}
+        </p>
+
+        {products.length > 0 && (
           <div className="jyc-card-grid">
-            {products.map((item) => (
-              <article key={item.id} className="jyc-card">
-                <div
-                  className="jyc-card-image"
-                  style={
-                    item.heroImageUrl
-                      ? {
-                          backgroundImage: `url(${item.heroImageUrl})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }
-                      : undefined
-                  }
-                />
-                <h3>{item.name}</h3>
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "#999",
-                    marginBottom: 8,
-                  }}
-                >
-                  Category: {item.category}
-                </div>
-                <p>{item.brief}</p>
-                <button type="button" className="jyc-card-btn">
-                  Learn More
-                </button>
-              </article>
-            ))}
+            {products.slice(0, 3).map((p, index) => {
+              const thumb = productThumbs[index];
+              const bgUrl = p.imageUrl || thumb?.imageUrl || "";
+
+              const displayName = p.nameEn || p.name;
+              const displayBrief = p.briefEn || p.brief;
+
+              return (
+                <article key={p.id} className="jyc-card">
+                  <div
+                    className="jyc-card-image"
+                    style={
+                      bgUrl
+                        ? {
+                            backgroundImage: `url(${bgUrl})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }
+                        : undefined
+                    }
+                  />
+                  <h3>{displayName}</h3>
+                  <p>{displayBrief}</p>
+                  <button type="button" className="jyc-card-btn">
+                    Learn More
+                  </button>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -225,11 +236,9 @@ export default function HomeEn() {
           Photos of key equipment and production lines, such as piercing mills,
           pipe rolling mills, sizing / reducing mills, straightening machines,
           cooling beds, hot centering machines and cold drawing machines, as
-          well as typical project references. Images are managed via the
-          back-office “图片 / Gallery 管理” and shared with the Chinese site.
+          well as typical project references.
         </p>
 
-        {/* 首页轮播（与中文逻辑相同） */}
         {homeItems.length > 0 && (
           <div className="jyc-home-slideshow">
             <div className="jyc-home-slideshow-main">

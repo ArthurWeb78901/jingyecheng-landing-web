@@ -1,3 +1,4 @@
+// src/app/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -6,10 +7,15 @@ import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormCn } from "@/components/ContactFormCn";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+} from "firebase/firestore";
 
 type HomeGalleryItem = {
-  id: string; // Firestore doc id
+  id: string;
   title: string;
   description?: string;
   imageUrl?: string;
@@ -22,24 +28,22 @@ type HomeProduct = {
   category: string;
   name: string;
   brief: string;
-  heroImageUrl?: string;
   enabled: boolean;
-  createdAt?: string;
+  imageUrl?: string;
 };
 
 export default function Home() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 🔹 首頁產品卡片資料（完全來自 jyc_products）
   const [products, setProducts] = useState<HomeProduct[]>([]);
 
-  // ✅ 從 Firestore 讀取 jycGallery（給圖片集 & 輪播用）
+  // ✅ 從 Firestore 讀取 jyc_gallery，而不是 localStorage
   useEffect(() => {
     async function loadHomeGallery() {
       try {
         const q = query(
-          collection(db, "jycGallery"),
+          collection(db, "jyc_gallery"),
           orderBy("createdAt", "desc")
         );
         const snap = await getDocs(q);
@@ -56,7 +60,6 @@ export default function Home() {
           };
         });
 
-        // 只留有圖片網址且勾選「顯示在首頁輪播」的
         const filtered = all.filter(
           (item) => item.imageUrl && item.showOnHome
         );
@@ -64,41 +67,43 @@ export default function Home() {
         setHomeItems(filtered);
         setCurrentSlide(0);
       } catch (err) {
-        console.error("load home gallery items from Firestore error", err);
+        console.error(
+          "load home gallery items from Firestore error",
+          err
+        );
       }
     }
 
     loadHomeGallery();
   }, []);
 
-  // ✅ 從 Firestore 讀取 jyc_products（給首頁「主要產品一覽」用）
+  // ✅ 從 Firestore 讀取 jyc_products（首頁產品區）
   useEffect(() => {
     async function loadProducts() {
       try {
         const q = query(
           collection(db, "jyc_products"),
-          orderBy("createdAt", "desc")
+          orderBy("name", "asc")
         );
         const snap = await getDocs(q);
 
-        const list: HomeProduct[] = snap.docs.map((d) => {
-          const data = d.data() as any;
-          return {
-            id: d.id,
-            category: data.category || "",
-            name: data.name || "",
-            brief: data.brief || "",
-            heroImageUrl: data.heroImageUrl || data.imageUrl || "",
-            enabled: data.enabled !== false, // 預設視為 true
-            createdAt: data.createdAt || "",
-          };
-        });
+        const list: HomeProduct[] = snap.docs
+          .map((d) => {
+            const data = d.data() as any;
+            return {
+              id: d.id,
+              category: data.category || "",
+              name: data.name || "",
+              brief: data.brief || "",
+              enabled: data.enabled ?? true, // 沒寫就當作 true
+              imageUrl: data.imageUrl || "",
+            };
+          })
+          .filter((p) => p.enabled);
 
-        // 只顯示「在前台顯示」的產品
-        const enabled = list.filter((p) => p.enabled);
-        setProducts(enabled);
+        setProducts(list);
       } catch (err) {
-        console.error("load products from Firestore error", err);
+        console.error("load home products from Firestore error", err);
       }
     }
 
@@ -118,11 +123,15 @@ export default function Home() {
 
   const currentItem = homeItems[currentSlide];
 
+  // 首页要用到的图
+  const productThumbs = homeItems.slice(0, 3); // 給產品卡片用
+  const galleryItems = homeItems.slice(0, 4); // Gallery 區塊最多 4 張
+
   return (
     <main className="jyc-page">
       <Header />
 
-      {/* Hero：整块背景图 + 文字反白叠在左侧 */}
+      {/* Hero：整块背景图 + 文字叠在左侧 */}
       <section className="jyc-hero">
         <div className="jyc-hero-inner">
           <div className="jyc-hero-text">
@@ -145,47 +154,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🔹 产品概要区块：完全依照 jyc_products 集合顯示現有產品 */}
+      {/* 产品概要区块（從 Firestore 的 jyc_products 來） */}
       <section id="products" className="jyc-section">
         <h2>主要产品一览</h2>
 
-        {products.length === 0 ? (
-          <p className="jyc-section-intro">
-            目前尚未在后台「产品资讯管理」新增任何产品。新增产品并勾选「在前台显示此产品」后，
-            将自动显示在此区块。
-          </p>
-        ) : (
+        <p className="jyc-section-intro">
+          {products.length === 0
+            ? "目前尚未在后台「产品资讯管理」新增任何产品。新增产品并勾选「在前台显示此产品」后，将自动显示在此区块。"
+            : "以下为目前已在后台配置的主要产品方向，详细机组配置与技术参数可在「产品与设备一览」页面查看。"}
+        </p>
+
+        {products.length > 0 && (
           <div className="jyc-card-grid">
-            {products.map((p) => (
-              <article key={p.id} className="jyc-card">
-                <div
-                  className="jyc-card-image"
-                  style={
-                    p.heroImageUrl
-                      ? {
-                          backgroundImage: `url(${p.heroImageUrl})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }
-                      : undefined
-                  }
-                />
-                <h3>{p.name}</h3>
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "#999",
-                    marginBottom: 8,
-                  }}
-                >
-                  类别：{p.category}
-                </div>
-                <p>{p.brief}</p>
-                <button type="button" className="jyc-card-btn">
-                  了解更多
-                </button>
-              </article>
-            ))}
+            {products.slice(0, 3).map((p, index) => {
+              const thumb = productThumbs[index];
+
+              const bgUrl = p.imageUrl || thumb?.imageUrl || "";
+
+              return (
+                <article key={p.id} className="jyc-card">
+                  <div
+                    className="jyc-card-image"
+                    style={
+                      bgUrl
+                        ? {
+                            backgroundImage: `url(${bgUrl})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }
+                        : undefined
+                    }
+                  />
+                  <h3>{p.name}</h3>
+                  <p>{p.brief}</p>
+                  <button type="button" className="jyc-card-btn">
+                    了解更多
+                  </button>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -195,8 +202,8 @@ export default function Home() {
         <h2>关于我们</h2>
         <p>
           山西太矿钢管设备有限公司位于能源重化工城市——山西省太原市，占地面积约 7 万平方米，
-          是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，集设计、生产、经营于一体，
-          为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
+          是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，集设计、生产、
+          经营于一体，为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
         </p>
       </section>
 
@@ -205,10 +212,9 @@ export default function Home() {
         <h2>图片集</h2>
         <p className="jyc-section-intro">
           设备现场、生产线布局与项目案例照片。后台「图片 / Gallery 管理」中勾选
-          「显示在首页轮播」的图片，会同步显示在此处与首页图片轮播，并统一由 Firestore 管理。
+          「显示在首页轮播」的图片，会同步显示在此处与首页产品卡片缩略图，并统一由 Firestore 管理。
         </p>
 
-        {/* 首页轮播（根据 showOnHome 勾选） */}
         {homeItems.length > 0 && (
           <div className="jyc-home-slideshow">
             <div className="jyc-home-slideshow-main">
@@ -244,11 +250,11 @@ export default function Home() {
         )}
 
         <div className="jyc-gallery-grid">
-          {homeItems.slice(0, 4).length === 0
+          {galleryItems.length === 0
             ? [1, 2, 3, 4].map((i) => (
                 <div key={i} className="jyc-gallery-item" />
               ))
-            : homeItems.slice(0, 4).map((item) => (
+            : galleryItems.map((item) => (
                 <div
                   key={item.id}
                   className="jyc-gallery-item"
