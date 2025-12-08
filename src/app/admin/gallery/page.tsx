@@ -40,12 +40,12 @@ export default function AdminGalleryPage() {
   const [uploadImageUrl, setUploadImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // ✅ 讀取 Firestore 裡的 jycGallery
+  // ✅ 讀取 Firestore 裡的 jyc_gallery
   useEffect(() => {
     async function fetchItems() {
       try {
         const q = query(
-          collection(db, "jycGallery"),
+          collection(db, "jyc_gallery"),
           orderBy("createdAt", "desc")
         );
         const snap = await getDocs(q);
@@ -107,8 +107,8 @@ export default function AdminGalleryPage() {
         createdAt: now,
       };
 
-      // ✅ 寫入 Firestore
-      const docRef = await addDoc(collection(db, "jycGallery"), payload);
+      // ✅ 寫入 Firestore -> jyc_gallery
+      const docRef = await addDoc(collection(db, "jyc_gallery"), payload);
 
       const newItem: AdminGalleryItem = {
         id: docRef.id,
@@ -142,13 +142,11 @@ export default function AdminGalleryPage() {
 
     // 先更新畫面
     setItems((prev) =>
-      prev.map((i) =>
-        i.id === id ? { ...i, showOnHome: nextValue } : i
-      )
+      prev.map((i) => (i.id === id ? { ...i, showOnHome: nextValue } : i))
     );
 
     try {
-      await updateDoc(doc(db, "jycGallery", id), {
+      await updateDoc(doc(db, "jyc_gallery", id), {
         showOnHome: nextValue,
       });
     } catch (err) {
@@ -170,7 +168,7 @@ export default function AdminGalleryPage() {
     setItems((prev) => prev.filter((i) => i.id !== id));
 
     try {
-      await deleteDoc(doc(db, "jycGallery", id));
+      await deleteDoc(doc(db, "jyc_gallery", id));
     } catch (err) {
       console.error("delete gallery item error", err);
       alert("删除记录时发生错误，请稍后再试。");
@@ -201,7 +199,7 @@ export default function AdminGalleryPage() {
             此页面用于管理网站上的设备照片、生产线现场与工程案例图片。
             图片档案会上传到 Firebase Storage，而图片资讯
             （标题、说明、类别、是否显示在首页轮播）会写入 Firestore 的
-            <code> jycGallery </code> 集合，供首页与图片集页面共用。
+            <code> jyc_gallery </code> 集合，供首页与图片集页面共用。
           </p>
 
           {/* 上传区 */}

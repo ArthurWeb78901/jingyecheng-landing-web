@@ -109,9 +109,7 @@ export default function GalleryEnPage() {
           <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>Gallery</h1>
           <p className="jyc-section-intro">
             Photo gallery of equipment installations, production lines and
-            project references. This page can be connected to the backend
-            gallery management module so that photos are centrally maintained
-            and kept up to date.
+            project references.
           </p>
 
           {hasData ? (
