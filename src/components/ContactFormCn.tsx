@@ -32,6 +32,7 @@ export function ContactFormCn() {
 
       if (!res.ok) throw new Error("failed");
 
+      // update //
       setDone(true);
       e.currentTarget.reset();
     } catch (err) {

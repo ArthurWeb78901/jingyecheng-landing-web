@@ -1,44 +1,62 @@
+// src/app/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
-import { ContactFormCn } from "@/components/ContactFormCn";
+import { ContactFormCn } from "@/components/ContactFormCN";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type HomeGalleryItem = {
-  id: number;
+  id: string;            // Firestore doc id
   title: string;
   description?: string;
   imageUrl?: string;
-  showOnHome?: boolean;
+  showOnHome: boolean;
   createdAt?: string;
 };
-
-const STORAGE_KEY = "jyc_admin_gallery_items";
 
 export default function Home() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 暂时仍从 localStorage 读取后台图库（示意），后续可改为 Firestore / 后台管理
+  // ✅ 從 Firestore 讀取 jycGallery，而不是 localStorage
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    async function loadHomeGallery() {
+      try {
+        const q = query(
+          collection(db, "jycGallery"),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
 
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+        const all: HomeGalleryItem[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            title: data.title || "",
+            description: data.description || "",
+            imageUrl: data.imageUrl || "",
+            showOnHome: !!data.showOnHome,
+            createdAt: data.createdAt || "",
+          };
+        });
 
-      const list: HomeGalleryItem[] = JSON.parse(raw);
+        // 只留有圖片網址且勾選「顯示在首頁輪播」的
+        const filtered = all.filter(
+          (item) => item.imageUrl && item.showOnHome
+        );
 
-      const filtered = list
-        .filter((item) => item.imageUrl && item.showOnHome)
-        .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-
-      setHomeItems(filtered);
-    } catch (err) {
-      console.error("load home gallery items error", err);
+        setHomeItems(filtered);
+        setCurrentSlide(0);
+      } catch (err) {
+        console.error("load home gallery items from Firestore error", err);
+      }
     }
+
+    loadHomeGallery();
   }, []);
 
   // 简单自动轮播：每 5 秒切一张（有 1 张图时不轮播）
@@ -52,7 +70,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [homeItems.length]);
 
-  // 这两个区块还是用后台勾选出来的图片（之后可改为 Firestore）
+  // 这两个区块用勾选出来的图片
   const productThumbs = homeItems.slice(0, 3); // 给 3 张产品卡片用
   const galleryItems = homeItems.slice(0, 4); // Gallery 区块最多 4 张
 
@@ -147,8 +165,8 @@ export default function Home() {
       <section id="gallery" className="jyc-section">
         <h2>图片集</h2>
         <p className="jyc-section-intro">
-          设备现场、生产线布局与项目案例照片。当前版本示意由后台「图片 / Gallery 管理」勾选
-          「显示在首页轮播」后，同步到此区域与首页产品卡片显示；后续可改由 Firestore / 后台系统统一管理。
+          设备现场、生产线布局与项目案例照片。后台「图片 / Gallery 管理」中勾选
+          「显示在首页轮播」的图片，会同步显示在此处与首页产品卡片缩略图，并统一由 Firestore 管理。
         </p>
 
         {/* 首页轮播（根据 showOnHome 勾选） */}

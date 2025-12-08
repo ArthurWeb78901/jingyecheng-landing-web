@@ -4,60 +4,29 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { storage } from "@/lib/firebase";
+import { storage, db } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  orderBy,
+  query,
+} from "firebase/firestore";
 
 type AdminGalleryItem = {
-  id: number;
+  id: string; // Firestore doc id
   title: string;
   category: "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
-  filename: string;        // 原始档名
-  description?: string;    // 图片说明
-  imageUrl?: string;       // 实际图片网址（Firebase 或外部 URL）
+  filename: string;
+  description?: string;
+  imageUrl?: string;
   showOnHome: boolean;
-  createdAt?: string;
+  createdAt?: string; // ISO 字串
 };
-
-const STORAGE_KEY = "jyc_admin_gallery_items";
-
-const mockAdminGallery: AdminGalleryItem[] = [
-  {
-    id: 1,
-    title: "无缝钢管机组主视图",
-    category: "设备展示",
-    filename: "line-main-01.jpg",
-    description: "无缝钢管机组整体外观，可用于首页主视觉。",
-    imageUrl: "/gallery/line-main-01.jpg",
-    showOnHome: true,
-  },
-  {
-    id: 2,
-    title: "轧钢机架与传动系统",
-    category: "设备展示",
-    filename: "mill-structure-01.jpg",
-    description: "轧机机架及传动结构特写，用于说明设备刚性。",
-    imageUrl: "/gallery/mill-structure-01.jpg",
-    showOnHome: true,
-  },
-  {
-    id: 3,
-    title: "生产线整体布局",
-    category: "生产线现场",
-    filename: "plant-layout-01.jpg",
-    description: "示意整条生产线的布置，可用在工程规划介绍。",
-    imageUrl: "/gallery/plant-layout-01.jpg",
-    showOnHome: false,
-  },
-  {
-    id: 4,
-    title: "项目 A 机组交机现场",
-    category: "工程案例",
-    filename: "project-a-01.jpg",
-    description: "某项目现场交机照片，可用在典型案例说明。",
-    imageUrl: "/gallery/project-a-01.jpg",
-    showOnHome: false,
-  },
-];
 
 export default function AdminGalleryPage() {
   const [items, setItems] = useState<AdminGalleryItem[]>([]);
@@ -68,42 +37,35 @@ export default function AdminGalleryPage() {
   const [uploadFileName, setUploadFileName] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadDescription, setUploadDescription] = useState("");
-  const [uploadImageUrl, setUploadImageUrl] = useState(""); // 选填：若没上传档案，可直接用外部 URL
+  const [uploadImageUrl, setUploadImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // 载入 / 初始化示意数据
+  // ✅ 讀取 Firestore 裡的 jycGallery
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const seeded = mockAdminGallery.map((x) => ({
-          ...x,
-          createdAt: new Date().toISOString(),
-        }));
-        setItems(seeded);
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-        return;
+    async function fetchItems() {
+      try {
+        const q = query(
+          collection(db, "jycGallery"),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+        const list: AdminGalleryItem[] = snap.docs.map((d) => {
+          const data = d.data() as Omit<AdminGalleryItem, "id">;
+          return {
+            id: d.id,
+            ...data,
+          };
+        });
+        setItems(list);
+      } catch (err) {
+        console.error("load gallery items from Firestore error", err);
       }
-
-      const list: AdminGalleryItem[] = JSON.parse(raw);
-      list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-      setItems(list);
-    } catch (err) {
-      console.error("load gallery items error", err);
-      setItems(mockAdminGallery);
     }
+
+    fetchItems();
   }, []);
 
-  const saveItems = (next: AdminGalleryItem[]) => {
-    setItems(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    }
-  };
-
-  // 上传（真实：若有档案则传 Firebase，没有档案但填了 URL 就直接用 URL）
+  // 上傳圖片 + 寫入 Firestore
   const handleUpload = async () => {
     if (!uploadCategory) {
       alert("请选择图片类别。");
@@ -121,7 +83,7 @@ export default function AdminGalleryPage() {
       let finalUrl = uploadImageUrl.trim() || "";
       let finalFilename = uploadFileName || "";
 
-      // 有选档案时：优先上传到 Firebase Storage
+      // 有檔案 → 優先上傳 Firebase Storage
       if (uploadFile) {
         const ext = uploadFile.name.split(".").pop() || "jpg";
         const storagePath = `jyc-gallery/${Date.now()}-${Math.random()
@@ -135,21 +97,28 @@ export default function AdminGalleryPage() {
 
       const now = new Date().toISOString();
 
-      const newItem: AdminGalleryItem = {
-        id: Date.now(),
+      const payload = {
         title: uploadTitle.trim() || finalFilename || "未命名图片",
         category: uploadCategory as AdminGalleryItem["category"],
         filename: finalFilename || "（外部图片）",
-        description: uploadDescription.trim() || undefined,
-        imageUrl: finalUrl || undefined,
+        description: uploadDescription.trim() || "",
+        imageUrl: finalUrl || "",
         showOnHome: true,
         createdAt: now,
       };
 
-      const next = [newItem, ...items];
-      saveItems(next);
+      // ✅ 寫入 Firestore
+      const docRef = await addDoc(collection(db, "jycGallery"), payload);
 
-      // 清空表单
+      const newItem: AdminGalleryItem = {
+        id: docRef.id,
+        ...payload,
+      };
+
+      // 更新本地 state，讓畫面立即顯示
+      setItems((prev) => [newItem, ...prev]);
+
+      // 清空表單
       setUploadTitle("");
       setUploadCategory("");
       setUploadFileName("");
@@ -164,20 +133,48 @@ export default function AdminGalleryPage() {
     }
   };
 
-  const handleToggleShowOnHome = (id: number) => {
-    const next = items.map((item) =>
-      item.id === id ? { ...item, showOnHome: !item.showOnHome } : item
+  // 切換「顯示在首頁輪播」
+  const handleToggleShowOnHome = async (id: string) => {
+    const target = items.find((i) => i.id === id);
+    if (!target) return;
+
+    const nextValue = !target.showOnHome;
+
+    // 先更新畫面
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id ? { ...i, showOnHome: nextValue } : i
+      )
     );
-    saveItems(next);
+
+    try {
+      await updateDoc(doc(db, "jycGallery", id), {
+        showOnHome: nextValue,
+      });
+    } catch (err) {
+      console.error("update showOnHome error", err);
+      alert("更新「显示在首页轮播」状态时发生错误。");
+    }
   };
 
-  const handleDelete = (id: number) => {
-    if (typeof window !== "undefined") {
-      if (!window.confirm("确定要删除这张图片（不会删除 Firebase 实体档案，仅删除后台记录）吗？"))
-        return;
+  // 刪除記錄（這裡先只刪 Firestore，不刪實體檔案）
+  const handleDelete = async (id: string) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm("确定要删除这张图片记录吗？（不会删除 Firebase 实体档案）")
+    ) {
+      return;
     }
-    const next = items.filter((item) => item.id !== id);
-    saveItems(next);
+
+    // 先更新畫面
+    setItems((prev) => prev.filter((i) => i.id !== id));
+
+    try {
+      await deleteDoc(doc(db, "jycGallery", id));
+    } catch (err) {
+      console.error("delete gallery item error", err);
+      alert("删除记录时发生错误，请稍后再试。");
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,9 +199,9 @@ export default function AdminGalleryPage() {
           </h1>
           <p className="jyc-section-intro">
             此页面用于管理网站上的设备照片、生产线现场与工程案例图片。
-            图片档案会上传到 Firebase Storage（nooko-hub 项目），而图片资讯
-            （标题、说明、类别、是否显示在首页轮播）暂存在浏览器 localStorage
-            中，方便 Demo 使用。正式上线时可改为串接 Firestore 或其他数据库。
+            图片档案会上传到 Firebase Storage，而图片资讯
+            （标题、说明、类别、是否显示在首页轮播）会写入 Firestore 的
+            <code> jycGallery </code> 集合，供首页与图片集页面共用。
           </p>
 
           {/* 上传区 */}
@@ -226,10 +223,9 @@ export default function AdminGalleryPage() {
                 marginBottom: 12,
               }}
             >
-              通常建议直接选择图片档案，上传后系统会将档案存到
-              Firebase Storage 的 <code>jyc-gallery/</code> 资料夹，并自动取得网址做为预览。
+              建议直接选择图片档案，上传后系统会将档案存到
+              Firebase Storage 的 <code>jyc-gallery/</code> 资料夹，并取得网址做为预览。
               若暂时没有档案，也可以只填「图片网址」作为外部图片来源。
-              （当两者都有时，以上传档案为主）
             </p>
 
             <div
@@ -344,8 +340,8 @@ export default function AdminGalleryPage() {
                 marginBottom: 12,
               }}
             >
-              下方为目前保存在 localStorage 的图片资料，正式环境可改由数据库读取，
-              并让前台首页 / Gallery 依据「显示在首页轮播」勾选状态来决定要不要显示。
+              下方为目前保存在 Firestore 中的图片资料，首页与图片集页面会依据
+              「显示在首页轮播」勾选状态决定是否显示。
             </p>
 
             {items.length === 0 ? (
@@ -359,7 +355,7 @@ export default function AdminGalleryPage() {
                   color: "#666",
                 }}
               >
-                目前尚未有任何图片资料。你可以透过上方上传区新增几笔测试数据。
+                目前尚未有任何图片资料。你可以透过上方上传区新增几笔资料。
               </div>
             ) : (
               <div
