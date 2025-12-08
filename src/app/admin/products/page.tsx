@@ -19,9 +19,12 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Firestore 中實際存的欄位
 type FirestoreProduct = {
-  category: string;
-  name: string;
-  brief: string;
+  category: string;     // 中文分類
+  categoryEn?: string;  // 英文分類（目前可選）
+  name: string;         // 中文名稱
+  nameEn?: string;      // 英文名稱
+  brief: string;        // 中文簡介
+  briefEn?: string;     // 英文簡介
   enabled: boolean;
   imageUrl?: string;
 };
@@ -34,23 +37,35 @@ type AdminProduct = FirestoreProduct & {
 const INITIAL_PRODUCTS: FirestoreProduct[] = [
   {
     category: "无缝钢管生产线",
+    categoryEn: "Seamless Pipe Mill Lines",
     name: "热轧无缝钢管生产机组",
+    nameEn: "Hot-rolled Seamless Pipe Mill Line",
     brief:
       "覆盖加热、穿孔、轧管、定径 / 减径、冷床、矫直、锯切等工序的整线机组，用于生产 φ50–φ325 mm 范围内的热轧无缝钢管，结构扎实、运行稳定。",
+    briefEn:
+      "Turn-key hot rolling lines covering billet heating, piercing, pipe rolling, sizing / reducing, cooling beds, straightening and cutting for seamless pipes with diameters approx. φ50–φ325 mm.",
     enabled: true,
   },
   {
     category: "穿孔与轧管机组",
+    categoryEn: "Piercing & Pipe Rolling Mills",
     name: "穿孔机与轧管机组设备",
+    nameEn: "Piercing & Pipe Rolling Equipment",
     brief:
       "包括曼内斯曼穿孔机、卧式锥形辊穿孔机、自动 / Accu-Roll 轧管机以及自研导板式二辊限动芯棒轧管机，适用于生产高尺寸精度、大延伸系数、壁厚均匀的空心坯与钢管。",
+    briefEn:
+      "Mannesmann piercing mills, horizontal cone-type piercing mills, automatic / Accu-Roll mills and proprietary two-roll mandrel mills with guide plates, designed for high dimensional accuracy, high elongation and uniform wall thickness.",
     enabled: true,
   },
   {
     category: "精整与辅助设备",
+    categoryEn: "Finishing & Auxiliary Equipment",
     name: "定径减径机、矫直机及冷床等精整设备",
+    nameEn: "Sizing / Reducing Mills, Straighteners & Cooling Beds",
     brief:
       "提供二辊 / 三辊定径减径机、六辊 / 七辊矫直机、链步梁式冷床、热定心机、冷拔机及相关输送辅助设备，用于 φ10–φ325 mm 钢管的定径、矫直、冷却与后续精整，提高成品直线度与表面质量。",
+    briefEn:
+      "Two-roll / three-roll sizing and reducing mills, six-roll / seven-roll straighteners, chain and walking-beam cooling beds, hot centering machines, cold drawing machines and conveying equipment for pipes approx. φ10–φ325 mm.",
     enabled: true,
   },
 ];
@@ -64,8 +79,11 @@ export default function AdminProductsPage() {
 
   // 表单字段
   const [formCategory, setFormCategory] = useState("");
+  const [formCategoryEn, setFormCategoryEn] = useState("");
   const [formName, setFormName] = useState("");
+  const [formNameEn, setFormNameEn] = useState("");
   const [formBrief, setFormBrief] = useState("");
+  const [formBriefEn, setFormBriefEn] = useState("");
   const [formEnabled, setFormEnabled] = useState(true);
   const [formImageUrl, setFormImageUrl] = useState<string | undefined>(
     undefined
@@ -113,8 +131,11 @@ export default function AdminProductsPage() {
   const resetForm = () => {
     setEditingId(null);
     setFormCategory("");
+    setFormCategoryEn("");
     setFormName("");
+    setFormNameEn("");
     setFormBrief("");
+    setFormBriefEn("");
     setFormEnabled(true);
     setFormImageUrl(undefined);
     setUploadFile(null);
@@ -124,8 +145,11 @@ export default function AdminProductsPage() {
   const handleEditClick = (p: AdminProduct) => {
     setEditingId(p.id);
     setFormCategory(p.category);
+    setFormCategoryEn(p.categoryEn || "");
     setFormName(p.name);
+    setFormNameEn(p.nameEn || "");
     setFormBrief(p.brief);
+    setFormBriefEn(p.briefEn || "");
     setFormEnabled(p.enabled);
     setFormImageUrl(p.imageUrl);
     setUploadFile(null);
@@ -181,8 +205,11 @@ export default function AdminProductsPage() {
 
       const payload: FirestoreProduct = {
         category: formCategory.trim(),
+        categoryEn: formCategoryEn.trim() || undefined,
         name: formName.trim(),
+        nameEn: formNameEn.trim() || undefined,
         brief: formBrief.trim(),
+        briefEn: formBriefEn.trim() || undefined,
         enabled: formEnabled,
         imageUrl: finalImageUrl,
       };
@@ -190,13 +217,13 @@ export default function AdminProductsPage() {
       if (editingId) {
         // 更新
         const docRef = doc(db, PRODUCTS_COLLECTION, editingId);
-        await updateDoc(docRef, payload);
+        await updateDoc(docRef, payload as any);
         setProducts((prev) =>
           prev.map((p) => (p.id === editingId ? { id: editingId, ...payload } : p))
         );
       } else {
         // 新增
-        const docRef = await addDoc(colRef, payload);
+        const docRef = await addDoc(colRef, payload as any);
         const created: AdminProduct = { id: docRef.id, ...payload };
         setProducts((prev) => [created, ...prev]);
       }
@@ -263,10 +290,11 @@ export default function AdminProductsPage() {
                 maxWidth: 640,
               }}
             >
+              {/* 分類 & 名稱（中） */}
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <input
                   type="text"
-                  placeholder="产品分类（例如：无缝钢管生产线 / 穿孔与轧管机组）"
+                  placeholder="产品分类（中文，例如：无缝钢管生产线 / 穿孔与轧管机组）"
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
                   style={{
@@ -280,7 +308,7 @@ export default function AdminProductsPage() {
                 />
                 <input
                   type="text"
-                  placeholder="产品名称（例如：热轧无缝钢管生产机组）"
+                  placeholder="产品名称（中文，例如：热轧无缝钢管生产机组）"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   style={{
@@ -294,11 +322,57 @@ export default function AdminProductsPage() {
                 />
               </div>
 
+              {/* 分類 & 名稱（EN） */}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <input
+                  type="text"
+                  placeholder="Product category (English, optional)"
+                  value={formCategoryEn}
+                  onChange={(e) => setFormCategoryEn(e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: 200,
+                    padding: "8px 10px",
+                    borderRadius: 4,
+                    border: "1px solid #ccc",
+                    fontSize: 13,
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Product name (English, optional)"
+                  value={formNameEn}
+                  onChange={(e) => setFormNameEn(e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: 200,
+                    padding: "8px 10px",
+                    borderRadius: 4,
+                    border: "1px solid #ccc",
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+
               <textarea
-                placeholder="产品简介（将显示在前台产品卡片中，可说明适用规格、工艺范围与设备特点）"
+                placeholder="产品简介（中文，将显示在前台产品卡片中，可说明适用规格、工艺范围与设备特点）"
                 rows={3}
                 value={formBrief}
                 onChange={(e) => setFormBrief(e.target.value)}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  fontSize: 13,
+                  resize: "vertical",
+                }}
+              />
+
+              <textarea
+                placeholder="Product brief (English, optional, used on EN pages)"
+                rows={3}
+                value={formBriefEn}
+                onChange={(e) => setFormBriefEn(e.target.value)}
                 style={{
                   padding: "8px 10px",
                   borderRadius: 4,
@@ -461,9 +535,21 @@ export default function AdminProductsPage() {
                       )}
                       <div>
                         <strong>{p.name}</strong>
-                        <span style={{ marginLeft: 8, color: "#777" }}>
-                          （{p.category}）
-                        </span>
+                        {p.nameEn && (
+                          <span
+                            style={{
+                              marginLeft: 8,
+                              fontSize: 12,
+                              color: "#777",
+                            }}
+                          >
+                            / {p.nameEn}
+                          </span>
+                        )}
+                        <div style={{ fontSize: 12, color: "#777" }}>
+                          {p.category}
+                          {p.categoryEn ? `（${p.categoryEn}）` : null}
+                        </div>
                       </div>
                     </div>
                     <span
@@ -486,6 +572,18 @@ export default function AdminProductsPage() {
                   >
                     {p.brief}
                   </p>
+                  {p.briefEn && (
+                    <p
+                      style={{
+                        margin: "4px 0 0 0",
+                        fontSize: 12,
+                        color: "#777",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      EN：{p.briefEn}
+                    </p>
+                  )}
 
                   <div
                     style={{

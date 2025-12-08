@@ -17,12 +17,16 @@ import {
   query,
 } from "firebase/firestore";
 
+type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
+
 type AdminGalleryItem = {
   id: string; // Firestore doc id
-  title: string;
-  category: "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
+  title: string;                // 中文標題
+  titleEn?: string;             // 英文標題（可選）
+  category: GalleryCategory;
   filename: string;
-  description?: string;
+  description?: string;         // 中文說明
+  descriptionEn?: string;       // 英文說明（可選）
   imageUrl?: string;
   showOnHome: boolean;
   createdAt?: string; // ISO 字串
@@ -32,11 +36,13 @@ export default function AdminGalleryPage() {
   const [items, setItems] = useState<AdminGalleryItem[]>([]);
 
   const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadTitleEn, setUploadTitleEn] = useState("");
   const [uploadCategory, setUploadCategory] =
-    useState<AdminGalleryItem["category"] | "">("");
+    useState<GalleryCategory | "">("");
   const [uploadFileName, setUploadFileName] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadDescription, setUploadDescription] = useState("");
+  const [uploadDescriptionEn, setUploadDescriptionEn] = useState("");
   const [uploadImageUrl, setUploadImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -99,9 +105,11 @@ export default function AdminGalleryPage() {
 
       const payload = {
         title: uploadTitle.trim() || finalFilename || "未命名图片",
-        category: uploadCategory as AdminGalleryItem["category"],
+        titleEn: uploadTitleEn.trim() || "",
+        category: uploadCategory as GalleryCategory,
         filename: finalFilename || "（外部图片）",
         description: uploadDescription.trim() || "",
+        descriptionEn: uploadDescriptionEn.trim() || "",
         imageUrl: finalUrl || "",
         showOnHome: true,
         createdAt: now,
@@ -120,10 +128,12 @@ export default function AdminGalleryPage() {
 
       // 清空表單
       setUploadTitle("");
+      setUploadTitleEn("");
       setUploadCategory("");
       setUploadFileName("");
       setUploadFile(null);
       setUploadDescription("");
+      setUploadDescriptionEn("");
       setUploadImageUrl("");
     } catch (err) {
       console.error("upload error", err);
@@ -198,7 +208,7 @@ export default function AdminGalleryPage() {
           <p className="jyc-section-intro">
             此页面用于管理网站上的设备照片、生产线现场与工程案例图片。
             图片档案会上传到 Firebase Storage，而图片资讯
-            （标题、说明、类别、是否显示在首页轮播）会写入 Firestore 的
+            （中英文标题、说明、类别、是否显示在首页轮播）会写入 Firestore 的
             <code> jyc_gallery </code> 集合，供首页与图片集页面共用。
           </p>
 
@@ -239,7 +249,7 @@ export default function AdminGalleryPage() {
               <input type="file" onChange={handleFileChange} />
               <input
                 type="text"
-                placeholder="图片标题（选填）"
+                placeholder="图片标题（中文，选填）"
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
                 style={{
@@ -254,9 +264,7 @@ export default function AdminGalleryPage() {
               <select
                 value={uploadCategory}
                 onChange={(e) =>
-                  setUploadCategory(
-                    e.target.value as AdminGalleryItem["category"] | ""
-                  )
+                  setUploadCategory(e.target.value as GalleryCategory | "")
                 }
                 style={{
                   padding: "6px 10px",
@@ -271,6 +279,28 @@ export default function AdminGalleryPage() {
                 <option value="工程案例">工程案例</option>
                 <option value="展会与交流">展会与交流</option>
               </select>
+            </div>
+
+            {/* 英文標題 */}
+            <div
+              style={{
+                marginBottom: 8,
+                fontSize: 13,
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Image title (English, optional)"
+                value={uploadTitleEn}
+                onChange={(e) => setUploadTitleEn(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  fontSize: 13,
+                }}
+              />
             </div>
 
             <div
@@ -296,9 +326,23 @@ export default function AdminGalleryPage() {
                 }}
               />
               <textarea
-                placeholder="图片说明 / Description（选填，会显示在卡片标题下方）"
+                placeholder="图片说明 / Description（中文，选填，会显示在卡片标题下方）"
                 value={uploadDescription}
                 onChange={(e) => setUploadDescription(e.target.value)}
+                rows={2}
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  fontSize: 13,
+                  resize: "vertical",
+                }}
+              />
+              <textarea
+                placeholder="Image description (English, optional)"
+                value={uploadDescriptionEn}
+                onChange={(e) => setUploadDescriptionEn(e.target.value)}
                 rows={2}
                 style={{
                   width: "100%",
@@ -404,20 +448,43 @@ export default function AdminGalleryPage() {
                       </span>
                     </div>
 
-                    <div style={{ marginBottom: 4, fontWeight: 600 }}>
+                    <div style={{ marginBottom: 2, fontWeight: 600 }}>
                       {item.title}
                     </div>
+                    {item.titleEn && (
+                      <div
+                        style={{
+                          marginBottom: 4,
+                          fontSize: 12,
+                          color: "#777",
+                        }}
+                      >
+                        EN：{item.titleEn}
+                      </div>
+                    )}
 
                     {item.description && (
                       <div
                         style={{
-                          marginBottom: 4,
+                          marginBottom: 2,
                           color: "#555",
                           fontSize: 12,
                           lineHeight: 1.5,
                         }}
                       >
                         {item.description}
+                      </div>
+                    )}
+                    {item.descriptionEn && (
+                      <div
+                        style={{
+                          marginBottom: 4,
+                          color: "#777",
+                          fontSize: 12,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        EN：{item.descriptionEn}
                       </div>
                     )}
 

@@ -4,112 +4,58 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
-type Product = {
-  model: string;
-  name: string;
-  brief: string;
-  features: string[];
+type ProductDoc = {
+  id: string;          // Firestore doc id
+  category: string;    // 产品分类（穿孔机、轧钢生产线设备…）
+  name: string;        // 产品名称
+  brief: string;       // 简短简介
+  heroImageUrl?: string; // 列表 / 首页用的主图
+  enabled: boolean;    // 是否在前台显示
+  createdAt?: string;  // 排序用（ISO 字串，可选）
 };
-
-type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
-
-type AdminGalleryItem = {
-  id: number;
-  title: string;
-  category: GalleryCategory;
-  filename: string;
-  description?: string;
-  imageUrl?: string;
-  showOnHome: boolean;
-  createdAt?: string;
-};
-
-const STORAGE_KEY = "jyc_admin_gallery_items";
-
-/** 产品类别 → 对应图库类别（先简单用类别来配图） */
-const PRODUCT_CATEGORY_MAP: Record<string, GalleryCategory> = {
-  无缝钢管机组: "设备展示",
-  轧钢设备: "设备展示",
-  精整线: "生产线现场",
-};
-
-const products: Product[] = [
-  {
-    model: "无缝钢管机组",
-    name: "无缝钢管生产机组",
-    brief:
-      "用于生产各类规格无缝钢管的成套机组设备，结构扎实、运行稳定。",
-    features: [
-      "可依钢管规格与产量需求客制机组配置",
-      "适用于多种钢级与应用领域",
-      "整线考虑加热、穿孔、轧制、冷却等工艺环节",
-    ],
-  },
-  {
-    model: "轧钢设备",
-    name: "轧钢生产线设备",
-    brief:
-      "适用于多种钢材成型的轧机与配套设备，可依工艺需求规划整线。",
-    features: [
-      "支持不同机架形式与轧制方式",
-      "可与切割、冷床、输送等设备整合",
-      "适合热轧、定径等多种工段应用",
-    ],
-  },
-  {
-    model: "精整线",
-    name: "精整与后处理设备",
-    brief:
-      "配合无缝钢管与轧制产品的后段精整与检测，提升产品质量。",
-    features: [
-      "可配置矫直、探伤、测长、打包等单元",
-      "依据客户工艺需求进行模块化组合",
-      "提升出厂产品一致性与可追溯性",
-    ],
-  },
-];
 
 export default function ProductsPage() {
-  const [imageMap, setImageMap] = useState<Record<string, string | undefined>>(
-    {}
-  );
+  const [products, setProducts] = useState<ProductDoc[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 从后台 Gallery 取图，当成产品卡片背景（图片本体在 Firebase，URL 暂存在 localStorage）
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-
-      const list: AdminGalleryItem[] = JSON.parse(raw);
-      if (!Array.isArray(list) || list.length === 0) return;
-
-      // 按时间新到旧排一下，优先用最近新增的图片
-      const sorted = [...list].sort((a, b) =>
-        (b.createdAt || "").localeCompare(a.createdAt || "")
-      );
-
-      const map: Record<string, string | undefined> = {};
-
-      products.forEach((p) => {
-        const cat = PRODUCT_CATEGORY_MAP[p.model];
-        if (!cat) return;
-
-        const found = sorted.find(
-          (item) => item.category === cat && item.imageUrl
+    async function fetchProducts() {
+      try {
+        // 按 createdAt 新到旧排，集合名和后端保持一致：jyc_products
+        const q = query(
+          collection(db, "jyc_products"),
+          orderBy("createdAt", "desc")
         );
+        const snap = await getDocs(q);
 
-        if (found?.imageUrl) {
-          map[p.model] = found.imageUrl;
-        }
-      });
+        const list: ProductDoc[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            category: data.category || "",
+            name: data.name || "",
+            brief: data.brief || "",
+            heroImageUrl: data.heroImageUrl || data.imageUrl || "",
+            enabled: data.enabled !== false, // 没填就当作 true
+            createdAt: data.createdAt || "",
+          };
+        });
 
-      setImageMap(map);
-    } catch (err) {
-      console.error("load gallery items for products error", err);
+        // 只显示启用（前台显示）的产品
+        const enabled = list.filter((p) => p.enabled);
+
+        setProducts(enabled);
+      } catch (err) {
+        console.error("load products from Firestore error", err);
+      } finally {
+        setLoading(false);
+      }
     }
+
+    fetchProducts();
   }, []);
 
   return (
@@ -123,28 +69,36 @@ export default function ProductsPage() {
             产品与设备一览
           </h1>
           <p className="jyc-section-intro">
-            以下为山西太矿钢管设备有限公司主要产品方向，实际机组配置与详细技术规格可依现场工艺、
-            产量与设备布局需求客制，最终以正式技术方案与报价文件为准。
+            以下为山西太矿钢管设备有限公司目前已上线的产品资讯。实际机组配置与详细技术规格可依据现场工艺、
+            产量与设备布局需求进行客制，最终以正式技术方案与报价文件为准。
           </p>
 
-          <div className="jyc-card-grid">
-            {products.map((p) => {
-              const bgUrl = imageMap[p.model];
-
-              return (
-                <article key={p.model} className="jyc-card">
+          {loading ? (
+            <p style={{ fontSize: 14, color: "#777" }}>加载中…</p>
+          ) : products.length === 0 ? (
+            <p style={{ fontSize: 14, color: "#777" }}>
+              目前尚未有任何已发布的产品。请先在「产品资讯管理」后台新增产品并勾选「在前台显示此产品」。
+            </p>
+          ) : (
+            <div className="jyc-card-grid">
+              {products.map((p) => (
+                <article key={p.id} className="jyc-card">
                   <div
                     className="jyc-card-image"
                     style={{
                       backgroundColor: "#f0f0f0",
-                      backgroundImage: bgUrl ? `url(${bgUrl})` : undefined,
+                      backgroundImage: p.heroImageUrl
+                        ? `url(${p.heroImageUrl})`
+                        : undefined,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }}
                   />
+
                   <h2 style={{ fontSize: "18px", marginBottom: "4px" }}>
                     {p.name}
                   </h2>
+
                   <div
                     style={{
                       fontSize: "13px",
@@ -152,39 +106,27 @@ export default function ProductsPage() {
                       marginBottom: "8px",
                     }}
                   >
-                    类别：{p.model}
+                    类别：{p.category}
                   </div>
+
                   <p
                     style={{
                       fontSize: "14px",
                       color: "#555",
                       marginBottom: "10px",
+                      whiteSpace: "pre-line", // 如果简介有分行，可以正确换行
                     }}
                   >
                     {p.brief}
                   </p>
 
-                  <ul
-                    style={{
-                      paddingLeft: "18px",
-                      margin: "0 0 12px 0",
-                      fontSize: "13px",
-                      color: "#555",
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {p.features.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-
                   <button type="button" className="jyc-card-btn">
                     询问此类设备
                   </button>
                 </article>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
