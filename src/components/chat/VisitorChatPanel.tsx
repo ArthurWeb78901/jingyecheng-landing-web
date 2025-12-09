@@ -143,32 +143,23 @@ export function VisitorChatPanel(props: Props) {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || !sessionId) return;
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  const text = input.trim();
+  if (!text || !sessionId) return;
 
-    setInput("");
+  setInput("");
 
-    // 1) 寫入使用者訊息（未讀）
-    void saveChatMessage("user", text, false);
+  // 訪客訊息寫入 Firestore（未讀）
+  void saveChatMessage("user", text, false);
 
-    // 2) 管理員在線：只在本 session 的「第一則」訪客訊息時自動回一次
-    if (adminOnline) {
-      if (typeof window !== "undefined") {
-        const key = `jyc_chat_first_ack_${sessionId}`;
-        const already = window.localStorage.getItem(key) === "true";
-        if (!already) {
-          void saveChatMessage("bot", texts.adminReply, true);
-          window.localStorage.setItem(key, "true");
-        }
-      }
-      return;
-    }
-
-    // 3) 管理員不在線：跑離線腳本 + FAQ
+  // 若客服「不在線」，才啟動離線腳本 + FAQ
+  if (!adminOnline) {
     handleOfflineFlow(text);
-  };
+  }
+  // 若客服在線：不再自動回覆任何文字，完全交給真人在後台回覆
+};
+
 
   const handleOfflineFlow = (userText: string) => {
     if (!sessionId) return;
