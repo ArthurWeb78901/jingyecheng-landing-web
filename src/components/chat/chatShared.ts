@@ -1,56 +1,35 @@
 // src/components/chat/chatShared.ts
 "use client";
 
-import { db } from "@/lib/firebase";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-
-/* ========= Types ========= */
-
-export type Message = {
-  id: number;
-  from: "user" | "bot";
-  text: string;
+export type ChatTexts = {
+  bubbleLabel: string;
+  adminBubbleLabel: string;
+  title: string;
+  adminTitle: string;
+  statusOnline: string;
+  statusOffline: string;
+  welcomeOnline: string;
+  welcomeOffline: string;
+  adminReply: string;
+  askName: string;
+  askCompany: (name: string) => string;
+  askContact: string;
+  askNeed: string;
+  afterSaved: string;
+  afterDone: string;
+  inputPlaceholder: string;
+  sendLabel: string;
+  faqPrice: string;
+  faqDelivery: string;
+  faqService: string;
+  faqUpgrade: string;
+  adminEmpty: string;
+  adminHint: string;
+  adminInputPlaceholder: string;
 };
 
-export type InfoStage =
-  | "none"
-  | "ask-name"
-  | "ask-company"
-  | "ask-contact"
-  | "ask-need"
-  | "done";
-
-export type LeadDraft = {
-  name: string;
-  company: string;
-  contact: string;
-  need: string;
-};
-
-export type RemoteMessage = {
-  id: string;
-  sessionId: string;
-  from: "user" | "bot";
-  text: string;
-  createdAt: number;
-  read: boolean;
-};
-
-export type AdminSession = {
-  sessionId: string;
-  lastText: string;
-  lastAt: number;
-  unreadCount: number;
-};
-
-let _messageId = 1;
-export function nextMessageId() {
-  return _messageId++;
-}
-
-/* ========= 文案 ========= */
-
-export const zhTexts = {
+/** 文案表：中文 */
+export const zhTexts: ChatTexts = {
   bubbleLabel: "在线助手",
   adminBubbleLabel: "客服讯息",
   title: "在线咨询",
@@ -83,13 +62,12 @@ export const zhTexts = {
   faqUpgrade:
     "若是现有产线改造或升级，我们通常会先了解现有设备型号与工况，再评估局部改造或整线优化的方案与预算。",
   adminEmpty: "目前尚无访客留言。",
-  adminHint: "您可以在下方输入回复内容，讯息会即时发送给该访客并显示在对方网页上。",
+  adminHint:
+    "您可以在下方输入回复内容，讯息会即时发送给该访客并显示在对方网页上。",
   adminInputPlaceholder: "请输入要回复给访客的内容…",
-  liveTakeoverNotice: "客服已上线，目前由专人实时为您服务。",
 };
 
-export type ChatTexts = typeof zhTexts;
-
+/** 文案表：英文 */
 export const enTexts: ChatTexts = {
   bubbleLabel: "Online Assistant",
   adminBubbleLabel: "Inbox",
@@ -128,12 +106,21 @@ export const enTexts: ChatTexts = {
   adminHint:
     "Type your reply below. Messages will be sent to the visitor in real time and displayed on their page.",
   adminInputPlaceholder: "Type your reply to the visitor…",
-  liveTakeoverNotice:
-    "A live operator has taken over this chat and will reply to you in real time.",
 };
 
-/* ========= FAQ & helpers ========= */
+/** 给每个访客一个 sessionId */
+export function getOrCreateSessionId(): string {
+  if (typeof window === "undefined") return "";
+  const KEY = "jyc_chat_session_id";
+  let id = window.localStorage.getItem(KEY);
+  if (!id) {
+    id = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    window.localStorage.setItem(KEY, id);
+  }
+  return id;
+}
 
+/** FAQ 关键字应答 */
 export function getFaqAnswer(text: string, isEnglish: boolean): string | null {
   const t = text.toLowerCase();
   const txt = isEnglish ? enTexts : zhTexts;
@@ -182,14 +169,32 @@ export function getFaqAnswer(text: string, isEnglish: boolean): string | null {
   return null;
 }
 
-// 离线线索存到 localStorage
+/** Admin / Visitor 共用：CRM 线索 shape */
+export type LeadDraft = {
+  name: string;
+  company: string;
+  contact: string;
+  need: string;
+};
+
+type StoredLead = {
+  id: number;
+  name: string;
+  company: string;
+  contact: string;
+  need: string;
+  createdAt: string;
+  source?: string;
+};
+
+/** 离线脚本收集的线索写入 localStorage */
 export function saveLeadToLocalStorage(lead: LeadDraft) {
   if (typeof window === "undefined") return;
 
   try {
     const key = "jyc_crm_leads";
     const raw = window.localStorage.getItem(key);
-    const list: any[] = raw ? JSON.parse(raw) : [];
+    const list: StoredLead[] = raw ? JSON.parse(raw) : [];
 
     const exists = list.some(
       (item) =>
@@ -200,11 +205,14 @@ export function saveLeadToLocalStorage(lead: LeadDraft) {
     );
     if (exists) return;
 
-    const newLead = {
+    const newLead: StoredLead = {
       id: Date.now(),
-      ...lead,
+      name: lead.name || "",
+      company: lead.company || "",
+      contact: lead.contact || "",
+      need: lead.need || "",
       createdAt: new Date().toISOString(),
-      source: "chat-bubble",
+      source: "chat-bubble", // 离线自动收集
     };
 
     list.push(newLead);
@@ -214,45 +222,53 @@ export function saveLeadToLocalStorage(lead: LeadDraft) {
   }
 }
 
-// 访客 sessionId
-export function getOrCreateSessionId() {
-  if (typeof window === "undefined") return "";
-  const KEY = "jyc_chat_session_id";
-  let id = window.localStorage.getItem(KEY);
-  if (!id) {
-    id = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    window.localStorage.setItem(KEY, id);
-  }
-  return id;
-}
+/** Admin 结束会话时，用来归档整段在线聊天 */
+export type ArchiveMessage = {
+  from: "user" | "bot";
+  text: string;
+  createdAt: number;
+};
 
-// Firestore 写入讯息
-export async function addChatMessage(
-  from: "user" | "bot",
-  text: string,
+export function archiveChatSessionToLocalStorage(
   sessionId: string,
-  pathname: string,
-  read: boolean
+  msgs: ArchiveMessage[],
+  isEnglish: boolean
 ) {
-  if (!sessionId) return;
-  try {
-    await addDoc(collection(db, "jyc_chat_messages"), {
-      sessionId,
-      from,
-      text,
-      pathname,
-      createdAt: serverTimestamp(),
-      read,
-    });
-  } catch (err) {
-    console.error("addChatMessage error", err);
-  }
-}
+  if (typeof window === "undefined") return;
+  if (!msgs || msgs.length === 0) return;
 
-// localStorage key helpers
-export function adminAckKey(sessionId: string) {
-  return `jyc_chat_admin_ack_${sessionId}`;
-}
-export function welcomeKey(sessionId: string, isEnglish: boolean) {
-  return `jyc_chat_welcome_sent_${sessionId}_${isEnglish ? "en" : "zh"}`;
+  try {
+    const key = "jyc_crm_leads";
+    const raw = window.localStorage.getItem(key);
+    const list: StoredLead[] = raw ? JSON.parse(raw) : [];
+
+    const userMsgs = msgs.filter((m) => m.from === "user");
+    const transcript = userMsgs.map((m) => m.text).join("\n");
+
+    const firstTime =
+      msgs[0]?.createdAt && !Number.isNaN(msgs[0].createdAt)
+        ? new Date(msgs[0].createdAt)
+        : new Date();
+
+    const newLead: StoredLead = {
+      id: Date.now(),
+      name:
+        (isEnglish ? "Visitor " : "访客 ") +
+        (sessionId ? sessionId.slice(-4) : ""),
+      company: "",
+      contact: "",
+      need:
+        transcript ||
+        (isEnglish ? "No conversation content." : "无会话内容。"),
+      createdAt: firstTime.toISOString(),
+      source: isEnglish
+        ? "online-chat-archive"
+        : "在线助手（人工接管会话归档）",
+    };
+
+    list.push(newLead);
+    window.localStorage.setItem(key, JSON.stringify(list));
+  } catch (err) {
+    console.error("archiveChatSessionToLocalStorage error", err);
+  }
 }

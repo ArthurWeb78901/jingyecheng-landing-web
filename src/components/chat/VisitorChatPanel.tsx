@@ -2,26 +2,36 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  ChatTexts,
-  InfoStage,
-  LeadDraft,
-  Message,
-  getFaqAnswer,
-  saveLeadToLocalStorage,
-  addChatMessage,
-  adminAckKey,
-  welcomeKey,
-  nextMessageId,
-} from "./chatShared";
 import { db } from "@/lib/firebase";
 import {
+  addDoc,
   collection,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   where,
 } from "firebase/firestore";
+import {
+  ChatTexts,
+  getFaqAnswer,
+  LeadDraft,
+  saveLeadToLocalStorage,
+} from "./chatShared";
+
+type Message = {
+  id: string;
+  from: "user" | "bot";
+  text: string;
+};
+
+type InfoStage =
+  | "none"
+  | "ask-name"
+  | "ask-company"
+  | "ask-contact"
+  | "ask-need"
+  | "done";
 
 type Props = {
   texts: ChatTexts;
@@ -29,19 +39,21 @@ type Props = {
   pathname: string;
   adminOnline: boolean;
   sessionId: string;
-  initialMessage: string;
+  initialMessage?: string;
   onConsumeInitialMessage: () => void;
 };
 
-export function VisitorChatPanel({
-  texts,
-  isEnglish,
-  pathname,
-  adminOnline,
-  sessionId,
-  initialMessage,
-  onConsumeInitialMessage,
-}: Props) {
+export function VisitorChatPanel(props: Props) {
+  const {
+    texts,
+    isEnglish,
+    pathname,
+    adminOnline,
+    sessionId,
+    initialMessage,
+    onConsumeInitialMessage,
+  } = props;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [infoStage, setInfoStage] = useState<InfoStage>("none");
@@ -51,26 +63,15 @@ export function VisitorChatPanel({
     contact: "",
     need: "",
   });
-  const [adminAckSent, setAdminAckSent] = useState(false);
 
-  // 初次载入预填文字（从其他按钮跳转过来）
+  // 初次帶入 prefill
   useEffect(() => {
-    if (initialMessage) {
-      setInput(initialMessage);
-      onConsumeInitialMessage();
-    }
+    if (!initialMessage) return;
+    setInput(initialMessage);
+    onConsumeInitialMessage();
   }, [initialMessage, onConsumeInitialMessage]);
 
-  // 读取是否已发过自动确认
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!sessionId) return;
-    const key = adminAckKey(sessionId);
-    const sent = window.localStorage.getItem(key) === "true";
-    setAdminAckSent(sent);
-  }, [sessionId]);
-
-  // 订阅当前 session 所有讯息
+  // 訂閱本 session 的所有訊息
   useEffect(() => {
     if (!sessionId) return;
 
@@ -85,9 +86,10 @@ export function VisitorChatPanel({
       (snap) => {
         const list: Message[] = snap.docs.map((d) => {
           const data = d.data() as any;
-          const from: "user" | "bot" = data.from === "user" ? "user" : "bot";
+          const from: "user" | "bot" =
+            data.from === "user" ? "user" : "bot";
           return {
-            id: nextMessageId(),
+            id: d.id,
             from,
             text: data.text || "",
           };
@@ -102,20 +104,44 @@ export function VisitorChatPanel({
     return () => unsub();
   }, [sessionId]);
 
-  // 每个 session / 语言只发一次欢迎讯息
+  // 首次進入會話：寫入歡迎訊息（每個 session + 語系只一次）
   useEffect(() => {
     if (!sessionId) return;
     if (typeof window === "undefined") return;
 
-    const key = welcomeKey(sessionId, isEnglish);
+    const key = `jyc_chat_welcome_sent_${sessionId}_${
+      isEnglish ? "en" : "zh"
+    }`;
     const sent = window.localStorage.getItem(key) === "true";
     const welcome = adminOnline ? texts.welcomeOnline : texts.welcomeOffline;
 
     if (!sent) {
-      void addChatMessage("bot", welcome, sessionId, pathname, true);
+      void saveChatMessage("bot", welcome, true);
       window.localStorage.setItem(key, "true");
     }
-  }, [adminOnline, sessionId, isEnglish, pathname, texts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, adminOnline, isEnglish]);
+
+  /** 寫入 Firestore 一則訊息 */
+  async function saveChatMessage(
+    from: "user" | "bot",
+    text: string,
+    read: boolean
+  ) {
+    if (!sessionId) return;
+    try {
+      await addDoc(collection(db, "jyc_chat_messages"), {
+        sessionId,
+        from,
+        text,
+        pathname,
+        createdAt: serverTimestamp(),
+        read,
+      });
+    } catch (err) {
+      console.error("saveChatMessage error", err);
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,22 +149,24 @@ export function VisitorChatPanel({
     if (!text || !sessionId) return;
 
     setInput("");
-    // 访客讯息
-    void addChatMessage("user", text, sessionId, pathname, false);
 
-    // 在线：只在第一次自动回一条确认，后面完全由真人回
+    // 1) 寫入使用者訊息（未讀）
+    void saveChatMessage("user", text, false);
+
+    // 2) 管理員在線：只在本 session 的「第一則」訪客訊息時自動回一次
     if (adminOnline) {
-      if (!adminAckSent) {
-        void addChatMessage("bot", texts.adminReply, sessionId, pathname, true);
-        setAdminAckSent(true);
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(adminAckKey(sessionId), "true");
+      if (typeof window !== "undefined") {
+        const key = `jyc_chat_first_ack_${sessionId}`;
+        const already = window.localStorage.getItem(key) === "true";
+        if (!already) {
+          void saveChatMessage("bot", texts.adminReply, true);
+          window.localStorage.setItem(key, "true");
         }
       }
       return;
     }
 
-    // 离线：自动问答
+    // 3) 管理員不在線：跑離線腳本 + FAQ
     handleOfflineFlow(text);
   };
 
@@ -152,21 +180,25 @@ export function VisitorChatPanel({
         replies.push(texts.askName);
         setInfoStage("ask-name");
         break;
+
       case "ask-name":
         setLeadDraft((prev) => ({ ...prev, name: userText }));
         replies.push(texts.askCompany(userText));
         setInfoStage("ask-company");
         break;
+
       case "ask-company":
         setLeadDraft((prev) => ({ ...prev, company: userText }));
         replies.push(texts.askContact);
         setInfoStage("ask-contact");
         break;
+
       case "ask-contact":
         setLeadDraft((prev) => ({ ...prev, contact: userText }));
         replies.push(texts.askNeed);
         setInfoStage("ask-need");
         break;
+
       case "ask-need":
         setLeadDraft((prev) => {
           const full: LeadDraft = { ...prev, need: userText };
@@ -176,9 +208,11 @@ export function VisitorChatPanel({
         replies.push(texts.afterSaved);
         setInfoStage("done");
         break;
+
       case "done":
         replies.push(texts.afterDone);
         break;
+
       default:
         break;
     }
@@ -186,8 +220,10 @@ export function VisitorChatPanel({
     const faq = getFaqAnswer(userText, isEnglish);
     if (faq) replies.push(faq);
 
+    if (replies.length === 0) return;
+
     for (const r of replies) {
-      void addChatMessage("bot", r, sessionId, pathname, true);
+      void saveChatMessage("bot", r, true);
     }
   };
 
@@ -201,6 +237,7 @@ export function VisitorChatPanel({
             {adminOnline ? texts.statusOnline : texts.statusOffline}
           </div>
         </div>
+        {/* 關閉按鈕由 ChatBubble 控制包裹，所以這裡不再放 × */}
       </div>
 
       <div className="jyc-chat-messages">

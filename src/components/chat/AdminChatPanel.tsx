@@ -1,31 +1,43 @@
 // src/components/chat/AdminChatPanel.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  ChatTexts,
-  RemoteMessage,
-  AdminSession,
-  addChatMessage,
-} from "./chatShared";
+import React, { useEffect, useMemo, useState } from "react";
 import { db } from "@/lib/firebase";
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
-  getDocs,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   updateDoc,
-  where,
 } from "firebase/firestore";
+import {
+  ArchiveMessage,
+  archiveChatSessionToLocalStorage,
+  ChatTexts,
+} from "./chatShared";
+
+type RemoteMessage = ArchiveMessage & {
+  id: string;
+  sessionId: string;
+  read: boolean;
+};
+
+type AdminSession = {
+  sessionId: string;
+  lastText: string;
+  lastAt: number;
+  unreadCount: number;
+};
 
 type Props = {
   texts: ChatTexts;
   isEnglish: boolean;
   pathname: string;
-  onHasUnreadChange: (val: boolean) => void;
+  onHasUnreadChange?: (hasUnread: boolean) => void;
 };
 
 export function AdminChatPanel({
@@ -38,9 +50,19 @@ export function AdminChatPanel({
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [adminInput, setAdminInput] = useState("");
-  const [liveNotified, setLiveNotified] = useState<string[]>([]);
+  const [liveNoticeSessions, setLiveNoticeSessions] = useState<string[]>([]);
 
-  // 监听所有访客消息
+  const hasUnread = useMemo(
+    () => sessions.some((s) => s.unreadCount > 0),
+    [sessions]
+  );
+
+  // 把 hasUnread 回傳給 ChatBubble，讓泡泡顯示紅點
+  useEffect(() => {
+    onHasUnreadChange?.(hasUnread);
+  }, [hasUnread, onHasUnreadChange]);
+
+  // 訂閱所有聊天室訊息
   useEffect(() => {
     const q = query(
       collection(db, "jyc_chat_messages"),
@@ -97,9 +119,6 @@ export function AdminChatPanel({
         );
         setSessions(list);
 
-        const hasUnread = list.some((s) => s.unreadCount > 0);
-        onHasUnreadChange(hasUnread);
-
         setActiveSessionId((prev) => prev || list[0]?.sessionId || null);
       },
       (err) => {
@@ -108,7 +127,37 @@ export function AdminChatPanel({
     );
 
     return () => unsub();
-  }, [onHasUnreadChange]);
+  }, []);
+
+  const activeMsgs: RemoteMessage[] = useMemo(
+    () =>
+      activeSessionId == null
+        ? []
+        : remoteMessages
+            .filter((m) => m.sessionId === activeSessionId)
+            .sort((a, b) => a.createdAt - b.createdAt),
+    [remoteMessages, activeSessionId]
+  );
+
+  async function saveChatMessage(
+    from: "user" | "bot",
+    text: string,
+    sessionId: string,
+    read: boolean
+  ) {
+    try {
+      await addDoc(collection(db, "jyc_chat_messages"), {
+        sessionId,
+        from,
+        text,
+        pathname,
+        createdAt: serverTimestamp(),
+        read,
+      });
+    } catch (err) {
+      console.error("admin saveChatMessage error", err);
+    }
+  }
 
   async function markSessionRead(sessionId: string) {
     const toUpdate = remoteMessages.filter(
@@ -137,64 +186,75 @@ export function AdminChatPanel({
     if (!text || !activeSessionId) return;
 
     setAdminInput("");
-    void addChatMessage("bot", text, activeSessionId, pathname, true);
+    void saveChatMessage("bot", text, activeSessionId, true);
   };
 
-  const handleDeleteSession = async (sid: string) => {
-    if (!sid) return;
-    if (typeof window !== "undefined") {
-      const ok = window.confirm(
-        isEnglish
-          ? "Close and delete this conversation? This cannot be undone."
-          : "确定要结束并清除此对话吗？此操作无法恢复。"
-      );
-      if (!ok) return;
-    }
-
-    try {
-      const q = query(
-        collection(db, "jyc_chat_messages"),
-        where("sessionId", "==", sid)
-      );
-      const snap = await getDocs(q);
-      for (const d of snap.docs) await deleteDoc(d.ref);
-      setActiveSessionId((prev) => (prev === sid ? null : prev));
-    } catch (err) {
-      console.error("delete session error", err);
-    }
-  };
+  const liveSentForActive =
+    activeSessionId != null && liveNoticeSessions.includes(activeSessionId);
 
   const handleSendTakeoverNotice = () => {
-    if (!activeSessionId) return;
-    if (liveNotified.includes(activeSessionId)) return;
+    if (!activeSessionId || liveSentForActive) return;
 
-    void addChatMessage(
-      "bot",
-      texts.liveTakeoverNotice,
-      activeSessionId,
-      pathname,
-      true
-    );
-    setLiveNotified((prev) =>
+    const msg = isEnglish
+      ? "You are now connected with a live operator. We will respond to your questions in real time."
+      : "现在由真人客服接管，我们会实时回复您的问题。";
+
+    void saveChatMessage("bot", msg, activeSessionId, true);
+    setLiveNoticeSessions((prev) =>
       prev.includes(activeSessionId) ? prev : [...prev, activeSessionId]
     );
   };
 
-  const activeMsgs =
-    activeSessionId == null
-      ? []
-      : remoteMessages
-          .filter((m) => m.sessionId === activeSessionId)
-          .sort((a, b) => a.createdAt - b.createdAt);
+  const handleDeleteSession = async (sid: string) => {
+    if (!sid) return;
 
-  const liveSentForActive =
-    activeSessionId != null && liveNotified.includes(activeSessionId);
+    if (typeof window !== "undefined") {
+      const ok = window.confirm(
+        isEnglish
+          ? "End this conversation, archive it to the customer list, and delete chat messages?"
+          : "确定要结束并清除此对话吗？会话记录将归档到客户资料页，同时从聊天室中删除。"
+      );
+      if (!ok) return;
+    }
+
+    const msgsForSession = remoteMessages.filter(
+      (m) => m.sessionId === sid
+    );
+
+    // 1) 归档到 localStorage（/admin/customers 会读取）
+    archiveChatSessionToLocalStorage(
+      sid,
+      msgsForSession.map((m) => ({
+        from: m.from,
+        text: m.text,
+        createdAt: m.createdAt,
+      })),
+      isEnglish
+    );
+
+    // 2) Firestore 刪除
+    for (const m of msgsForSession) {
+      try {
+        await deleteDoc(doc(db, "jyc_chat_messages", m.id));
+      } catch (err) {
+        console.error("delete chat message error", err);
+      }
+    }
+
+    // 3) 更新本地 state
+    setRemoteMessages((prev) => prev.filter((m) => m.sessionId !== sid));
+    setSessions((prev) => {
+      const next = prev.filter((s) => s.sessionId !== sid);
+      setActiveSessionId((cur) =>
+        cur === sid ? next[0]?.sessionId || null : cur
+      );
+      return next;
+    });
+    setLiveNoticeSessions((prev) => prev.filter((x) => x !== sid));
+  };
 
   return (
-    <div
-      className="jyc-chat-panel"
-      style={{ width: 420, maxWidth: "90vw" }} // 管理端宽一点
-    >
+    <div className="jyc-chat-panel jyc-chat-panel-admin">
       <div className="jyc-chat-header">
         <div>
           <div className="jyc-chat-title">{texts.adminTitle}</div>
@@ -214,10 +274,10 @@ export function AdminChatPanel({
           borderTop: "1px solid #eee",
         }}
       >
-        {/* 左边：会话列表 */}
+        {/* 左側：會話列表 */}
         <div
           style={{
-            width: 160,
+            width: 180,
             borderRight: "1px solid #eee",
             padding: "6px 4px",
             fontSize: 12,
@@ -258,7 +318,8 @@ export function AdminChatPanel({
                 }}
               >
                 <span>
-                  {isEnglish ? "Visitor" : "访客"} {s.sessionId.slice(-4)}
+                  {isEnglish ? "Visitor" : "访客"}{" "}
+                  {s.sessionId.slice(-4)}
                 </span>
                 {s.unreadCount > 0 && (
                   <span
@@ -291,7 +352,7 @@ export function AdminChatPanel({
           ))}
         </div>
 
-        {/* 右侧：消息 + 输入区 */}
+        {/* 右側：訊息 + 回覆區 */}
         <div
           style={{
             flex: 1,
@@ -362,7 +423,9 @@ export function AdminChatPanel({
                 borderRadius: 6,
                 border: "none",
                 background:
-                  !activeSessionId || !adminInput.trim() ? "#ccc" : "#333",
+                  !activeSessionId || !adminInput.trim()
+                    ? "#ccc"
+                    : "#333",
                 color: "#fff",
                 fontSize: 13,
                 cursor:
@@ -375,26 +438,23 @@ export function AdminChatPanel({
             </button>
           </form>
 
+          {/* 底部說明 + 操作按鈕 */}
           <div
             style={{
               padding: "4px 10px 6px",
               fontSize: 11,
               color: "#777",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 8,
             }}
           >
-            <span>{texts.adminHint}</span>
+            <div style={{ marginBottom: 4 }}>{texts.adminHint}</div>
 
             {activeSessionId && (
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
+                  justifyContent: "flex-end",
                   gap: 8,
-                  whiteSpace: "nowrap",
+                  flexWrap: "wrap",
                 }}
               >
                 <button
@@ -432,7 +492,9 @@ export function AdminChatPanel({
                     cursor: "pointer",
                   }}
                 >
-                  {isEnglish ? "Close & clear chat" : "结束并清除此对话"}
+                  {isEnglish
+                    ? "Close & clear chat"
+                    : "结束并清除此对话"}
                 </button>
               </div>
             )}
