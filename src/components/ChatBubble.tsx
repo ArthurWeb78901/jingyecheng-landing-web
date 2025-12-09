@@ -9,7 +9,10 @@ import {
   collection,
   doc,
   onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 
 type Message = {
@@ -18,7 +21,13 @@ type Message = {
   text: string;
 };
 
-type InfoStage = "none" | "ask-name" | "ask-company" | "ask-contact" | "ask-need" | "done";
+type InfoStage =
+  | "none"
+  | "ask-name"
+  | "ask-company"
+  | "ask-contact"
+  | "ask-need"
+  | "done";
 
 type LeadDraft = {
   name: string;
@@ -27,12 +36,30 @@ type LeadDraft = {
   need: string;
 };
 
+type RemoteMessage = {
+  id: string;
+  sessionId: string;
+  from: "user" | "bot";
+  text: string;
+  createdAt: number;
+  read: boolean;
+};
+
+type AdminSession = {
+  sessionId: string;
+  lastText: string;
+  lastAt: number;
+  unreadCount: number;
+};
+
 let messageId = 1;
 
 /** 文案表：中文 */
 const zhTexts = {
   bubbleLabel: "在线助手",
+  adminBubbleLabel: "客服讯息",
   title: "在线咨询（示意）",
+  adminTitle: "访客留言（后台示意）",
   statusOnline: "客服在线（专人回复模式）",
   statusOffline: "自动应答中（离线收集客户资料）",
   welcomeOnline:
@@ -60,12 +87,17 @@ const zhTexts = {
     "我们可提供设备安装指导、调试、操作培训以及后续售后服务，具体服务内容可依项目合约约定。",
   faqUpgrade:
     "若是现有产线改造或升级，我们通常会先了解现有设备型号与工况，再评估局部改造或整线优化的方案与预算。",
+  adminEmpty: "目前尚无访客留言。",
+  adminHint:
+    "此为示意环境，请通过电话或邮件与客户联系，暂不开放在线回复。",
 };
 
 /** 文案表：英文 */
 const enTexts = {
   bubbleLabel: "Online Assistant",
+  adminBubbleLabel: "Inbox",
   title: "Online Inquiry (Demo)",
+  adminTitle: "Visitor Inquiries (Demo)",
   statusOnline: "Operator online (manual reply mode)",
   statusOffline: "Auto reply (collecting basic lead info)",
   welcomeOnline:
@@ -77,7 +109,8 @@ const enTexts = {
   askName: "To better follow up, may I have your name?",
   askCompany: (name: string) =>
     `Nice to meet you, ${name}. May I know your company or organization? (You may skip this if it is a personal inquiry.)`,
-  askContact: "Got it, thank you. Please leave a contact method, such as phone number or email.",
+  askContact:
+    "Got it, thank you. Please leave a contact method, such as phone number or email.",
   askNeed:
     "Thank you. Please briefly describe your production line or equipment requirements so that we can arrange a sales engineer to contact you.",
   afterSaved:
@@ -94,6 +127,9 @@ const enTexts = {
     "We can provide installation supervision, commissioning, operator training and after-sales service. Detailed service scope can be defined in the project contract.",
   faqUpgrade:
     "For upgrading or revamping existing lines, we normally review the current equipment and operating conditions first, then propose partial modification or full optimization方案 along with a budget estimate.",
+  adminEmpty: "No visitor inquiries yet.",
+  adminHint:
+    "This is a demo environment. Please follow up with visitors by phone or email. In-chat reply is not enabled.",
 };
 
 // 简单 FAQ 关键字应答（根据当前语言返回对应文本）
@@ -195,11 +231,13 @@ function getOrCreateSessionId() {
 export function ChatBubble() {
   const pathname = usePathname() || "/";
   const isEnglish = pathname.startsWith("/en");
-
   const texts = isEnglish ? enTexts : zhTexts;
 
   const [isOpen, setIsOpen] = useState(false);
   const [adminOnline, setAdminOnline] = useState(false);
+  const [isAdminClient, setIsAdminClient] = useState(false);
+
+  // 访客端本地消息（only for visitor side）
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [infoStage, setInfoStage] = useState<InfoStage>("none");
@@ -211,13 +249,31 @@ export function ChatBubble() {
   });
   const [sessionId, setSessionId] = useState("");
 
-  // 初始化 sessionId
+  // 管理端：从 Firestore 读到的所有留言
+  const [remoteMessages, setRemoteMessages] = useState<RemoteMessage[]>([]);
+  const [sessions, setSessions] = useState<AdminSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
+
+  // 初始化 sessionId（访客）
   useEffect(() => {
     if (typeof window === "undefined") return;
     setSessionId(getOrCreateSessionId());
   }, []);
 
-  // ✅ 支持从其他页面唤起聊天窗，并预填文字
+  // 判断当前浏览器是否为「管理员端」（靠 login page 存的 localStorage）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const flag =
+      window.localStorage.getItem("jyc_admin_logged_in") === "true";
+    setIsAdminClient(flag);
+    if (flag) {
+      // 本机登入后台 => 一定视为在线
+      setAdminOnline(true);
+    }
+  }, []);
+
+  // 支持从其他页面唤起聊天窗，并预填文字（访客端用）
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -226,9 +282,7 @@ export function ChatBubble() {
       const msg = ce.detail?.message || "";
 
       setIsOpen(true);
-      if (msg) {
-        setInput(msg);
-      }
+      if (msg) setInput(msg);
     };
 
     window.addEventListener("jyc-open-chat" as any, handler as any);
@@ -237,7 +291,7 @@ export function ChatBubble() {
     };
   }, []);
 
-  // ✅ 用 Firestore 判断管理员是否在线（跨设备统一）
+  // 用 Firestore 判断管理员是否在线（给访客看用；管理员端只是写这个 doc）
   useEffect(() => {
     const statusRef = doc(db, "jyc_meta", "adminStatus");
     const unsub = onSnapshot(
@@ -245,43 +299,151 @@ export function ChatBubble() {
       (snap) => {
         const data = snap.data() as any;
         if (data && typeof data.online === "boolean") {
-          setAdminOnline(data.online);
-        } else {
-          setAdminOnline(false);
+          setAdminOnline((prev) => prev || data.online);
         }
       },
       (err) => {
         console.error("listen adminStatus error", err);
-        setAdminOnline(false);
       }
     );
     return () => unsub();
   }, []);
 
-  // （可选）保留原本 localStorage 的逻辑当作 fallback
+  // 访客端：欢迎讯息（需依在线/离线状态自动更新）
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const flag = window.localStorage.getItem("jyc_admin_logged_in") === "true";
-      setAdminOnline((prev) => prev || flag);
-    }
-  }, []);
+    if (isAdminClient) return; // 管理端不用这套欢迎语
 
-  // 首次欢迎讯息
+    const welcomeOnline = texts.welcomeOnline;
+    const welcomeOffline = texts.welcomeOffline;
+    const welcome = adminOnline ? welcomeOnline : welcomeOffline;
+
+    setMessages((prev) => {
+      if (prev.length === 0) {
+        return [
+          {
+            id: messageId++,
+            from: "bot" as const,
+            text: welcome,
+          },
+        ];
+      }
+
+      const [first, ...rest] = prev;
+      const isWelcomeMsg =
+        first.from === "bot" &&
+        (first.text === welcomeOnline || first.text === welcomeOffline);
+
+      if (!isWelcomeMsg) return prev; // 第一条已经是用户自己的讯息
+
+      if (first.text === welcome) return prev; // 已经是最新状态
+
+      const updatedFirst = { ...first, text: welcome };
+      return [updatedFirst, ...rest];
+    });
+  }, [
+    adminOnline,
+    isAdminClient,
+    isEnglish,
+    texts.welcomeOnline,
+    texts.welcomeOffline,
+  ]);
+
+  // 管理端：监听所有访客的留言
   useEffect(() => {
-    if (messages.length === 0) {
-      const welcome = adminOnline ? texts.welcomeOnline : texts.welcomeOffline;
-      setMessages([
-        {
-          id: messageId++,
-          from: "bot",
-          text: welcome,
-        },
-      ]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminOnline, messages.length, isEnglish]);
+    if (!isAdminClient) return;
 
-  // 把聊天讯息存到 Firestore，给后台看
+    const q = query(
+      collection(db, "jyc_chat_messages"),
+      orderBy("createdAt", "asc")
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const msgs: RemoteMessage[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          const c = data.createdAt;
+          let ts = Date.now();
+          if (c && typeof c.toMillis === "function") {
+            ts = c.toMillis();
+          } else if (c && typeof c.seconds === "number") {
+            ts = c.seconds * 1000;
+          }
+          return {
+            id: d.id,
+            sessionId: data.sessionId || "unknown",
+            from: data.from === "bot" ? "bot" : "user",
+            text: data.text || "",
+            createdAt: ts,
+            read: !!data.read,
+          };
+        });
+
+        setRemoteMessages(msgs);
+
+        const grouped: Record<string, AdminSession> = {};
+        for (const m of msgs) {
+          if (!grouped[m.sessionId]) {
+            grouped[m.sessionId] = {
+              sessionId: m.sessionId,
+              lastText: m.text,
+              lastAt: m.createdAt,
+              unreadCount: !m.read && m.from === "user" ? 1 : 0,
+            };
+          } else {
+            const g = grouped[m.sessionId];
+            if (m.createdAt >= g.lastAt) {
+              g.lastAt = m.createdAt;
+              g.lastText = m.text;
+            }
+            if (!m.read && m.from === "user") {
+              g.unreadCount += 1;
+            }
+          }
+        }
+
+        const list = Object.values(grouped).sort(
+          (a, b) => b.lastAt - a.lastAt
+        );
+        setSessions(list);
+        setHasUnread(list.some((s) => s.unreadCount > 0));
+
+        setActiveSessionId((prev) => prev || list[0]?.sessionId || null);
+      },
+      (err) => {
+        console.error("listen chat messages error", err);
+      }
+    );
+
+    return () => unsub();
+  }, [isAdminClient]);
+
+  // 管理端：把某个会话的讯息标记为已读
+  async function markSessionRead(sessionId: string) {
+    if (!isAdminClient) return;
+
+    const toUpdate = remoteMessages.filter(
+      (m) => m.sessionId === sessionId && !m.read && m.from === "user"
+    );
+
+    for (const m of toUpdate) {
+      try {
+        await updateDoc(doc(db, "jyc_chat_messages", m.id), {
+          read: true,
+        });
+      } catch (err) {
+        console.error("markSessionRead error", err);
+      }
+    }
+  }
+
+  // 打开某个会话
+  const handleSelectSession = (sid: string) => {
+    setActiveSessionId(sid);
+    markSessionRead(sid);
+  };
+
+  // 访客端：把聊天讯息存到 Firestore，给后台看
   async function saveChatMessage(from: "user" | "bot", text: string) {
     if (!sessionId) return;
     try {
@@ -298,6 +460,7 @@ export function ChatBubble() {
     }
   }
 
+  // 访客端：送出讯息
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
@@ -311,10 +474,9 @@ export function ChatBubble() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
-    // ✅ 存到 Firestore，后台可见
     saveChatMessage("user", text);
 
-    // 有登入：专人回复模式
+    // 有登入：专人回复模式（只给说明，不走自动问答）
     if (adminOnline) {
       const reply: Message = {
         id: messageId++,
@@ -322,8 +484,6 @@ export function ChatBubble() {
         text: texts.adminReply,
       };
       setMessages((prev) => [...prev, reply]);
-      // 如需也记录机器人回覆可加：
-      // saveChatMessage("bot", texts.adminReply);
       return;
     }
 
@@ -331,6 +491,7 @@ export function ChatBubble() {
     handleOfflineFlow(text);
   };
 
+  // 访客端：离线模式自动问答流程
   const handleOfflineFlow = (userText: string) => {
     const replies: string[] = [];
 
@@ -392,6 +553,214 @@ export function ChatBubble() {
       })),
     ]);
   };
+
+  /* ==========================
+     管理端 UI（收件匣模式）
+  =========================== */
+
+  if (isAdminClient) {
+    const activeMsgs =
+      activeSessionId == null
+        ? []
+        : remoteMessages
+            .filter((m) => m.sessionId === activeSessionId)
+            .sort((a, b) => a.createdAt - b.createdAt);
+
+    return (
+      <>
+        <button
+          type="button"
+          className="jyc-chat-bubble-button"
+          onClick={() => {
+            setIsOpen((v) => !v);
+            if (!isOpen && activeSessionId) {
+              // 打开时，把当前会话设为已读
+              markSessionRead(activeSessionId);
+            }
+          }}
+        >
+          {texts.adminBubbleLabel}
+          {hasUnread && (
+            <span
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: "#ff4d4f",
+                marginLeft: 6,
+              }}
+            />
+          )}
+        </button>
+
+        {isOpen && (
+          <div className="jyc-chat-panel">
+            <div className="jyc-chat-header">
+              <div>
+                <div className="jyc-chat-title">{texts.adminTitle}</div>
+                <div className="jyc-chat-status" style={{ fontSize: 11 }}>
+                  {isEnglish
+                    ? "You are logged in as admin. New visitor messages will appear here."
+                    : "您目前已登入后台，新访客留言会出现在此视窗中。"}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="jyc-chat-close"
+                onClick={() => setIsOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flex: 1,
+                minHeight: 260,
+                borderTop: "1px solid #eee",
+              }}
+            >
+              {/* 会话列表 */}
+              <div
+                style={{
+                  width: 140,
+                  borderRight: "1px solid #eee",
+                  padding: "6px 4px",
+                  fontSize: 12,
+                  overflowY: "auto",
+                }}
+              >
+                {sessions.length === 0 && (
+                  <div style={{ color: "#999", padding: "8px 4px" }}>
+                    {texts.adminEmpty}
+                  </div>
+                )}
+
+                {sessions.map((s) => (
+                  <button
+                    key={s.sessionId}
+                    type="button"
+                    onClick={() => handleSelectSession(s.sessionId)}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      border: "none",
+                      background:
+                        s.sessionId === activeSessionId ? "#f0f0f0" : "white",
+                      borderRadius: 6,
+                      padding: "6px 6px",
+                      marginBottom: 4,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        marginBottom: 2,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>
+                        {isEnglish ? "Visitor" : "访客"}{" "}
+                        {s.sessionId.slice(-4)}
+                      </span>
+                      {s.unreadCount > 0 && (
+                        <span
+                          style={{
+                            minWidth: 16,
+                            padding: "0 4px",
+                            borderRadius: 999,
+                            background: "#ff4d4f",
+                            color: "#fff",
+                            fontSize: 10,
+                            textAlign: "center",
+                          }}
+                        >
+                          {s.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#666",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {s.lastText || (isEnglish ? "(no text)" : "（无内容）")}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* 讯息区 */}
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <div className="jyc-chat-messages">
+                  {activeMsgs.length === 0 ? (
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "#999",
+                        padding: "8px 4px",
+                      }}
+                    >
+                      {sessions.length === 0
+                        ? texts.adminEmpty
+                        : isEnglish
+                        ? "Select a visitor session on the left."
+                        : "请在左侧选择一位访客的会话。"}
+                    </div>
+                  ) : (
+                    activeMsgs.map((m) => (
+                      <div
+                        key={m.id}
+                        className={
+                          "jyc-chat-message " +
+                          (m.from === "user"
+                            ? "jyc-chat-message-user"
+                            : "jyc-chat-message-bot")
+                        }
+                      >
+                        {m.text}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    padding: "6px 10px",
+                    borderTop: "1px solid #eee",
+                    fontSize: 11,
+                    color: "#777",
+                  }}
+                >
+                  {texts.adminHint}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  /* ==========================
+     访客端 UI（在线助手）
+  =========================== */
 
   return (
     <>
