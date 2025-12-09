@@ -326,8 +326,7 @@ export function ChatBubble() {
       (snap) => {
         const list: Message[] = snap.docs.map((d) => {
           const data = d.data() as any;
-          const from: "user" | "bot" =
-            data.from === "user" ? "user" : "bot";
+          const from: "user" | "bot" = data.from === "user" ? "user" : "bot";
           return {
             id: messageId++,
             from,
@@ -344,7 +343,7 @@ export function ChatBubble() {
     return () => unsub();
   }, [isAdminClient, sessionId]);
 
-  // 访客端：首次进入会话时写入欢迎讯息（每个 session 只写一次）
+  // 访客端：首次进入会话时，把欢迎语写进 Firestore（每个 session / 语言 只写一次）
   useEffect(() => {
     if (isAdminClient) return;
     if (!sessionId) return;
@@ -355,7 +354,6 @@ export function ChatBubble() {
     const welcome = adminOnline ? texts.welcomeOnline : texts.welcomeOffline;
 
     if (!sent) {
-      // 只写一次欢迎语
       void saveChatMessage("bot", welcome, sessionId, pathname, true);
       window.localStorage.setItem(key, "true");
     }
@@ -489,7 +487,7 @@ export function ChatBubble() {
     // 1) 访客讯息写入 Firestore（未读）
     void saveChatMessage("user", text, sessionId, pathname, false);
 
-    // 2) 若客服在线：给一条「已收到」的自动回覆（可选）
+    // 2) 若客服在线：给一条「已收到」的自动回覆
     if (adminOnline) {
       void saveChatMessage("bot", texts.adminReply, sessionId, pathname, true);
       return;
