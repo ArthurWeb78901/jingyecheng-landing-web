@@ -140,7 +140,7 @@ export default function HomeEn() {
               Turn-key Solutions for Seamless Pipe Mills &amp; Rolling Equipment
             </h1>
             <p>
-              Founded in 1993, Shanxi Taikuang Steel Pipe Equipment Co., Ltd.
+              Founded in 1993, Taiyuan Jingyecheng Heavy Equipment Co., Ltd.
               specializes in equipment for hot-rolled seamless steel pipe
               production, including piercing mills, pipe rolling mills, sizing
               and reducing mills, straightening machines, cooling beds, hot
@@ -196,7 +196,21 @@ export default function HomeEn() {
                   />
                   <h3>{displayName}</h3>
                   <p>{displayBrief}</p>
-                  <button type="button" className="jyc-card-btn">
+                  <button
+                    type="button"
+                    className="jyc-card-btn"
+                    onClick={() => {
+                      if (typeof window === "undefined") return;
+
+                      const msg = `I would like to learn more about your “${displayName}” equipment, including detailed technical parameters and configuration suggestions.`;
+
+                      window.dispatchEvent(
+                        new CustomEvent("jyc-open-chat", {
+                          detail: { message: msg },
+                        }) as any
+                      );
+                    }}
+                  >
                     Learn More
                   </button>
                 </article>
@@ -210,9 +224,9 @@ export default function HomeEn() {
       <section id="about" className="jyc-section jyc-section-alt">
         <h2>About Us</h2>
         <p>
-          Shanxi Taikuang Steel Pipe Equipment Co., Ltd. is located in Taiyuan,
+          Taiyuan Jingyecheng Heavy Equipment Co., Ltd. is located in Taiyuan,
           Shanxi Province, with a site area of about 70,000 m². The company is a
-          heavy industry manufacturer specialized in rolling equipment for
+          heavy-industry manufacturer specialized in rolling equipment for
           seamless steel pipes, covering piercing mills, pipe rolling mills,
           sizing / reducing mills, straightening machines, cooling beds, hot
           centering machines and cold drawing machines. We integrate design,

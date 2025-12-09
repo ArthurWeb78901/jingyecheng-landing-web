@@ -575,6 +575,26 @@ body {
     background-position: center;
   }
 
+  /* ✅ 桌机版「主要产品一览」：横向滑动，一次 4 个 */
+  .jyc-card-grid {
+    display: flex;           /* 横向排 */
+    overflow-x: auto;
+    gap: 24px;
+    margin-top: 24px;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .jyc-card-grid::-webkit-scrollbar {
+    height: 8px;             /* 有需要可以改小或用 display:none 隐藏 */
+  }
+
+  .jyc-card {
+    flex: 0 0 25%;           /* 一次显示 4 张卡片 */
+    max-width: 25%;
+    scroll-snap-align: start;
+  }
+
   /* Gallery 縮圖：固定小正方形 */
   .jyc-gallery-grid {
     grid-template-columns: repeat(auto-fit, 140px);

@@ -118,7 +118,7 @@ export default function Home() {
   // 首页要用到的图
   // thumbs 數量跟產品數同步，不夠時也只是 fallback，用不到也沒關係
   const productThumbs = homeItems.slice(0, products.length || 3);
-  const galleryItems = homeItems.slice(0, 4); // Gallery 區塊最多 4 張
+  const galleryItems = homeItems.slice(0, 12); // Gallery 區塊最多 12 張
 
   return (
     <main className="jyc-page">
@@ -130,7 +130,7 @@ export default function Home() {
           <div className="jyc-hero-text">
             <h1>无缝钢管机组与轧钢设备整体解决方案提供商</h1>
             <p>
-              山西太矿钢管设备有限公司成立于 1993 年，深耕无缝钢管机组设备与轧钢设备领域，
+              太原精业城重工设备有限公司成立于 1993 年，深耕无缝钢管机组设备与轧钢设备领域，
               覆盖穿孔机、轧管机、定径 / 减径机、矫直机、冷床、热定心机及冷拔机等关键设备，
               以专业设计、制造与服务能力，为客户提供稳定可靠的生产线与完善的技术支持。
             </p>
@@ -175,7 +175,21 @@ export default function Home() {
                   />
                   <h3>{p.name}</h3>
                   <p>{p.brief}</p>
-                  <button type="button" className="jyc-card-btn">
+                  <button
+                    type="button"
+                    className="jyc-card-btn"
+                    onClick={() => {
+                      if (typeof window === "undefined") return;
+
+                      const msg = `我想进一步了解贵公司的「${p.name}」设备，请协助提供更详细的技术参数与配置建议。`;
+
+                      window.dispatchEvent(
+                        new CustomEvent("jyc-open-chat", {
+                          detail: { message: msg },
+                        }) as any
+                      );
+                    }}
+                  >
                     了解更多
                   </button>
                 </article>
@@ -189,7 +203,7 @@ export default function Home() {
       <section id="about" className="jyc-section jyc-section-alt">
         <h2>关于我们</h2>
         <p>
-          山西太矿钢管设备有限公司位于能源重化工城市——山西省太原市，占地面积约 7 万平方米，
+          太原精业城重工设备有限公司位于能源重化工城市——山西省太原市，占地面积约 7 万平方米，
           是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，集设计、生产、
           经营于一体，为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
         </p>
@@ -239,7 +253,7 @@ export default function Home() {
 
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0
-            ? [1, 2, 3, 4].map((i) => (
+            ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
                 <div key={i} className="jyc-gallery-thumb" />
               ))
             : galleryItems.map((item) => (

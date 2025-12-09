@@ -146,7 +146,6 @@ function saveLeadToLocalStorage(lead: LeadDraft) {
     const raw = window.localStorage.getItem(key);
     const list: any[] = raw ? JSON.parse(raw) : [];
 
-    // 强化去重：如果列表中已经有完全相同的一笔，就不再新增
     const exists = list.some(
       (item) =>
         item.name === lead.name &&
@@ -190,6 +189,26 @@ export function ChatBubble() {
     contact: "",
     need: "",
   });
+
+  /** ✅ 支持从其他页面元素唤起聊天窗，并预填一段文字 */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ message?: string }>;
+      const msg = ce.detail?.message || "";
+
+      setIsOpen(true);
+      if (msg) {
+        setInput(msg);
+      }
+    };
+
+    window.addEventListener("jyc-open-chat" as any, handler as any);
+    return () => {
+      window.removeEventListener("jyc-open-chat" as any, handler as any);
+    };
+  }, []);
 
   // 读登入状态（有没有进后台登陆）— 只用来判断在线 / 离线模式
   useEffect(() => {
@@ -271,7 +290,6 @@ export function ChatBubble() {
         break;
 
       case "ask-need":
-        // 最后一步：记录需求并存成一笔 lead
         setLeadDraft((prev) => {
           const full: LeadDraft = { ...prev, need: userText };
           saveLeadToLocalStorage(full);
@@ -289,7 +307,6 @@ export function ChatBubble() {
         break;
     }
 
-    // FAQ 自动解答（离线模式下加在后面）
     const faq = getFaqAnswer(userText, isEnglish);
     if (faq) {
       replies.push(faq);
