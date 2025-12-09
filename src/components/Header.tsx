@@ -41,8 +41,7 @@ export function Header() {
 
   return (
     <header className="jyc-header">
-      <div className="jyc-logo">山西太矿钢管设备有限公司</div>
-
+      <div className="jyc-logo">太原精业城重工设备有限公司</div>
       <nav className="jyc-nav">
         {navLinks.map((item) => (
           <Link key={item.href} href={item.href}>

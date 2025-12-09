@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { markAdminOnline } from "@/lib/adminStatus";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,18 +13,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // 硬编码帐号／密码
     if (username === "wendy123" && password === "123456") {
-      // 记在 localStorage，之後可以用来做简单判断
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("jyc_admin_logged_in", "true");
+      try {
+        // 仍保留原本的 localStorage 标记（兼容旧逻辑）
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("jyc_admin_logged_in", "true");
+        }
+
+        // ✅ 新增：写入 Firestore，标记管理员在线
+        await markAdminOnline();
+
+        setError("");
+        // 登入成功，导到后台首页
+        router.push("/admin");
+      } catch (err) {
+        console.error("login / markAdminOnline error", err);
+        setError("登入成功但更新在线状态失败，请稍后再试。");
       }
-      setError("");
-      // 登入成功，导到后台首页
-      router.push("/admin");
     } else {
       setError("帐号或密码错误，请再试一次。");
     }

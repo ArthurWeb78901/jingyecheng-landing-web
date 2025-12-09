@@ -3,6 +3,14 @@
 
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { db } from "@/lib/firebase";
+import {
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  serverTimestamp,
+} from "firebase/firestore";
 
 type Message = {
   id: number;
@@ -28,9 +36,9 @@ const zhTexts = {
   statusOnline: "客服在线（专人回复模式）",
   statusOffline: "自动应答中（离线收集客户资料）",
   welcomeOnline:
-    "您好，这里是太矿钢管设备在线助手。目前客服在线，您可以直接留下问题，我会先帮您记录，后续由专人回复。",
+    "您好，这里是太原精业城重工设备在线助手。目前客服在线，您可以直接留下问题，我会先帮您记录，后续由专人回复。",
   welcomeOffline:
-    "您好，这里是太矿钢管设备在线助手。目前客服暂不在线，我会先根据常见问题为您解答，并协助记录您的基本资讯方便后续联系。",
+    "您好，这里是太原精业城重工设备在线助手。目前客服暂不在线，我会先根据常见问题为您解答，并协助记录您的基本资讯方便后续联系。",
   adminReply:
     "感谢您的留言，目前为示意环境。实际上线后，客服人员将在后台看到您的讯息，并以电话或邮件与您联系。",
   askName: "为了方便后续联系，请问怎么称呼您？",
@@ -61,9 +69,9 @@ const enTexts = {
   statusOnline: "Operator online (manual reply mode)",
   statusOffline: "Auto reply (collecting basic lead info)",
   welcomeOnline:
-    "Hello, this is Taikuang Steel Pipe online assistant. Our staff is currently online. You may leave your questions here and we will record them for follow-up.",
+    "Hello, this is Taiyuan Jingyecheng Heavy Equipment online assistant. Our staff is currently online. You may leave your questions here and we will record them for follow-up.",
   welcomeOffline:
-    "Hello, this is Taikuang Steel Pipe online assistant. Our staff is currently offline. I will answer common questions first and help record your basic information for follow-up.",
+    "Hello, this is Taiyuan Jingyecheng Heavy Equipment online assistant. Our staff is currently offline. I will answer common questions first and help record your basic information for follow-up.",
   adminReply:
     "Thank you for your message. This is a demo environment. In production, our staff will see your inquiry in the backend and contact you by phone or email.",
   askName: "To better follow up, may I have your name?",
@@ -172,6 +180,18 @@ function saveLeadToLocalStorage(lead: LeadDraft) {
   }
 }
 
+// 给每个访客一个 sessionId，方便后台区分不同对话
+function getOrCreateSessionId() {
+  if (typeof window === "undefined") return "";
+  const KEY = "jyc_chat_session_id";
+  let id = window.localStorage.getItem(KEY);
+  if (!id) {
+    id = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    window.localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 export function ChatBubble() {
   const pathname = usePathname() || "/";
   const isEnglish = pathname.startsWith("/en");
@@ -189,8 +209,15 @@ export function ChatBubble() {
     contact: "",
     need: "",
   });
+  const [sessionId, setSessionId] = useState("");
 
-  /** ✅ 支持从其他页面元素唤起聊天窗，并预填一段文字 */
+  // 初始化 sessionId
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setSessionId(getOrCreateSessionId());
+  }, []);
+
+  // ✅ 支持从其他页面唤起聊天窗，并预填文字
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -210,11 +237,32 @@ export function ChatBubble() {
     };
   }, []);
 
-  // 读登入状态（有没有进后台登陆）— 只用来判断在线 / 离线模式
+  // ✅ 用 Firestore 判断管理员是否在线（跨设备统一）
+  useEffect(() => {
+    const statusRef = doc(db, "jyc_meta", "adminStatus");
+    const unsub = onSnapshot(
+      statusRef,
+      (snap) => {
+        const data = snap.data() as any;
+        if (data && typeof data.online === "boolean") {
+          setAdminOnline(data.online);
+        } else {
+          setAdminOnline(false);
+        }
+      },
+      (err) => {
+        console.error("listen adminStatus error", err);
+        setAdminOnline(false);
+      }
+    );
+    return () => unsub();
+  }, []);
+
+  // （可选）保留原本 localStorage 的逻辑当作 fallback
   useEffect(() => {
     if (typeof window !== "undefined") {
       const flag = window.localStorage.getItem("jyc_admin_logged_in") === "true";
-      setAdminOnline(flag);
+      setAdminOnline((prev) => prev || flag);
     }
   }, []);
 
@@ -231,7 +279,24 @@ export function ChatBubble() {
       ]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminOnline, messages.length, isEnglish]); // 语言或在线状态变化时重置欢迎语
+  }, [adminOnline, messages.length, isEnglish]);
+
+  // 把聊天讯息存到 Firestore，给后台看
+  async function saveChatMessage(from: "user" | "bot", text: string) {
+    if (!sessionId) return;
+    try {
+      await addDoc(collection(db, "jyc_chat_messages"), {
+        sessionId,
+        from,
+        text,
+        pathname,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
+    } catch (err) {
+      console.error("saveChatMessage error", err);
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,7 +311,10 @@ export function ChatBubble() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
-    // ✅ 有登入：专人回复模式（不自动问答、不建档，只留一条说明）
+    // ✅ 存到 Firestore，后台可见
+    saveChatMessage("user", text);
+
+    // 有登入：专人回复模式
     if (adminOnline) {
       const reply: Message = {
         id: messageId++,
@@ -254,14 +322,15 @@ export function ChatBubble() {
         text: texts.adminReply,
       };
       setMessages((prev) => [...prev, reply]);
+      // 如需也记录机器人回覆可加：
+      // saveChatMessage("bot", texts.adminReply);
       return;
     }
 
-    // ✅ 没登入：自动问答 + 收集客户资料 + 存 CRM
+    // 没登入：自动问答 + 收集资料
     handleOfflineFlow(text);
   };
 
-  // 离线模式：问姓名 / 公司 / 联络方式 / 需求，并写到 CRM
   const handleOfflineFlow = (userText: string) => {
     const replies: string[] = [];
 
