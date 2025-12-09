@@ -13,6 +13,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 
 type Message = {
@@ -58,16 +59,16 @@ let messageId = 1;
 const zhTexts = {
   bubbleLabel: "在线助手",
   adminBubbleLabel: "客服讯息",
-  title: "在线咨询（示意）",
-  adminTitle: "访客留言（后台示意）",
-  statusOnline: "客服在线（专人回复模式）",
+  title: "在线咨询",
+  adminTitle: "访客留言",
+  statusOnline: "客服在线（可由专人回复）",
   statusOffline: "自动应答中（离线收集客户资料）",
   welcomeOnline:
-    "您好，这里是太原精业城重工设备在线助手。目前客服在线，您可以直接留下问题，我会先帮您记录，后续由专人回复。",
+    "您好，这里是太原精业城重工设备在线助手。目前客服在线，您可以直接留下问题，我们会尽快安排专人与您联系并回复。",
   welcomeOffline:
     "您好，这里是太原精业城重工设备在线助手。目前客服暂不在线，我会先根据常见问题为您解答，并协助记录您的基本资讯方便后续联系。",
   adminReply:
-    "感谢您的留言，目前为示意环境。实际上线后，客服人员将在后台看到您的讯息，并以电话或邮件与您联系。",
+    "感谢您的留言，我们已收到您的问题，稍后将由专人与您联系并进一步沟通细节。",
   askName: "为了方便后续联系，请问怎么称呼您？",
   askCompany: (name: string) =>
     `好的，${name} 您好。请问贵公司或单位名称是？（若是个人咨询也可以略过）`,
@@ -89,23 +90,24 @@ const zhTexts = {
     "若是现有产线改造或升级，我们通常会先了解现有设备型号与工况，再评估局部改造或整线优化的方案与预算。",
   adminEmpty: "目前尚无访客留言。",
   adminHint:
-    "此为示意环境，请通过电话或邮件与客户联系，暂不开放在线回复。",
+    "您可以在下方输入回复内容，讯息会即时发送给该访客并显示在对方网页上。",
+  adminInputPlaceholder: "请输入要回复给访客的内容…",
 };
 
 /** 文案表：英文 */
 const enTexts = {
   bubbleLabel: "Online Assistant",
   adminBubbleLabel: "Inbox",
-  title: "Online Inquiry (Demo)",
-  adminTitle: "Visitor Inquiries (Demo)",
-  statusOnline: "Operator online (manual reply mode)",
+  title: "Online Inquiry",
+  adminTitle: "Visitor Inquiries",
+  statusOnline: "Operator online (live reply available)",
   statusOffline: "Auto reply (collecting basic lead info)",
   welcomeOnline:
-    "Hello, this is Taiyuan Jingyecheng Heavy Equipment online assistant. Our staff is currently online. You may leave your questions here and we will record them for follow-up.",
+    "Hello, this is Taiyuan Jingyecheng Heavy Equipment online assistant. Our staff is currently online. You may leave your questions here and we will follow up as soon as possible.",
   welcomeOffline:
     "Hello, this is Taiyuan Jingyecheng Heavy Equipment online assistant. Our staff is currently offline. I will answer common questions first and help record your basic information for follow-up.",
   adminReply:
-    "Thank you for your message. This is a demo environment. In production, our staff will see your inquiry in the backend and contact you by phone or email.",
+    "Thank you for your message. We have received your inquiry and our sales team will contact you shortly for further discussion.",
   askName: "To better follow up, may I have your name?",
   askCompany: (name: string) =>
     `Nice to meet you, ${name}. May I know your company or organization? (You may skip this if it is a personal inquiry.)`,
@@ -129,7 +131,8 @@ const enTexts = {
     "For upgrading or revamping existing lines, we normally review the current equipment and operating conditions first, then propose partial modification or full optimization方案 along with a budget estimate.",
   adminEmpty: "No visitor inquiries yet.",
   adminHint:
-    "This is a demo environment. Please follow up with visitors by phone or email. In-chat reply is not enabled.",
+    "Type your reply below. Messages will be sent to the visitor in real time and displayed on their page.",
+  adminInputPlaceholder: "Type your reply to the visitor…",
 };
 
 // 简单 FAQ 关键字应答（根据当前语言返回对应文本）
@@ -198,9 +201,7 @@ function saveLeadToLocalStorage(lead: LeadDraft) {
         item.need === lead.need
     );
 
-    if (exists) {
-      return;
-    }
+    if (exists) return;
 
     const newLead = {
       id: Date.now(),
@@ -234,10 +235,10 @@ export function ChatBubble() {
   const texts = isEnglish ? enTexts : zhTexts;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [adminOnline, setAdminOnline] = useState(false);
-  const [isAdminClient, setIsAdminClient] = useState(false);
+  const [adminOnline, setAdminOnline] = useState(false); // 客服是否在线（给访客看的状态）
+  const [isAdminClient, setIsAdminClient] = useState(false); // 当前浏览器是否为后台登入端
 
-  // 访客端本地消息（only for visitor side）
+  // 访客端：从 Firestore 显示的消息
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [infoStage, setInfoStage] = useState<InfoStage>("none");
@@ -249,11 +250,12 @@ export function ChatBubble() {
   });
   const [sessionId, setSessionId] = useState("");
 
-  // 管理端：从 Firestore 读到的所有留言
+  // 管理端：所有访客消息
   const [remoteMessages, setRemoteMessages] = useState<RemoteMessage[]>([]);
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
+  const [adminInput, setAdminInput] = useState("");
 
   // 初始化 sessionId（访客）
   useEffect(() => {
@@ -280,7 +282,6 @@ export function ChatBubble() {
     const handler = (e: Event) => {
       const ce = e as CustomEvent<{ message?: string }>;
       const msg = ce.detail?.message || "";
-
       setIsOpen(true);
       if (msg) setInput(msg);
     };
@@ -291,7 +292,7 @@ export function ChatBubble() {
     };
   }, []);
 
-  // 用 Firestore 判断管理员是否在线（给访客看用；管理员端只是写这个 doc）
+  // 用 Firestore 判断管理员是否在线（跨设备统一）
   useEffect(() => {
     const statusRef = doc(db, "jyc_meta", "adminStatus");
     const unsub = onSnapshot(
@@ -309,44 +310,56 @@ export function ChatBubble() {
     return () => unsub();
   }, []);
 
-  // 访客端：欢迎讯息（需依在线/离线状态自动更新）
+  // 访客端：订阅当前 session 的所有消息（含访客 + 机器人 + 管理员）
   useEffect(() => {
-    if (isAdminClient) return; // 管理端不用这套欢迎语
+    if (isAdminClient) return; // 管理端不用这条订阅
+    if (!sessionId) return;
 
-    const welcomeOnline = texts.welcomeOnline;
-    const welcomeOffline = texts.welcomeOffline;
-    const welcome = adminOnline ? welcomeOnline : welcomeOffline;
+    const q = query(
+      collection(db, "jyc_chat_messages"),
+      where("sessionId", "==", sessionId),
+      orderBy("createdAt", "asc")
+    );
 
-    setMessages((prev) => {
-      if (prev.length === 0) {
-        return [
-          {
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list: Message[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          const from: "user" | "bot" =
+            data.from === "user" ? "user" : "bot";
+          return {
             id: messageId++,
-            from: "bot" as const,
-            text: welcome,
-          },
-        ];
+            from,
+            text: data.text || "",
+          };
+        });
+        setMessages(list);
+      },
+      (err) => {
+        console.error("listen visitor chat error", err);
       }
+    );
 
-      const [first, ...rest] = prev;
-      const isWelcomeMsg =
-        first.from === "bot" &&
-        (first.text === welcomeOnline || first.text === welcomeOffline);
+    return () => unsub();
+  }, [isAdminClient, sessionId]);
 
-      if (!isWelcomeMsg) return prev; // 第一条已经是用户自己的讯息
+  // 访客端：首次进入会话时写入欢迎讯息（每个 session 只写一次）
+  useEffect(() => {
+    if (isAdminClient) return;
+    if (!sessionId) return;
+    if (typeof window === "undefined") return;
 
-      if (first.text === welcome) return prev; // 已经是最新状态
+    const key = `jyc_chat_welcome_sent_${sessionId}_${isEnglish ? "en" : "zh"}`;
+    const sent = window.localStorage.getItem(key) === "true";
+    const welcome = adminOnline ? texts.welcomeOnline : texts.welcomeOffline;
 
-      const updatedFirst = { ...first, text: welcome };
-      return [updatedFirst, ...rest];
-    });
-  }, [
-    adminOnline,
-    isAdminClient,
-    isEnglish,
-    texts.welcomeOnline,
-    texts.welcomeOffline,
-  ]);
+    if (!sent) {
+      // 只写一次欢迎语
+      void saveChatMessage("bot", welcome, sessionId, pathname, true);
+      window.localStorage.setItem(key, "true");
+    }
+  }, [adminOnline, isAdminClient, sessionId, isEnglish, pathname, texts]);
 
   // 管理端：监听所有访客的留言
   useEffect(() => {
@@ -372,7 +385,7 @@ export function ChatBubble() {
           return {
             id: d.id,
             sessionId: data.sessionId || "unknown",
-            from: data.from === "bot" ? "bot" : "user",
+            from: data.from === "user" ? "user" : "bot",
             text: data.text || "",
             createdAt: ts,
             read: !!data.read,
@@ -418,7 +431,7 @@ export function ChatBubble() {
     return () => unsub();
   }, [isAdminClient]);
 
-  // 管理端：把某个会话的讯息标记为已读
+  // 管理端：把某个会话的访客讯息标记为已读
   async function markSessionRead(sessionId: string) {
     if (!isAdminClient) return;
 
@@ -437,23 +450,28 @@ export function ChatBubble() {
     }
   }
 
-  // 打开某个会话
   const handleSelectSession = (sid: string) => {
     setActiveSessionId(sid);
     markSessionRead(sid);
   };
 
-  // 访客端：把聊天讯息存到 Firestore，给后台看
-  async function saveChatMessage(from: "user" | "bot", text: string) {
-    if (!sessionId) return;
+  // 写入 Firestore 聊天记录
+  async function saveChatMessage(
+    from: "user" | "bot",
+    text: string,
+    sessId: string,
+    path: string,
+    read: boolean
+  ) {
+    if (!sessId) return;
     try {
       await addDoc(collection(db, "jyc_chat_messages"), {
-        sessionId,
+        sessionId: sessId,
         from,
         text,
-        pathname,
+        pathname: path,
         createdAt: serverTimestamp(),
-        read: false,
+        read,
       });
     } catch (err) {
       console.error("saveChatMessage error", err);
@@ -464,35 +482,27 @@ export function ChatBubble() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text) return;
+    if (!text || !sessionId) return;
 
-    const userMsg: Message = {
-      id: messageId++,
-      from: "user",
-      text,
-    };
-    setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
-    saveChatMessage("user", text);
+    // 1) 访客讯息写入 Firestore（未读）
+    void saveChatMessage("user", text, sessionId, pathname, false);
 
-    // 有登入：专人回复模式（只给说明，不走自动问答）
+    // 2) 若客服在线：给一条「已收到」的自动回覆（可选）
     if (adminOnline) {
-      const reply: Message = {
-        id: messageId++,
-        from: "bot",
-        text: texts.adminReply,
-      };
-      setMessages((prev) => [...prev, reply]);
+      void saveChatMessage("bot", texts.adminReply, sessionId, pathname, true);
       return;
     }
 
-    // 没登入：自动问答 + 收集资料
+    // 3) 若客服离线：启动自动问答 + 收集资料
     handleOfflineFlow(text);
   };
 
-  // 访客端：离线模式自动问答流程
+  // 访客端：离线模式自动问答流程（只负责写入 bot 消息）
   const handleOfflineFlow = (userText: string) => {
+    if (!sessionId) return;
+
     const replies: string[] = [];
 
     switch (infoStage) {
@@ -538,20 +548,24 @@ export function ChatBubble() {
     }
 
     const faq = getFaqAnswer(userText, isEnglish);
-    if (faq) {
-      replies.push(faq);
-    }
+    if (faq) replies.push(faq);
 
     if (replies.length === 0) return;
 
-    setMessages((prev) => [
-      ...prev,
-      ...replies.map((text) => ({
-        id: messageId++,
-        from: "bot" as const,
-        text,
-      })),
-    ]);
+    for (const r of replies) {
+      void saveChatMessage("bot", r, sessionId, pathname, true);
+    }
+  };
+
+  // 管理端：发送回复给当前访客
+  const handleAdminSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = adminInput.trim();
+    if (!text || !activeSessionId) return;
+
+    setAdminInput("");
+    // 管理端发出的讯息直接设为 read=true（不算未读）
+    void saveChatMessage("bot", text, activeSessionId, pathname, true);
   };
 
   /* ==========================
@@ -574,7 +588,6 @@ export function ChatBubble() {
           onClick={() => {
             setIsOpen((v) => !v);
             if (!isOpen && activeSessionId) {
-              // 打开时，把当前会话设为已读
               markSessionRead(activeSessionId);
             }
           }}
@@ -700,7 +713,7 @@ export function ChatBubble() {
                 ))}
               </div>
 
-              {/* 讯息区 */}
+              {/* 讯息区 + 回复输入框 */}
               <div
                 style={{
                   flex: 1,
@@ -740,10 +753,55 @@ export function ChatBubble() {
                   )}
                 </div>
 
+                <form
+                  onSubmit={handleAdminSend}
+                  style={{
+                    padding: 8,
+                    borderTop: "1px solid #eee",
+                    display: "flex",
+                    gap: 6,
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={adminInput}
+                    onChange={(e) => setAdminInput(e.target.value)}
+                    placeholder={texts.adminInputPlaceholder}
+                    disabled={!activeSessionId}
+                    style={{
+                      flex: 1,
+                      padding: "6px 8px",
+                      borderRadius: 6,
+                      border: "1px solid #ccc",
+                      fontSize: 13,
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!activeSessionId || !adminInput.trim()}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 6,
+                      border: "none",
+                      background:
+                        !activeSessionId || !adminInput.trim()
+                          ? "#ccc"
+                          : "#333",
+                      color: "#fff",
+                      fontSize: 13,
+                      cursor:
+                        !activeSessionId || !adminInput.trim()
+                          ? "not-allowed"
+                          : "pointer",
+                    }}
+                  >
+                    {texts.sendLabel}
+                  </button>
+                </form>
+
                 <div
                   style={{
-                    padding: "6px 10px",
-                    borderTop: "1px solid #eee",
+                    padding: "4px 10px 6px",
                     fontSize: 11,
                     color: "#777",
                   }}

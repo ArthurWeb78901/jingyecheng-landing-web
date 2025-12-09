@@ -79,8 +79,7 @@ export default function ProductsEnPage() {
             Products Overview
           </h1>
           <p className="jyc-section-intro">
-            Below are the products currently provided by Shanxi Taikuang Steel
-            Pipe Equipment Co., Ltd. Detailed technical specifications and line
+            Below are the products currently provided by Taiyuan Jingyecheng Steel Equip Co., Ltd. Detailed technical specifications and line
             configurations can be tailored to process, capacity and plant layout
             requirements, and are subject to the final technical proposal and
             quotation.

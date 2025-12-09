@@ -11,11 +11,11 @@ export default function AboutEnPage() {
       <section className="jyc-section jyc-section-alt">
         <div style={{ maxWidth: 920, margin: "0 auto" }}>
           <h1 style={{ fontSize: "26px", marginBottom: "12px" }}>
-            Shanxi Taikuang Steel Pipe Equipment Co., Ltd.
+            Taiyuan Jingyecheng Steel Equip Co.
           </h1>
 
           <p className="jyc-section-intro">
-            Founded in 1993, Shanxi Taikuang Steel Pipe Equipment Co., Ltd.
+            Founded in 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
             covers a total area of about 70,000 square meters and is located in
             Taiyuan, Shanxi Province, a key city for energy and heavy chemical
             industries. The company is a heavy industry enterprise specialized
@@ -71,7 +71,7 @@ export default function AboutEnPage() {
               <br />
               Tel: 0351-2028121
               <br />
-              Email: sxtkgg@aliyun.com
+              Email: wendy@jycsteelequip.com
             </p>
             <p style={{ fontSize: "12px", color: "#888", marginTop: 4 }}>
               © Shanxi Taikuang Steel Pipe Equipment Co., Ltd. ICP No.
