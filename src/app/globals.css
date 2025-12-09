@@ -651,12 +651,15 @@ body {
     margin-top: 10px;
   }
 
-  .jyc-gallery-item {
-    height: 30px;              /* 原本 80px → 現在更矮，大約再小 30% */
-    border-radius: 6px;
-    background-size: cover;
-    background-position: center;
-  }
+/* Gallery 單張縮圖：正方形 */
+.jyc-gallery-item {
+  width: 100%;
+  aspect-ratio: 1 / 1;    /* 關鍵：固定 1:1 正方形 */
+  border-radius: 6px;
+  background: #e0e0e0;
+  background-size: cover;
+  background-position: center;
+}
 
   /* 手機版「主要產品一覽」改成橫向滑動卡片 */
   .jyc-card-grid {
