@@ -158,7 +158,7 @@ export default function Home() {
         </p>
 
         {products.length > 0 && (
-          <div className="jyc-card-grid">
+          <div className="jyc-card-grid jyc-card-grid--home-scroll">
             {products.map((p, index) => {
               const thumb = productThumbs[index];
               const bgUrl = p.imageUrl || thumb?.imageUrl || "";
