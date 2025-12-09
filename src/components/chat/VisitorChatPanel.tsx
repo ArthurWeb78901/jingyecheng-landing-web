@@ -294,38 +294,25 @@ export function VisitorChatPanel(props: Props) {
   };
 
   // 访客发送讯息
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || !sessionId) return;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const text = input.trim();
+  if (!text || !sessionId) return;
 
-    setInput("");
+  setInput("");
 
-    // 1) 先写入访客讯息（未读）
-    await saveChatMessage("user", text, false);
+  // 1) 先写入访客讯息（未读）
+  await saveChatMessage("user", text, false);
 
-    // 2) 在线模式：只在真正「第一句」时发一次感谢回复
-    if (adminOnline) {
-      const hasAnyRealMessageBefore = messages.some((m) => {
-        // 排除欢迎词本身
-        if (m.from === "bot") {
-          return (
-            m.text !== texts.welcomeOnline && m.text !== texts.welcomeOffline
-          );
-        }
-        return true; // 有任何 user 讯息，就算有记录
-      });
+  // 2) 如果管理员在线，就完全交给真人在后台回复，不再自动发任何感谢信息
+  if (adminOnline) {
+    return;
+  }
 
-      if (!hasAnyRealMessageBefore) {
-        await saveChatMessage("bot", texts.adminReply, true);
-      }
-      // 后续完全交给真人在后台 AdminChatPanel 回复
-      return;
-    }
+  // 3) 管理员不在线时，才走离线自动问答 / 资料收集流程
+  handleOfflineFlow(text);
+};
 
-    // 3) 离线模式：走自动问答流程
-    handleOfflineFlow(text);
-  };
 
   return (
     <div className="jyc-chat-panel">

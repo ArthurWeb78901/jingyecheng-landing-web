@@ -492,6 +492,500 @@ body {
   background: #111;
 }
 
+/* 基础重设 & 全站字体 */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background-color: #f5f5f5;
+  color: #222;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 页面整体布局 */
+.jyc-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* 顶部导航 */
+.jyc-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid #e5e5e5;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+}
+
+.jyc-logo {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+.jyc-nav {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.jyc-nav a {
+  text-decoration: none;
+  color: #555;
+}
+
+.jyc-nav a:hover {
+  color: #111;
+}
+
+/* 右侧：语言切换 + 登录按钮 */
+.jyc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.jyc-lang-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.jyc-lang-switch button,
+.jyc-lang-switch a {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  color: #333;
+  white-space: nowrap;
+}
+
+.jyc-lang-switch button:hover,
+.jyc-lang-switch a:hover {
+  border-color: #999;
+}
+
+/* 当前语言高亮 */
+.jyc-lang-active {
+  background: #333 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* 登录状态 / 按钮 */
+.jyc-login-link {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  text-decoration: none;
+  color: #333;
+  white-space: nowrap;
+}
+
+.jyc-login-link:hover {
+  background: #333;
+  color: #fff;
+}
+
+.jyc-login-status {
+  font-size: 11px;
+  color: #0a7d32;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid #0a7d32;
+  white-space: nowrap;
+}
+
+/* ================= Hero 区块：整块背景图 ================= */
+.jyc-hero {
+  position: relative;
+  padding: 72px 40px;
+  background-image: url("/background-image.png");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  color: #fff;
+}
+
+/* 左侧内容区域 */
+.jyc-hero-inner {
+  position: relative;
+  max-width: 640px;
+  z-index: 1;
+}
+
+/* 左侧文字 */
+.jyc-hero-text h1 {
+  font-size: 32px;
+  line-height: 1.3;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.jyc-hero-text p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #f3f3f3;
+  margin-bottom: 24px;
+}
+
+/* 按钮行 */
+.jyc-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 图片说明（反白小字） */
+.jyc-hero-caption {
+  font-size: 12px;
+  color: #f5f5f5;
+  opacity: 0.9;
+}
+
+/* 默认（中文）渐层：稍微深一点 */
+.jyc-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 0.35),
+    rgba(0, 0, 0, 0.05)
+  );
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 英文首页：渐层比中文稍浅一点 */
+.jyc-hero-en::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.45),
+    rgba(0, 0, 0, 0.18),
+    rgba(0, 0, 0, 0)
+  );
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 共用按钮 */
+.jyc-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: none;
+  background: #333;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.jyc-btn-primary:hover {
+  background: #111;
+}
+
+.jyc-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.jyc-btn-secondary:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* 通用区块 */
+.jyc-section {
+  padding: 56px 32px;
+  background: #fff;
+}
+
+.jyc-section-alt {
+  background: #fafafa;
+}
+
+.jyc-section h2 {
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.jyc-section-intro {
+  font-size: 14px;
+  color: #666;
+  max-width: 720px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* 产品卡片（通用栅格） */
+.jyc-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.jyc-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  padding: 16px;
+}
+
+/* 默認：16:9，手機看圖比較清楚 */
+.jyc-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  background: #f0f0f0;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 12px;
+}
+
+.jyc-card h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.jyc-card p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.jyc-card-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.jyc-card-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* ===== 首页「主要产品一览」横向滑动容器 ===== */
+.jyc-home-products-row {
+  display: flex;
+  overflow-x: auto;
+  gap: 24px;
+  margin-top: 24px;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+
+/* 桌机上显示细一点的横向滚动条 */
+.jyc-home-products-row::-webkit-scrollbar {
+  height: 8px;
+}
+
+.jyc-home-products-row .jyc-card {
+  flex: 0 0 80%;
+  max-width: 80%;
+  scroll-snap-align: start;
+}
+
+/* 平板以上：一次大约 2 张 */
+@media (min-width: 768px) {
+  .jyc-home-products-row .jyc-card {
+    flex: 0 0 40%;
+    max-width: 40%;
+  }
+}
+
+/* 大桌机：一次 4 张卡片 */
+@media (min-width: 1200px) {
+  .jyc-home-products-row .jyc-card {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+}
+
+/* ===== Gallery & 首页轮播 ===== */
+
+/* 首页轮播（Gallery 上方） */
+.jyc-home-slideshow {
+  margin-bottom: 24px;
+}
+
+/* 默認：滿寬、16:9 */
+.jyc-home-slideshow-main {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 */
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e0e0e0;
+}
+
+.jyc-home-slideshow-main-inner {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: background-image 0.4s ease-out;
+}
+
+.jyc-home-slideshow-caption {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+.jyc-home-slideshow-dots {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.jyc-home-slideshow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #999;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.jyc-home-slideshow-dot-active {
+  background: #333;
+  border-color: #333;
+}
+
+/* Gallery 四宫格（默认：适合桌机 / 大平板） */
+.jyc-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.jyc-gallery-item {
+  height: 120px;
+  border-radius: 6px;
+  background: #e0e0e0;
+}
+
+/* 縮圖：正方形（通用） */
+.jyc-gallery-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  background: #e0e0e0;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Contact 表单 */
+.jyc-contact-form {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jyc-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.jyc-contact-form input,
+.jyc-contact-form textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.jyc-contact-form input:focus,
+.jyc-contact-form textarea:focus {
+  outline: none;
+  border-color: #888;
+}
+
+.jyc-contact-submit {
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+/* Footer */
+.jyc-footer {
+  padding: 24px 32px;
+  border-top: 1px solid #e5e5e5;
+  background: #fff;
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+}
+
+.jyc-footer-sub {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+/* 在线助手泡泡 */
+.jyc-chat-bubble-button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #333;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.jyc-chat-bubble-button:hover {
+  background: #111;
+}
+
 .jyc-chat-panel {
   position: fixed;
   right: 24px;
@@ -698,3 +1192,110 @@ body {
     background-position: center;
   }
 }
+
+
+/* 🖥 桌机：缩小产品图片与 Gallery 缩图，不影响手机 */
+@media (min-width: 1024px) {
+  /* 首頁產品卡片圖片：再矮一點 */
+  .jyc-card-image {
+    height: 150px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* Gallery 縮圖：固定小正方形 */
+  .jyc-gallery-grid {
+    grid-template-columns: repeat(auto-fit, 140px);
+    gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .jyc-gallery-item {
+    width: 140px;
+    height: 140px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* 首頁上方輪播：再矮一點 */
+  .jyc-home-slideshow-main {
+    padding-top: 40%;
+  }
+}
+
+/* 📱 手机与小平板（响应式） */
+@media (max-width: 768px) {
+  .jyc-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .jyc-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .jyc-hero {
+    padding: 48px 16px;
+  }
+
+  .jyc-hero-text h1 {
+    font-size: 24px;
+  }
+
+  .jyc-section {
+    padding: 32px 16px;
+  }
+
+  .jyc-form-row {
+    flex-direction: column;
+  }
+
+  /* 🔥 手机端聊天：铺满底部，消息区一定可见 */
+  .jyc-chat-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 80vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .jyc-chat-bubble-button {
+    right: 12px;
+    bottom: 16px;
+  }
+
+  .jyc-chat-messages {
+    flex: 1;
+    min-height: 120px; /* 防止只有输入框，看起来没有消息区 */
+  }
+
+  /* 手機版 slide show 高度稍微縮小 */
+  .jyc-home-slideshow-main {
+    padding-top: 42%;
+    max-height: 400px;
+  }
+
+  /* 手機版 Gallery：縮小縮圖尺寸 */
+  .jyc-gallery-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4 欄 */
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .jyc-gallery-item {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    background: #e0e0e0;
+    background-size: cover;
+    background-position: center;
+  }
+}
+
