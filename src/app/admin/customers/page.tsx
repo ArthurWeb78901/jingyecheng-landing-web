@@ -95,24 +95,42 @@ export default function AdminCustomersPage() {
   };
 
   // 编辑单条线索（一次编辑所有字段）
+  // 编辑单条线索（一次编辑所有字段）
   const handleEdit = async (lead: Lead) => {
     if (typeof window === "undefined") return;
 
-    const name = window.prompt("称呼（姓名）", lead.name) ?? lead.name;
-    const company =
-      window.prompt("公司 / 单位（可留空）", lead.company) ?? lead.company;
+    const nameInput = window.prompt("称呼（姓名）", lead.name);
+    const companyInput = window.prompt(
+      "公司 / 单位（可留空）",
+      lead.company
+    );
+    const contactPersonInput = window.prompt(
+      "负责人姓名（可留空）",
+      lead.contactPerson || ""
+    );
+    const phoneInput = window.prompt(
+      "联系电话（可留空）",
+      lead.phone || ""
+    );
+    const emailInput = window.prompt(
+      "Email（可留空）",
+      lead.email || ""
+    );
+    const needInput = window.prompt(
+      "需求说明（可留空）",
+      lead.need || ""
+    );
+
+    // prompt 点「取消」就保持原值
+    const name = nameInput !== null ? nameInput : lead.name;
+    const company = companyInput !== null ? companyInput : lead.company;
     const contactPerson =
-      window.prompt("负责人姓名（可留空）", lead.contactPerson || "") ??
-      lead.contactPerson ||
-      "";
-    const phone =
-      window.prompt("联系电话（可留空）", lead.phone || "") ??
-      lead.phone ||
-      "";
-    const email =
-      window.prompt("Email（可留空）", lead.email || "") ?? lead.email || "";
-    const need =
-      window.prompt("需求说明（可留空）", lead.need || "") ?? lead.need || "";
+      contactPersonInput !== null
+        ? contactPersonInput
+        : lead.contactPerson || "";
+    const phone = phoneInput !== null ? phoneInput : lead.phone || "";
+    const email = emailInput !== null ? emailInput : lead.email || "";
+    const need = needInput !== null ? needInput : lead.need || "";
 
     // 用电话 + Email 合成一行 contact，兼容旧字段
     let contact = lead.contact || "";
@@ -137,6 +155,7 @@ export default function AdminCustomersPage() {
         need,
       });
 
+      // 更新本地 state
       setLeads((prev) =>
         prev.map((l) =>
           l.id === lead.id
@@ -158,6 +177,7 @@ export default function AdminCustomersPage() {
       window.alert("更新客户资料失败，请稍后再试。");
     }
   };
+
 
   // 删除单条线索
   const handleDeleteOne = async (lead: Lead) => {
