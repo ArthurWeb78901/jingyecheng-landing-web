@@ -7,9 +7,9 @@ import {
   addDoc,
   collection,
   onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
-  where,
 } from "firebase/firestore";
 import type { ChatTexts } from "./chatShared";
 
@@ -17,7 +17,6 @@ type Message = {
   id: string;
   from: "user" | "bot";
   text: string;
-  createdAt: number; // 👈 用来排序
 };
 
 type InfoStage =
@@ -156,14 +155,13 @@ export function VisitorChatPanel(props: Props) {
     onConsumeInitialMessage();
   }, [initialMessage, onConsumeInitialMessage]);
 
-  // 订阅当前 session 的所有消息（访客 + 机器人 + 管理员）
+  // ✅ 订阅所有消息，再用 sessionId 在前端过滤
   useEffect(() => {
     if (!sessionId) return;
 
-    // ❗ 去掉 orderBy("createdAt")，避免需要 Firestore 组合索引
     const q = query(
       collection(db, "jyc_chat_messages"),
-      where("sessionId", "==", sessionId)
+      orderBy("createdAt", "asc")
     );
 
     const unsub = onSnapshot(
@@ -172,22 +170,16 @@ export function VisitorChatPanel(props: Props) {
         const list: Message[] = snap.docs
           .map((d) => {
             const data = d.data() as any;
-            const c = data.createdAt;
-            let ts = 0;
-            if (c && typeof c.toMillis === "function") {
-              ts = c.toMillis();
-            } else if (c && typeof c.seconds === "number") {
-              ts = c.seconds * 1000;
+            if (!data.sessionId || data.sessionId !== sessionId) {
+              return null;
             }
-
             return {
               id: d.id,
               from: data.from === "user" ? "user" : "bot",
               text: data.text || "",
-              createdAt: ts,
-            };
+            } as Message;
           })
-          .sort((a, b) => a.createdAt - b.createdAt); // 前端自己排序
+          .filter(Boolean) as Message[];
 
         setMessages(list);
       },
@@ -231,6 +223,7 @@ export function VisitorChatPanel(props: Props) {
         console.error("send welcome error", err);
       }
     })();
+    // 不要把 adminOnline 放依赖里，避免切换状态重复发
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, isEnglish, pathname, texts.welcomeOnline, texts.welcomeOffline]);
 
@@ -312,29 +305,18 @@ export function VisitorChatPanel(props: Props) {
     const text = input.trim();
     if (!text || !sessionId) return;
 
-    // 1) 本地乐观渲染一条（立刻看到）
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `local-${Date.now()}`,
-        from: "user",
-        text,
-        createdAt: Date.now(),
-      },
-    ]);
-
-    // 2) 清空输入框
+    // 可以保留或去掉乐观渲染，这里选择去掉，完全交给 Firestore 回传
     setInput("");
 
-    // 3) 写入 Firestore（未读）
+    // 写入访客讯息（未读）
     await saveChatMessage("user", text, false);
 
-    // 4) 管理员在线就交给真人，不走机器人
+    // 管理员在线就交给真人回复，不走自动脚本
     if (adminOnline) {
       return;
     }
 
-    // 5) 管理员不在线时，走离线自动问答 / 资料收集
+    // 管理员不在线时才走离线流程
     handleOfflineFlow(text);
   };
 
