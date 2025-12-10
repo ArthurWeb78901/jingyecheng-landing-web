@@ -9,22 +9,22 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDocs,
+  onSnapshot,
   orderBy,
   query,
   updateDoc,
 } from "firebase/firestore";
 
 type Lead = {
-  id: string; // Firestore doc id
-  name: string; // 称呼
-  company: string; // 公司
-  contact: string; // 旧版合并联络方式（兼容用）
-  contactPerson?: string; // 负责人姓名
-  phone?: string; // 电话
-  email?: string; // Email
-  need: string; // 需求说明
-  createdAt: string; // ISO string
+  id: string;
+  name: string;
+  company: string;
+  contact: string; // 旧字段：展示用（会由 phone + email 拼成）
+  contactPerson?: string;
+  phone?: string;
+  email?: string;
+  need: string;
+  createdAt: number | null;
   source?: string;
 };
 
@@ -32,24 +32,35 @@ export default function AdminCustomersPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 从 Firestore 读取 jyc_leads
-  useEffect(() => {
-    async function fetchLeads() {
-      try {
-        const q = query(
-          collection(db, "jyc_leads"),
-          orderBy("createdAt", "desc")
-        );
-        const snap = await getDocs(q);
+  // 编辑浮窗相关 state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    company: "",
+    contactPerson: "",
+    phone: "",
+    email: "",
+    need: "",
+  });
 
+  // 从 Firestore 订阅 jyc_leads
+  useEffect(() => {
+    const q = query(collection(db, "jyc_leads"), orderBy("createdAt", "desc"));
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
         const list: Lead[] = snap.docs.map((d) => {
           const data = d.data() as any;
           const c = data.createdAt;
-          let createdAtISO = "";
-          if (c && typeof c.toDate === "function") {
-            createdAtISO = c.toDate().toISOString();
-          } else if (typeof c === "string") {
-            createdAtISO = c;
+          let ts: number | null = null;
+          if (c && typeof c.toMillis === "function") {
+            ts = c.toMillis();
+          } else if (c && typeof c.seconds === "number") {
+            ts = c.seconds * 1000;
+          } else if (typeof c === "number") {
+            ts = c;
           }
 
           return {
@@ -61,21 +72,36 @@ export default function AdminCustomersPage() {
             phone: data.phone || "",
             email: data.email || "",
             need: data.need || "",
-            createdAt: createdAtISO,
+            createdAt: ts,
             source: data.source || "",
           };
         });
 
         setLeads(list);
-      } catch (err) {
-        console.error("load leads from Firestore error", err);
-      } finally {
+        setLoading(false);
+      },
+      (err) => {
+        console.error("load leads error", err);
         setLoading(false);
       }
-    }
+    );
 
-    fetchLeads();
+    return () => unsub();
   }, []);
+
+  const handleClear = async () => {
+    if (!window.confirm("确定要清空当前所有客户资料吗？此操作无法恢复。")) return;
+
+    try {
+      const coll = collection(db, "jyc_leads");
+      // 简单做法：前端根据当前 state 一条条删
+      await Promise.all(leads.map((lead) => deleteDoc(doc(coll, lead.id))));
+      setLeads([]);
+    } catch (err) {
+      console.error("clear leads error", err);
+      window.alert("清空客户资料失败，请稍后再试。");
+    }
+  };
 
   const renderSourceLabel = (source?: string) => {
     if (!source) return "";
@@ -89,51 +115,59 @@ export default function AdminCustomersPage() {
       return "来源：在线助手（人工接管会话归档）";
     }
     if (source === "admin-manual") {
-      return "来源：后台手动添加";
+      return "来源：后台手动新增";
     }
     return `来源：${source}`;
   };
 
-  // 编辑单条线索（一次编辑所有字段）
-  // 编辑单条线索（一次编辑所有字段）
-  const handleEdit = async (lead: Lead) => {
-    if (typeof window === "undefined") return;
+  const handleDelete = async (lead: Lead) => {
+    if (!window.confirm(`确定要删除「${lead.name || "（未填写称呼）"}」这笔资料吗？`))
+      return;
 
-    const nameInput = window.prompt("称呼（姓名）", lead.name);
-    const companyInput = window.prompt(
-      "公司 / 单位（可留空）",
-      lead.company
-    );
-    const contactPersonInput = window.prompt(
-      "负责人姓名（可留空）",
-      lead.contactPerson || ""
-    );
-    const phoneInput = window.prompt(
-      "联系电话（可留空）",
-      lead.phone || ""
-    );
-    const emailInput = window.prompt(
-      "Email（可留空）",
-      lead.email || ""
-    );
-    const needInput = window.prompt(
-      "需求说明（可留空）",
-      lead.need || ""
-    );
+    try {
+      await deleteDoc(doc(db, "jyc_leads", lead.id));
+      setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+    } catch (err) {
+      console.error("delete lead error", err);
+      window.alert("删除客户资料失败，请稍后再试。");
+    }
+  };
 
-    // prompt 点「取消」就保持原值
-    const name = nameInput !== null ? nameInput : lead.name;
-    const company = companyInput !== null ? companyInput : lead.company;
-    const contactPerson =
-      contactPersonInput !== null
-        ? contactPersonInput
-        : lead.contactPerson || "";
-    const phone = phoneInput !== null ? phoneInput : lead.phone || "";
-    const email = emailInput !== null ? emailInput : lead.email || "";
-    const need = needInput !== null ? needInput : lead.need || "";
+  // 打开编辑浮窗
+  const openEditModal = (lead: Lead) => {
+    setEditingLead(lead);
+    setEditForm({
+      name: lead.name || "",
+      company: lead.company || "",
+      contactPerson: lead.contactPerson || "",
+      phone: lead.phone || "",
+      email: lead.email || "",
+      need: lead.need || "",
+    });
+    setEditModalOpen(true);
+  };
 
-    // 用电话 + Email 合成一行 contact，兼容旧字段
-    let contact = lead.contact || "";
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingLead(null);
+  };
+
+  const handleEditFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 保存编辑结果
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLead) return;
+
+    const { name, company, contactPerson, phone, email, need } = editForm;
+
+    // 用电话 + Email 合成一行 contact（兼容旧字段）
+    let contact = editingLead.contact || "";
     if (phone || email) {
       if (phone && email) {
         contact = `电话：${phone} / Email：${email}`;
@@ -145,75 +179,37 @@ export default function AdminCustomersPage() {
     }
 
     try {
-      await updateDoc(doc(db, "jyc_leads", lead.id), {
+      await updateDoc(doc(db, "jyc_leads", editingLead.id), {
         name,
         company,
-        contact,
         contactPerson,
         phone,
         email,
         need,
+        contact,
       });
 
-      // 更新本地 state
       setLeads((prev) =>
         prev.map((l) =>
-          l.id === lead.id
+          l.id === editingLead.id
             ? {
                 ...l,
                 name,
                 company,
-                contact,
                 contactPerson,
                 phone,
                 email,
                 need,
+                contact,
               }
             : l
         )
       );
+
+      closeEditModal();
     } catch (err) {
       console.error("update lead error", err);
       window.alert("更新客户资料失败，请稍后再试。");
-    }
-  };
-
-
-  // 删除单条线索
-  const handleDeleteOne = async (lead: Lead) => {
-    if (typeof window === "undefined") return;
-    const ok = window.confirm(
-      `确定要删除这笔客户资料吗？\n\n称呼：${lead.name || "（未填写）"}`
-    );
-    if (!ok) return;
-
-    try {
-      await deleteDoc(doc(db, "jyc_leads", lead.id));
-      setLeads((prev) => prev.filter((l) => l.id !== lead.id));
-    } catch (err) {
-      console.error("delete lead error", err);
-      window.alert("删除客户资料失败，请稍后再试。");
-    }
-  };
-
-  // 清空全部线索
-  const handleClearAll = async () => {
-    if (typeof window === "undefined") return;
-    if (leads.length === 0) return;
-
-    const ok = window.confirm(
-      `确定要清空当前所有 ${leads.length} 笔客户资料吗？此操作将从 Firestore 中永久删除，无法恢复！`
-    );
-    if (!ok) return;
-
-    try {
-      await Promise.all(
-        leads.map((lead) => deleteDoc(doc(db, "jyc_leads", lead.id)))
-      );
-      setLeads([]);
-    } catch (err) {
-      console.error("clear all leads error", err);
-      window.alert("清空客户资料失败，请稍后再试。");
     }
   };
 
@@ -227,16 +223,13 @@ export default function AdminCustomersPage() {
             客户资料 / CRM
           </h1>
           <p className="jyc-section-intro">
-            本页面汇总由前台「在线助手」产生的客户线索，数据存放于
-            Firestore 集合 <code>jyc_leads</code> 中：
+            本页面汇总由前台「在线助手」产生的基础客户资讯。
             <br />
-            ・访客在<strong>离线模式</strong>
-            下完成资料填写，会自动生成一笔线索；
+            ・离线模式：脚本自动询问称呼、公司、联络方式与需求。
             <br />
-            ・客服在<strong>人工接管</strong>
-            时，可以在访客聊天视窗中点击「手动添加客人信息」，将该会话整理成一笔线索；
+            ・人工接管：结束会话时可将对话整理成一笔线索保存到 Firestore。
             <br />
-            ・本页支持对任一线索进行编辑与删除，修改会即时写回 Firestore。
+            你也可以在此页面对任一线索进行编辑与删除。
           </p>
 
           <div
@@ -250,31 +243,31 @@ export default function AdminCustomersPage() {
           >
             <div>
               {loading
-                ? "资料载入中…"
+                ? "载入中…"
                 : `共 ${leads.length} 笔记录${
                     leads.length > 0 ? "（依建立时间由新到旧排列）" : ""
                   }`}
             </div>
-            <button
-              type="button"
-              style={{
-                padding: "4px 10px",
-                borderRadius: 4,
-                border: "1px solid #c33",
-                background: "#fff",
-                color: "#c33",
-                fontSize: 12,
-                cursor: leads.length === 0 ? "not-allowed" : "pointer",
-                opacity: leads.length === 0 ? 0.5 : 1,
-              }}
-              disabled={leads.length === 0}
-              onClick={handleClearAll}
-            >
-              清空全部客户资料
-            </button>
+            {leads.length > 0 && (
+              <button
+                type="button"
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 4,
+                  border: "1px solid #c33",
+                  background: "#fff",
+                  color: "#c33",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+                onClick={handleClear}
+              >
+                清空全部客户资料
+              </button>
+            )}
           </div>
 
-          {loading ? (
+          {leads.length === 0 && !loading ? (
             <div
               style={{
                 padding: 16,
@@ -285,20 +278,7 @@ export default function AdminCustomersPage() {
                 color: "#666",
               }}
             >
-              正在从 Firestore 读取客户资料…
-            </div>
-          ) : leads.length === 0 ? (
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 8,
-                border: "1px solid #e5e5e5",
-                background: "#fff",
-                fontSize: 13,
-                color: "#666",
-              }}
-            >
-              目前尚无从在线助手收集或归档的客户资料。
+              目前尚无客户资料，请先透过「在线助手」产生线索，或在后台聊天面板中手动保存线索。
             </div>
           ) : (
             <div
@@ -358,24 +338,20 @@ export default function AdminCustomersPage() {
                     </div>
                   )}
 
-                  <div style={{ marginBottom: 4 }}>
+                  <div style={{ marginBottom: 2 }}>
                     <span style={{ fontSize: 12, color: "#555" }}>
                       联络方式：
-                      {lead.phone || lead.email || lead.contact
-                        ? [
-                            lead.phone && `电话：${lead.phone}`,
-                            lead.email && `Email：${lead.email}`,
-                            !lead.phone && !lead.email && lead.contact
-                              ? lead.contact
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(" / ")
+                      {lead.contact
+                        ? lead.contact
+                        : lead.phone || lead.email
+                        ? `${lead.phone || ""}${
+                            lead.phone && lead.email ? " / " : ""
+                          }${lead.email || ""}`
                         : "（未填写）"}
                     </span>
                   </div>
 
-                  <div style={{ marginBottom: 8 }}>
+                  <div style={{ marginBottom: 6 }}>
                     <span style={{ fontSize: 12, color: "#555" }}>
                       需求说明：
                       {lead.need
@@ -384,23 +360,23 @@ export default function AdminCustomersPage() {
                     </span>
                   </div>
 
-                  {/* 操作按钮：编辑 / 删除 */}
                   <div
                     style={{
                       display: "flex",
                       justifyContent: "flex-end",
                       gap: 8,
-                      fontSize: 12,
+                      marginTop: 4,
                     }}
                   >
                     <button
                       type="button"
-                      onClick={() => handleEdit(lead)}
+                      onClick={() => openEditModal(lead)}
                       style={{
+                        padding: "4px 10px",
                         borderRadius: 999,
-                        border: "1px solid #333",
-                        padding: "2px 10px",
+                        border: "1px solid #555",
                         background: "#fff",
+                        fontSize: 12,
                         cursor: "pointer",
                       }}
                     >
@@ -408,13 +384,14 @@ export default function AdminCustomersPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDeleteOne(lead)}
+                      onClick={() => handleDelete(lead)}
                       style={{
+                        padding: "4px 10px",
                         borderRadius: 999,
                         border: "1px solid #c33",
-                        padding: "2px 10px",
-                        background: "#fff",
+                        background: "#fff5f5",
                         color: "#c33",
+                        fontSize: 12,
                         cursor: "pointer",
                       }}
                     >
@@ -429,6 +406,205 @@ export default function AdminCustomersPage() {
       </section>
 
       <Footer />
+
+      {/* 编辑浮窗 */}
+      {editModalOpen && editingLead && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.35)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 480,
+              background: "#fff",
+              borderRadius: 8,
+              padding: 16,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 18,
+                margin: "0 0 8px",
+              }}
+            >
+              编辑客户资料
+            </h2>
+            <p
+              style={{
+                fontSize: 12,
+                color: "#777",
+                marginBottom: 12,
+              }}
+            >
+              访客编号：{editingLead.id.slice(-6)}
+            </p>
+
+            <form onSubmit={handleEditSave} style={{ fontSize: 13 }}>
+              <div style={{ marginBottom: 8 }}>
+                <label>
+                  称呼（姓名）
+                  <input
+                    type="text"
+                    name="name"
+                    value={editForm.name}
+                    onChange={handleEditFormChange}
+                    style={{
+                      width: "100%",
+                      marginTop: 4,
+                      padding: "6px 8px",
+                      borderRadius: 4,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ marginBottom: 8 }}>
+                <label>
+                  公司 / 单位
+                  <input
+                    type="text"
+                    name="company"
+                    value={editForm.company}
+                    onChange={handleEditFormChange}
+                    style={{
+                      width: "100%",
+                      marginTop: 4,
+                      padding: "6px 8px",
+                      borderRadius: 4,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ marginBottom: 8 }}>
+                <label>
+                  负责人姓名
+                  <input
+                    type="text"
+                    name="contactPerson"
+                    value={editForm.contactPerson}
+                    onChange={handleEditFormChange}
+                    style={{
+                      width: "100%",
+                      marginTop: 4,
+                      padding: "6px 8px",
+                      borderRadius: 4,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <label>
+                    电话
+                    <input
+                      type="text"
+                      name="phone"
+                      value={editForm.phone}
+                      onChange={handleEditFormChange}
+                      style={{
+                        width: "100%",
+                        marginTop: 4,
+                        padding: "6px 8px",
+                        borderRadius: 4,
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </label>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label>
+                    Email
+                    <input
+                      type="email"
+                      name="email"
+                      value={editForm.email}
+                      onChange={handleEditFormChange}
+                      style={{
+                        width: "100%",
+                        marginTop: 4,
+                        padding: "6px 8px",
+                        borderRadius: 4,
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label>
+                  需求说明
+                  <textarea
+                    name="need"
+                    value={editForm.need}
+                    onChange={handleEditFormChange}
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      marginTop: 4,
+                      padding: "6px 8px",
+                      borderRadius: 4,
+                      border: "1px solid #ccc",
+                      resize: "vertical",
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 8,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 4,
+                    border: "1px solid #ccc",
+                    background: "#fff",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 4,
+                    border: "none",
+                    background: "#333",
+                    color: "#fff",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  保存
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
