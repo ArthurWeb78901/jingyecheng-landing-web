@@ -407,7 +407,7 @@ body {
 .jyc-gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
+  gap: 5px;
   margin-top: 16px;
 }
 

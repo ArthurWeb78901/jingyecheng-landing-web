@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ChatBubble } from "@/components/ChatBubble"; // 👈 新增：在线助手浮窗
 import { db } from "@/lib/firebase";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
@@ -57,6 +58,19 @@ export default function ProductsPage() {
 
     fetchProducts();
   }, []);
+
+  // 点击「询问此类设备」=> 打开右下角在线助手，并预填产品名
+  function handleAskProduct(productName: string) {
+    if (typeof window === "undefined") return;
+
+    const msg = `您好，我想咨询一下关于「${productName}」这类设备的详细资讯。`;
+
+    const evt = new CustomEvent("jyc-open-chat", {
+      detail: { message: msg },
+    });
+
+    window.dispatchEvent(evt);
+  }
 
   return (
     <main className="jyc-page">
@@ -155,7 +169,11 @@ export default function ProductsPage() {
                       </button>
                     )}
 
-                    <button type="button" className="jyc-card-btn">
+                    <button
+                      type="button"
+                      className="jyc-card-btn"
+                      onClick={() => handleAskProduct(p.name)}
+                    >
                       询问此类设备
                     </button>
                   </article>
@@ -167,6 +185,9 @@ export default function ProductsPage() {
       </section>
 
       <Footer />
+
+      {/* 👇 在线助手浮窗（全站共用） */}
+      <ChatBubble />
     </main>
   );
 }

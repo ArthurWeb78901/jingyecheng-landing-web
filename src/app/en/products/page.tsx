@@ -1,195 +1,409 @@
-// src/app/en/products/page.tsx
+// src/app/en/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ChatBubble } from "@/components/ChatBubble";
+import { ContactFormEn } from "@/components/ContactFormEn";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
-type ProductDoc = {
-  id: string;           // Firestore doc id
-  category: string;     // 中文分類（optional 顯示）
-  name: string;         // 中文名稱
-  nameEn?: string;      // 英文名稱（可選）
-  brief: string;        // 中文簡介
-  briefEn?: string;     // 英文簡介（可選）
-  heroImageUrl?: string;
+type HomeGalleryItem = {
+  id: string;
+  title: string;
+  description?: string;
   imageUrl?: string;
-  enabled: boolean;
+  showOnHome?: boolean;
   createdAt?: string;
 };
 
-export default function ProductsEnPage() {
-  const [products, setProducts] = useState<ProductDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+type HomeProduct = {
+  id: string;
+  category: string;
+  categoryEn?: string;
+  name: string;
+  nameEn?: string;
+  brief: string;
+  briefEn?: string;
+  enabled: boolean;
+  imageUrl?: string;
+};
 
-  // 每個產品的「展開 / 收合」狀態
-  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
+const PRODUCT_BRIEF_MAX = 220; // EN 首页产品卡简介显示的最大字数
 
+export default function HomeEn() {
+  const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [products, setProducts] = useState<HomeProduct[]>([]);
+
+  // EN 首页产品横向滚动容器
+  const productsRowRef = useRef<HTMLDivElement | null>(null);
+
+  // gallery from jyc_gallery
   useEffect(() => {
-    async function fetchProducts() {
+    async function loadHomeGallery() {
       try {
-        // 和首頁邏輯統一：用 name 排序
+        const q = query(
+          collection(db, "jyc_gallery"),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+
+        const all: HomeGalleryItem[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            title: data.title || "",
+            description: data.description || "",
+            imageUrl: data.imageUrl || "",
+            showOnHome: !!data.showOnHome,
+            createdAt: data.createdAt || "",
+          };
+        });
+
+        const filtered = all.filter(
+          (item) => item.imageUrl && item.showOnHome
+        );
+
+        setHomeItems(filtered);
+        setCurrentSlide(0);
+      } catch (err) {
+        console.error(
+          "load home gallery items from Firestore error (en)",
+          err
+        );
+      }
+    }
+
+    loadHomeGallery();
+  }, []);
+
+  // products from jyc_products
+  useEffect(() => {
+    async function loadProducts() {
+      try {
         const q = query(
           collection(db, "jyc_products"),
           orderBy("name", "asc")
         );
         const snap = await getDocs(q);
 
-        const list: ProductDoc[] = snap.docs.map((d) => {
-          const data = d.data() as any;
-          return {
-            id: d.id,
-            category: data.category || "",
-            name: data.name || "",
-            nameEn: data.nameEn || "",
-            brief: data.brief || "",
-            briefEn: data.briefEn || "",
-            heroImageUrl: data.heroImageUrl || data.imageUrl || "",
-            imageUrl: data.imageUrl || "",
-            // 沒填 enabled 就當作 true
-            enabled: data.enabled ?? true,
-            createdAt: data.createdAt || "",
-          };
-        });
+        const list: HomeProduct[] = snap.docs
+          .map((d) => {
+            const data = d.data() as any;
+            return {
+              id: d.id,
+              category: data.category || "",
+              categoryEn: data.categoryEn || "",
+              name: data.name || "",
+              nameEn: data.nameEn || "",
+              brief: data.brief || "",
+              briefEn: data.briefEn || "",
+              enabled: data.enabled ?? true,
+              imageUrl: data.imageUrl || "",
+            };
+          })
+          .filter((p) => p.enabled);
 
-        const enabled = list.filter((p) => p.enabled);
-        setProducts(enabled);
+        setProducts(list);
       } catch (err) {
-        console.error("load products from Firestore (EN) error", err);
-      } finally {
-        setLoading(false);
+        console.error("load home products from Firestore error (en)", err);
       }
     }
 
-    fetchProducts();
+    loadProducts();
   }, []);
 
-  // 最大顯示字數（超過就顯示「Read more」）
-  const MAX_CHARS = 300;
+  // slideshow 自动轮播
+  useEffect(() => {
+    if (homeItems.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % homeItems.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [homeItems.length]);
+
+  const currentItem = homeItems[currentSlide];
+
+  // thumbs 数量与产品数同步，不足时只是一個備用來源
+  const productThumbs = homeItems.slice(0, products.length || 3);
+  const galleryItems = homeItems.slice(0, 4);
+
+  // 横向滚动逻辑（与中文首页一致）
+  const scrollProducts = (direction: "left" | "right") => {
+    const container = productsRowRef.current;
+    if (!container) return;
+
+    const firstCard =
+      container.querySelector<HTMLElement>(".jyc-card") || null;
+
+    const step =
+      (firstCard?.offsetWidth || container.clientWidth * 0.8) + 24;
+
+    const delta = direction === "left" ? -step : step;
+
+    container.scrollBy({
+      left: delta,
+      behavior: "smooth",
+    });
+  };
+
+  // 点击产品卡上的 “Learn More” 时，打开右下角在线助手并预填英文询问
+  const openChatForProduct = (displayName: string) => {
+    if (typeof window === "undefined") return;
+
+    const msg = `I would like to learn more about your “${displayName}” equipment, including detailed technical parameters and configuration suggestions.`;
+
+    window.dispatchEvent(
+      new CustomEvent("jyc-open-chat", {
+        detail: { message: msg },
+      }) as any
+    );
+  };
 
   return (
     <main className="jyc-page">
       <Header />
 
-      <section className="jyc-section jyc-section-alt">
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <h1 style={{ fontSize: "26px", marginBottom: "8px" }}>
-            Products Overview
-          </h1>
-          <p className="jyc-section-intro">
-            Below are the products currently provided by Taiyuan Jingyecheng Steel Equip Co., Ltd. Detailed technical specifications and line
-            configurations can be tailored to process, capacity and plant layout
-            requirements, and are subject to the final technical proposal and
-            quotation.
-          </p>
-
-          {loading ? (
-            <p style={{ fontSize: 14, color: "#777" }}>Loading…</p>
-          ) : products.length === 0 ? (
-            <p style={{ fontSize: 14, color: "#777" }}>
-              No published products are available yet. Please add products in
-              the admin panel and enable &quot;Show on frontend&quot;.
+      {/* Hero - EN */}
+      <section className="jyc-hero jyc-hero-en">
+        <div className="jyc-hero-inner">
+          <div className="jyc-hero-text">
+            <h1>
+              Turn-key Solutions for Seamless Pipe Mills &amp; Rolling Equipment
+            </h1>
+            <p>
+              Founded in 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
+              specializes in equipment for hot-rolled seamless steel pipe
+              production, including piercing mills, pipe rolling mills, sizing
+              and reducing mills, straightening machines, cooling beds, hot
+              centering machines and cold drawing machines. We provide reliable
+              production lines and technical support with professional design,
+              manufacturing and service capabilities.
             </p>
-          ) : (
-            <div className="jyc-card-grid">
-              {products.map((p) => {
-                const displayName =
-                  p.nameEn && p.nameEn.trim().length > 0 ? p.nameEn : p.name;
 
-                const fullBrief =
-                  p.briefEn && p.briefEn.trim().length > 0
-                    ? p.briefEn
-                    : p.brief;
+            <div className="jyc-hero-actions">
+              <a href="#contact" className="jyc-btn-primary">
+                Contact Us
+              </a>
+              <a href="/en/products" className="jyc-btn-secondary">
+                View Products
+              </a>
+            </div>
 
-                const bgUrl = p.heroImageUrl || p.imageUrl || "";
+            <p className="jyc-hero-caption">
+              Sample view of a seamless pipe mill line
+            </p>
+          </div>
+        </div>
+      </section>
 
-                const isExpanded = !!expandedMap[p.id];
-                const isLong = fullBrief && fullBrief.length > MAX_CHARS;
+      {/* Products overview from Firestore */}
+      <section id="products" className="jyc-section">
+        <h2>Main Products</h2>
 
-                const shownText =
-                  !isLong || isExpanded
-                    ? fullBrief
-                    : fullBrief.slice(0, MAX_CHARS) + "…";
+        <p className="jyc-section-intro">
+          {products.length === 0
+            ? 'No products have been configured yet in the admin "Product Management" page. Once you add products and tick "Show on website", they will automatically appear here.'
+            : "Below are the main product categories currently configured. Detailed line configurations and technical specifications are available on the Products page."}
+        </p>
+
+        {products.length > 0 && (
+          <div style={{ position: "relative" }}>
+            {/* 左箭头 */}
+            <button
+              type="button"
+              aria-label="Scroll left to see more products"
+              onClick={() => scrollProducts("left")}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                border: "none",
+                background: "rgba(255,255,255,0.9)",
+                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                borderRadius: "50%",
+                width: 32,
+                height: 32,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 5,
+              }}
+            >
+              ‹
+            </button>
+
+            <div
+              className="jyc-home-products-row"
+              ref={productsRowRef}
+              aria-label="Main products horizontal list"
+            >
+              {products.map((p, index) => {
+                const thumb = productThumbs[index];
+                const bgUrl = p.imageUrl || thumb?.imageUrl || "";
+
+                const displayName = p.nameEn || p.name;
+                const displayBrief = p.briefEn || p.brief;
+                const isLong =
+                  displayBrief && displayBrief.length > PRODUCT_BRIEF_MAX;
+                const shownBrief = isLong
+                  ? displayBrief.slice(0, PRODUCT_BRIEF_MAX) + "…"
+                  : displayBrief;
 
                 return (
                   <article key={p.id} className="jyc-card">
                     <div
                       className="jyc-card-image"
-                      style={{
-                        backgroundColor: "#f0f0f0",
-                        backgroundImage: bgUrl ? `url(${bgUrl})` : undefined,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
+                      style={
+                        bgUrl
+                          ? { backgroundImage: `url(${bgUrl})` }
+                          : undefined
+                      }
                     />
-
-                    <h2 style={{ fontSize: "18px", marginBottom: "4px" }}>
-                      {displayName}
-                    </h2>
-
-                    {p.category && (
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          color: "#999",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        Category (CN): {p.category}
-                      </div>
-                    )}
-
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        color: "#555",
-                        marginBottom: isLong ? "4px" : "10px",
-                        whiteSpace: "pre-line",
-                      }}
+                    <h3>{displayName}</h3>
+                    <p>{shownBrief}</p>
+                    <button
+                      type="button"
+                      className="jyc-card-btn"
+                      onClick={() => openChatForProduct(displayName)}
                     >
-                      {shownText}
-                    </p>
-
-                    {isLong && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedMap((prev) => ({
-                            ...prev,
-                            [p.id]: !prev[p.id],
-                          }))
-                        }
-                        style={{
-                          border: "none",
-                          background: "transparent",
-                          color: "#0066cc",
-                          fontSize: 13,
-                          padding: 0,
-                          marginBottom: 10,
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                          textUnderlineOffset: 2,
-                          alignSelf: "flex-start",
-                        }}
-                      >
-                        {isExpanded ? "Show less" : "Read more"}
-                      </button>
-                    )}
-
-                    <button type="button" className="jyc-card-btn">
-                      Ask About This Product
+                      Learn More
                     </button>
                   </article>
                 );
               })}
             </div>
-          )}
+
+            {/* 右箭头 */}
+            <button
+              type="button"
+              aria-label="Scroll right to see more products"
+              onClick={() => scrollProducts("right")}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                border: "none",
+                background: "rgba(255,255,255,0.9)",
+                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                borderRadius: "50%",
+                width: 32,
+                height: 32,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 5,
+              }}
+            >
+              ›
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* About (short) */}
+      <section id="about" className="jyc-section jyc-section-alt">
+        <h2>About Us</h2>
+        <p>
+          Taiyuan Jingyecheng Heavy Equipment Co., Ltd. is located in Taiyuan,
+          Shanxi Province, with a site area of about 70,000 m². The company is a
+          heavy-industry manufacturer specialized in rolling equipment for
+          seamless steel pipes, covering piercing mills, pipe rolling mills,
+          sizing / reducing mills, straightening machines, cooling beds, hot
+          centering machines and cold drawing machines. We integrate design,
+          manufacturing and sales, and provide complete services from line
+          planning and equipment supply to installation, commissioning and
+          after-sales support.
+        </p>
+      </section>
+
+      {/* Gallery */}
+      <section id="gallery" className="jyc-section">
+        <h2>Gallery</h2>
+        <p className="jyc-section-intro">
+          Photos of key equipment and production lines, such as piercing mills,
+          pipe rolling mills, sizing / reducing mills, straightening machines,
+          cooling beds, hot centering machines and cold drawing machines, as
+          well as typical project references.
+        </p>
+
+        {homeItems.length > 0 && (
+          <div className="jyc-home-slideshow">
+            <div className="jyc-home-slideshow-main">
+              <div
+                className="jyc-home-slideshow-main-inner"
+                style={
+                  currentItem?.imageUrl
+                    ? { backgroundImage: `url(${currentItem.imageUrl})` }
+                    : undefined
+                }
+              />
+            </div>
+            <div className="jyc-home-slideshow-caption">
+              {currentItem?.title}
+            </div>
+            <div className="jyc-home-slideshow-dots">
+              {homeItems.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={
+                    "jyc-home-slideshow-dot" +
+                    (idx === currentSlide
+                      ? " jyc-home-slideshow-dot-active"
+                      : "")
+                  }
+                  onClick={() => setCurrentSlide(idx)}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="jyc-gallery-grid">
+          {galleryItems.length === 0
+            ? [1, 2, 3, 4].map((i) => (
+                <div key={i} className="jyc-gallery-thumb" />
+              ))
+            : galleryItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="jyc-gallery-thumb"
+                  style={
+                    item.imageUrl
+                      ? { backgroundImage: `url(${item.imageUrl})` }
+                      : undefined
+                  }
+                  title={item.title}
+                />
+              ))}
         </div>
       </section>
 
+      {/* Contact */}
+      <section id="contact" className="jyc-section jyc-section-alt">
+        <h2>Contact Us</h2>
+        <p className="jyc-section-intro">
+          Please leave your contact information and project requirements. Our
+          sales team will get back to you as soon as possible. You may also call
+          or email us directly.
+        </p>
+
+        <ContactFormEn />
+      </section>
+
       <Footer />
+      {/* 在线助手浮窗（与中文站一致） */}
+      <ChatBubble />
     </main>
   );
 }
