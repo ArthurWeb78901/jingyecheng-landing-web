@@ -13,7 +13,8 @@ export function Header() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const flag = window.localStorage.getItem("jyc_admin_logged_in") === "true";
+      const flag =
+        window.localStorage.getItem("jyc_admin_logged_in") === "true";
       setLoggedIn(flag);
     }
   }, []);
@@ -39,9 +40,19 @@ export function Header() {
         { href: "/contact", label: "联系我们" },
       ];
 
+  const logoText = isEnglish
+    ? "JYC Steel Equip"
+    : "太原精业城重工设备有限公司";
+
+  const logoHref = isEnglish ? "/en" : "/";
+
   return (
     <header className="jyc-header">
-      <div className="jyc-logo">太原精业城重工设备有限公司</div>
+      {/* Logo：依语言切换文字，并可点击回到对应首页 */}
+      <Link href={logoHref} className="jyc-logo">
+        {logoText}
+      </Link>
+
       <nav className="jyc-nav">
         {navLinks.map((item) => (
           <Link key={item.href} href={item.href}>
