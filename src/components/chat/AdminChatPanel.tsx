@@ -52,6 +52,13 @@ export function AdminChatPanel({
   const [adminInput, setAdminInput] = useState("");
   const [liveNoticeSessions, setLiveNoticeSessions] = useState<string[]>([]);
 
+  // 👉 手动添加客人信息用的表单状态
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadName, setLeadName] = useState("");
+  const [leadCompany, setLeadCompany] = useState("");
+  const [leadContact, setLeadContact] = useState("");
+  const [leadNeed, setLeadNeed] = useState("");
+
   const hasUnread = useMemo(
     () => sessions.some((s) => s.unreadCount > 0),
     [sessions]
@@ -139,6 +146,23 @@ export function AdminChatPanel({
     [remoteMessages, activeSessionId]
   );
 
+  // 👉 每当切换会话时，预填「需求」= 当前会话所有访客留言合并
+  useEffect(() => {
+    if (!activeSessionId) {
+      setShowLeadForm(false);
+      setLeadName("");
+      setLeadCompany("");
+      setLeadContact("");
+      setLeadNeed("");
+      return;
+    }
+    const userMsgs = remoteMessages.filter(
+      (m) => m.sessionId === activeSessionId && m.from === "user"
+    );
+    const joined = userMsgs.map((m) => m.text).join("\n");
+    setLeadNeed(joined);
+  }, [activeSessionId, remoteMessages]);
+
   async function saveChatMessage(
     from: "user" | "bot",
     text: string,
@@ -203,6 +227,43 @@ export function AdminChatPanel({
     setLiveNoticeSessions((prev) =>
       prev.includes(activeSessionId) ? prev : [...prev, activeSessionId]
     );
+  };
+
+  // 👉 手动添加客人信息：写入 Firestore jyc_leads
+  const handleSaveLeadManually = async () => {
+    if (!activeSessionId) return;
+
+    try {
+      await addDoc(collection(db, "jyc_leads"), {
+        sessionId: activeSessionId,
+        name: leadName || (isEnglish ? "Visitor" : "访客"),
+        company: leadCompany || "",
+        contact: leadContact || "",
+        need: leadNeed || "",
+        createdAt: serverTimestamp(),
+        lang: isEnglish ? "en" : "zh",
+        source: "admin-manual",
+      });
+
+      if (typeof window !== "undefined") {
+        window.alert(
+          isEnglish
+            ? "Customer lead has been saved to the database."
+            : "已将该访客信息保存到后台客户列表。"
+        );
+      }
+
+      setShowLeadForm(false);
+    } catch (err) {
+      console.error("save lead manually error", err);
+      if (typeof window !== "undefined") {
+        window.alert(
+          isEnglish
+            ? "Failed to save customer lead. Please try again."
+            : "保存客人信息失败，请稍后重试。"
+        );
+      }
+    }
   };
 
   const handleDeleteSession = async (sid: string) => {
@@ -318,8 +379,7 @@ export function AdminChatPanel({
                 }}
               >
                 <span>
-                  {isEnglish ? "Visitor" : "访客"}{" "}
-                  {s.sessionId.slice(-4)}
+                  {isEnglish ? "Visitor" : "访客"} {s.sessionId.slice(-4)}
                 </span>
                 {s.unreadCount > 0 && (
                   <span
@@ -423,9 +483,7 @@ export function AdminChatPanel({
                 borderRadius: 6,
                 border: "none",
                 background:
-                  !activeSessionId || !adminInput.trim()
-                    ? "#ccc"
-                    : "#333",
+                  !activeSessionId || !adminInput.trim() ? "#ccc" : "#333",
                 color: "#fff",
                 fontSize: 13,
                 cursor:
@@ -438,10 +496,10 @@ export function AdminChatPanel({
             </button>
           </form>
 
-          {/* 底部說明 + 操作按鈕 */}
+          {/* 底部說明 + 操作按鈕 + 手动添加客人信息 */}
           <div
             style={{
-              padding: "4px 10px 6px",
+              padding: "4px 10px 8px",
               fontSize: 11,
               color: "#777",
             }}
@@ -449,54 +507,212 @@ export function AdminChatPanel({
             <div style={{ marginBottom: 4 }}>{texts.adminHint}</div>
 
             {activeSessionId && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={handleSendTakeoverNotice}
-                  disabled={liveSentForActive}
-                  style={{
-                    borderRadius: 999,
-                    border: "1px solid #333",
-                    padding: "2px 8px",
-                    fontSize: 11,
-                    background: liveSentForActive ? "#f0f0f0" : "#fff",
-                    color: "#333",
-                    cursor: liveSentForActive ? "default" : "pointer",
-                  }}
-                >
-                  {liveSentForActive
-                    ? isEnglish
-                      ? "Live mode notified"
-                      : "已通知真人接管"
-                    : isEnglish
-                    ? "Notify live operator"
-                    : "真人接管提示"}
-                </button>
+              <>
+                {/* 手动添加客人信息表单 */}
+                {showLeadForm && (
+                  <div
+                    style={{
+                      marginBottom: 6,
+                      padding: "8px 10px",
+                      borderRadius: 6,
+                      border: "1px solid #ddd",
+                      background: "#fafafa",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 11,
+                      }}
+                    >
+                      {isEnglish
+                        ? "Add customer lead manually"
+                        : "手动添加客人信息"}
+                    </div>
+                    <input
+                      type="text"
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      placeholder={isEnglish ? "Name" : "姓名"}
+                      style={{
+                        padding: "4px 6px",
+                        borderRadius: 4,
+                        border: "1px solid #ccc",
+                        fontSize: 12,
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={leadCompany}
+                      onChange={(e) => setLeadCompany(e.target.value)}
+                      placeholder={isEnglish ? "Company" : "公司 / 单位"}
+                      style={{
+                        padding: "4px 6px",
+                        borderRadius: 4,
+                        border: "1px solid #ccc",
+                        fontSize: 12,
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={leadContact}
+                      onChange={(e) => setLeadContact(e.target.value)}
+                      placeholder={
+                        isEnglish
+                          ? "Contact (phone / email)"
+                          : "联系方式（手机 / 邮箱）"
+                      }
+                      style={{
+                        padding: "4px 6px",
+                        borderRadius: 4,
+                        border: "1px solid #ccc",
+                        fontSize: 12,
+                      }}
+                    />
+                    <textarea
+                      value={leadNeed}
+                      onChange={(e) => setLeadNeed(e.target.value)}
+                      placeholder={
+                        isEnglish
+                          ? "Requirement / notes"
+                          : "需求说明 / 备注（可自动带入聊天内容）"
+                      }
+                      rows={3}
+                      style={{
+                        padding: "4px 6px",
+                        borderRadius: 4,
+                        border: "1px solid #ccc",
+                        fontSize: 12,
+                        resize: "vertical",
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: 6,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setShowLeadForm(false)}
+                        style={{
+                          borderRadius: 999,
+                          border: "1px solid #ccc",
+                          padding: "2px 8px",
+                          background: "#fff",
+                          fontSize: 11,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {isEnglish ? "Cancel" : "取消"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveLeadManually}
+                        disabled={
+                          !leadName.trim() &&
+                          !leadCompany.trim() &&
+                          !leadContact.trim() &&
+                          !leadNeed.trim()
+                        }
+                        style={{
+                          borderRadius: 999,
+                          border: "none",
+                          padding: "2px 10px",
+                          background:
+                            !leadName.trim() &&
+                            !leadCompany.trim() &&
+                            !leadContact.trim() &&
+                            !leadNeed.trim()
+                              ? "#ccc"
+                              : "#333",
+                          color: "#fff",
+                          fontSize: 11,
+                          cursor:
+                            !leadName.trim() &&
+                            !leadCompany.trim() &&
+                            !leadContact.trim() &&
+                            !leadNeed.trim()
+                              ? "not-allowed"
+                              : "pointer",
+                        }}
+                      >
+                        {isEnglish ? "Save lead" : "保存客人信息"}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                <button
-                  type="button"
-                  onClick={() => handleDeleteSession(activeSessionId)}
+                {/* 底部按钮行 */}
+                <div
                   style={{
-                    border: "none",
-                    background: "transparent",
-                    color: "#999",
-                    textDecoration: "underline",
-                    fontSize: 11,
-                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 8,
+                    flexWrap: "wrap",
                   }}
                 >
-                  {isEnglish
-                    ? "Close & clear chat"
-                    : "结束并清除此对话"}
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowLeadForm((v) => !v)}
+                    style={{
+                      borderRadius: 999,
+                      border: "1px solid #333",
+                      padding: "2px 8px",
+                      fontSize: 11,
+                      background: "#fff",
+                      color: "#333",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {isEnglish
+                      ? "Add customer manually"
+                      : "手动添加客人信息"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSendTakeoverNotice}
+                    disabled={liveSentForActive}
+                    style={{
+                      borderRadius: 999,
+                      border: "1px solid #333",
+                      padding: "2px 8px",
+                      fontSize: 11,
+                      background: liveSentForActive ? "#f0f0f0" : "#fff",
+                      color: "#333",
+                      cursor: liveSentForActive ? "default" : "pointer",
+                    }}
+                  >
+                    {liveSentForActive
+                      ? isEnglish
+                        ? "Live mode notified"
+                        : "已通知真人接管"
+                      : isEnglish
+                      ? "Notify live operator"
+                      : "真人接管提示"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSession(activeSessionId)}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: "#999",
+                      textDecoration: "underline",
+                      fontSize: 11,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {isEnglish ? "Close & clear chat" : "结束并清除此对话"}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
