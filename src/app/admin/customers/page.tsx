@@ -4,40 +4,73 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 
 type Lead = {
-  id: number;
+  id: string; // Firestore doc id
   name: string;
   company: string;
   contact: string;
   need: string;
-  createdAt: string;
+  createdAt: string; // ISO string
   source?: string;
 };
 
 export default function AdminCustomersPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // 从 Firestore 读取 jyc_leads
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    async function fetchLeads() {
+      try {
+        const q = query(
+          collection(db, "jyc_leads"),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
 
-    try {
-      const raw = window.localStorage.getItem("jyc_crm_leads");
-      const list: Lead[] = raw ? JSON.parse(raw) : [];
-      list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-      setLeads(list);
-    } catch (err) {
-      console.error("load leads error", err);
+        const list: Lead[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          const c = data.createdAt;
+          let createdAtISO = "";
+          if (c && typeof c.toDate === "function") {
+            // Firestore Timestamp
+            createdAtISO = c.toDate().toISOString();
+          } else if (typeof c === "string") {
+            createdAtISO = c;
+          }
+
+          return {
+            id: d.id,
+            name: data.name || "",
+            company: data.company || "",
+            contact: data.contact || "",
+            need: data.need || "",
+            createdAt: createdAtISO,
+            source: data.source || "",
+          };
+        });
+
+        setLeads(list);
+      } catch (err) {
+        console.error("load leads from Firestore error", err);
+      } finally {
+        setLoading(false);
+      }
     }
+
+    fetchLeads();
   }, []);
-
-  const handleClear = () => {
-    if (typeof window === "undefined") return;
-    if (!window.confirm("确定要清空当前浏览器中保存的客户资料示意数据吗？")) return;
-
-    window.localStorage.removeItem("jyc_crm_leads");
-    setLeads([]);
-  };
 
   const renderSourceLabel = (source?: string) => {
     if (!source) return "";
@@ -53,6 +86,80 @@ export default function AdminCustomersPage() {
     return `来源：${source}`;
   };
 
+  // 编辑单条线索
+  const handleEdit = async (lead: Lead) => {
+    if (typeof window === "undefined") return;
+
+    const name = window.prompt("称呼（姓名）", lead.name);
+    if (name === null) return;
+
+    const company = window.prompt("公司 / 单位（可留空）", lead.company);
+    if (company === null) return;
+
+    const contact = window.prompt("联络方式（电话 / 邮箱）", lead.contact);
+    if (contact === null) return;
+
+    const need = window.prompt("需求说明", lead.need);
+    if (need === null) return;
+
+    try {
+      await updateDoc(doc(db, "jyc_leads", lead.id), {
+        name,
+        company,
+        contact,
+        need,
+      });
+
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === lead.id ? { ...l, name, company, contact, need } : l
+        )
+      );
+    } catch (err) {
+      console.error("update lead error", err);
+      window.alert("更新客户资料失败，请稍后再试。");
+    }
+  };
+
+  // 删除单条线索
+  const handleDeleteOne = async (lead: Lead) => {
+    if (typeof window === "undefined") return;
+    const ok = window.confirm(
+      `确定要删除这笔客户资料吗？\n\n称呼：${lead.name || "（未填写）"}`
+    );
+    if (!ok) return;
+
+    try {
+      await deleteDoc(doc(db, "jyc_leads", lead.id));
+      setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+    } catch (err) {
+      console.error("delete lead error", err);
+      window.alert("删除客户资料失败，请稍后再试。");
+    }
+  };
+
+  // 清空全部线索
+  const handleClearAll = async () => {
+    if (typeof window === "undefined") return;
+    if (leads.length === 0) return;
+
+    const ok = window.confirm(
+      `确定要清空当前所有 ${leads.length} 笔客户资料吗？此操作将从 Firestore 中永久删除，无法恢复！`
+    );
+    if (!ok) return;
+
+    try {
+      // 逐条删除当前列表里的 leads
+      await Promise.all(
+        leads.map((lead) => deleteDoc(doc(db, "jyc_leads", lead.id)))
+      );
+      setLeads([]);
+    } catch (err) {
+      console.error("clear all leads error", err);
+      window.alert("清空客户资料失败，请稍后再试。");
+    }
+  };
+
   return (
     <main className="jyc-page">
       <Header />
@@ -60,18 +167,19 @@ export default function AdminCustomersPage() {
       <section className="jyc-section jyc-section-alt">
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>
-            客户资料 / CRM（示意）
+            客户资料 / CRM
           </h1>
           <p className="jyc-section-intro">
-            本页面汇总由前台「在线助手」产生的基础客户资讯：
+            本页面汇总由前台「在线助手」产生的客户线索，数据存放于
+            Firestore 集合 <code>jyc_leads</code> 中：
             <br />
-            ・在<strong>客服未登入后台（离线模式）</strong>时，系统会依脚本自动向访客询问称呼、公司、联络方式与需求，并记录为一笔线索。
+            ・访客在<strong>离线模式</strong>
+            下完成资料填写，会自动生成一笔线索；
             <br />
-            ・在<strong>客服登入后台（人工接管）</strong>时，您可以在访客对话视窗中点击「结束并清除此对话」，系统会将该会话的访客对话内容整合为一笔记录归档到此页面。
+            ・客服在<strong>人工接管</strong>
+            时，可以在访客聊天视窗中点击「手动添加客人信息」，将该会话整理成一笔线索；
             <br />
-            当前资料仅保存在<strong>当前浏览器的 localStorage</strong>
-            中，方便 Demo 使用；正式上线时可改为储存于服务器端数据库，
-            并与正式 CRM / 业务跟进流程整合。
+            ・本页支持对任一线索进行编辑与删除，修改会即时写回 Firestore。
           </p>
 
           <div
@@ -84,8 +192,11 @@ export default function AdminCustomersPage() {
             }}
           >
             <div>
-              共 {leads.length} 笔记录
-              {leads.length > 0 && "（依建立时间由新到旧排列）"}
+              {loading
+                ? "资料载入中…"
+                : `共 ${leads.length} 笔记录${
+                    leads.length > 0 ? "（依建立时间由新到旧排列）" : ""
+                  }`}
             </div>
             <button
               type="button"
@@ -96,15 +207,30 @@ export default function AdminCustomersPage() {
                 background: "#fff",
                 color: "#c33",
                 fontSize: 12,
-                cursor: "pointer",
+                cursor: leads.length === 0 ? "not-allowed" : "pointer",
+                opacity: leads.length === 0 ? 0.5 : 1,
               }}
-              onClick={handleClear}
+              disabled={leads.length === 0}
+              onClick={handleClearAll}
             >
-              清空示意资料
+              清空全部客户资料
             </button>
           </div>
 
-          {leads.length === 0 ? (
+          {loading ? (
+            <div
+              style={{
+                padding: 16,
+                borderRadius: 8,
+                border: "1px solid #e5e5e5",
+                background: "#fff",
+                fontSize: 13,
+                color: "#666",
+              }}
+            >
+              正在从 Firestore 读取客户资料…
+            </div>
+          ) : leads.length === 0 ? (
             <div
               style={{
                 padding: 16,
@@ -116,17 +242,6 @@ export default function AdminCustomersPage() {
               }}
             >
               目前尚无从在线助手收集或归档的客户资料。
-              <br />
-              你可以：
-              <br />
-              1）在<strong>未登入后台</strong>
-              的情况下，前往前台首页打开右下角「在线助手」，依照流程输入称呼、公司、联络方式与需求；
-              <br />
-              2）在<strong>登入后台</strong>
-              的情况下，由另一支手机或电脑打开前台网页，使用「在线助手」与客服端聊天，
-              然后在后台访客列表中点击「结束并清除此对话」进行归档；
-              <br />
-              完成后再回到此页面查看效果。
             </div>
           ) : (
             <div
@@ -184,13 +299,51 @@ export default function AdminCustomersPage() {
                     </span>
                   </div>
 
-                  <div>
+                  <div style={{ marginBottom: 8 }}>
                     <span style={{ fontSize: 12, color: "#555" }}>
                       需求说明：
                       {lead.need
                         ? lead.need
                         : "（未填写／若为在线聊天归档，仅会记录访客对话内容）"}
                     </span>
+                  </div>
+
+                  {/* 操作按钮：编辑 / 删除 */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      gap: 8,
+                      fontSize: 12,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(lead)}
+                      style={{
+                        borderRadius: 999,
+                        border: "1px solid #333",
+                        padding: "2px 10px",
+                        background: "#fff",
+                        cursor: "pointer",
+                      }}
+                    >
+                      编辑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOne(lead)}
+                      style={{
+                        borderRadius: 999,
+                        border: "1px solid #c33",
+                        padding: "2px 10px",
+                        background: "#fff",
+                        color: "#c33",
+                        cursor: "pointer",
+                      }}
+                    >
+                      删除
+                    </button>
                   </div>
                 </article>
               ))}
