@@ -1,6 +1,9 @@
 // src/components/chat/chatShared.ts
 "use client";
 
+import { db } from "@/lib/firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+
 export type ChatTexts = {
   bubbleLabel: string;
   adminBubbleLabel: string;
@@ -177,98 +180,90 @@ export type LeadDraft = {
   need: string;
 };
 
-type StoredLead = {
-  id: number;
-  name: string;
-  company: string;
-  contact: string;
-  need: string;
-  createdAt: string;
-  source?: string;
-};
+export type LeadSource = "offline-bot" | "chat-archive" | "admin-manual";
 
-/** 离线脚本收集的线索写入 localStorage */
-export function saveLeadToLocalStorage(lead: LeadDraft) {
-  if (typeof window === "undefined") return;
-
+/** 统一写入 Firestore: jyc_leads */
+async function saveLeadToFirestore(
+  lead: LeadDraft,
+  options: {
+    source: LeadSource;
+    isEnglish: boolean;
+    sessionId?: string;
+    transcript?: string;
+  }
+) {
   try {
-    const key = "jyc_crm_leads";
-    const raw = window.localStorage.getItem(key);
-    const list: StoredLead[] = raw ? JSON.parse(raw) : [];
-
-    const exists = list.some(
-      (item) =>
-        item.name === lead.name &&
-        item.company === lead.company &&
-        item.contact === lead.contact &&
-        item.need === lead.need
-    );
-    if (exists) return;
-
-    const newLead: StoredLead = {
-      id: Date.now(),
+    await addDoc(collection(db, "jyc_leads"), {
       name: lead.name || "",
       company: lead.company || "",
       contact: lead.contact || "",
-      need: lead.need || "",
-      createdAt: new Date().toISOString(),
-      source: "chat-bubble", // 离线自动收集
-    };
-
-    list.push(newLead);
-    window.localStorage.setItem(key, JSON.stringify(list));
+      need: lead.need || options.transcript || "",
+      createdAt: serverTimestamp(),
+      source: options.source, // offline-bot / chat-archive / admin-manual
+      language: options.isEnglish ? "en" : "zh",
+      sessionId: options.sessionId || null,
+    });
   } catch (err) {
-    console.error("saveLeadToLocalStorage error", err);
+    console.error("saveLeadToFirestore error", err);
   }
 }
 
-/** Admin 结束会话时，用来归档整段在线聊天 */
+/**
+ * 兼容旧接口：离线脚本收集的线索
+ * 以前是写 localStorage，现在改为写 Firestore (source = offline-bot)
+ * 第二个参数 isEnglish 可选，不传就当中文。
+ */
+export function saveLeadToLocalStorage(lead: LeadDraft, isEnglish = false) {
+  void saveLeadToFirestore(lead, {
+    source: "offline-bot",
+    isEnglish,
+  });
+}
+
+/** Admin 手动输入的线索（聊天窗旁边“加入客户资料”） */
+export async function saveAdminLead(lead: LeadDraft, isEnglish: boolean) {
+  await saveLeadToFirestore(lead, {
+    source: "admin-manual",
+    isEnglish,
+  });
+}
+
+/** Admin 结束会话时，用来归档整段在线聊天 -> Firestore */
 export type ArchiveMessage = {
   from: "user" | "bot";
   text: string;
   createdAt: number;
 };
 
+/**
+ * 名称保持不变（兼容旧代码），现在实际也是写 Firestore。
+ */
 export function archiveChatSessionToLocalStorage(
   sessionId: string,
   msgs: ArchiveMessage[],
   isEnglish: boolean
 ) {
-  if (typeof window === "undefined") return;
   if (!msgs || msgs.length === 0) return;
 
-  try {
-    const key = "jyc_crm_leads";
-    const raw = window.localStorage.getItem(key);
-    const list: StoredLead[] = raw ? JSON.parse(raw) : [];
+  const transcript = msgs
+    .filter((m) => m.from === "user")
+    .map((m) => m.text)
+    .join("\n");
 
-    const userMsgs = msgs.filter((m) => m.from === "user");
-    const transcript = userMsgs.map((m) => m.text).join("\n");
+  const pseudoLead: LeadDraft = {
+    name:
+      (isEnglish ? "Visitor " : "访客 ") +
+      (sessionId ? sessionId.slice(-4) : ""),
+    company: "",
+    contact: "",
+    need:
+      transcript || (isEnglish ? "No conversation content." : "无会话内容。"),
+  };
 
-    const firstTime =
-      msgs[0]?.createdAt && !Number.isNaN(msgs[0].createdAt)
-        ? new Date(msgs[0].createdAt)
-        : new Date();
-
-    const newLead: StoredLead = {
-      id: Date.now(),
-      name:
-        (isEnglish ? "Visitor " : "访客 ") +
-        (sessionId ? sessionId.slice(-4) : ""),
-      company: "",
-      contact: "",
-      need:
-        transcript ||
-        (isEnglish ? "No conversation content." : "无会话内容。"),
-      createdAt: firstTime.toISOString(),
-      source: isEnglish
-        ? "online-chat-archive"
-        : "在线助手（人工接管会话归档）",
-    };
-
-    list.push(newLead);
-    window.localStorage.setItem(key, JSON.stringify(list));
-  } catch (err) {
-    console.error("archiveChatSessionToLocalStorage error", err);
-  }
+  void saveLeadToFirestore(pseudoLead, {
+    source: "chat-archive",
+    isEnglish,
+    sessionId,
+    transcript,
+  });
 }

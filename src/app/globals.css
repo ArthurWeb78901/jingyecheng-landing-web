@@ -361,7 +361,7 @@ body {
 /* 默認：滿寬、16:9 */
 .jyc-home-slideshow-main {
   position: relative;
-  width: 100%;
+  width: 85%;
   padding-top: 56.25%; /* 16:9 */
   border-radius: 8px;
   overflow: hidden;
@@ -419,7 +419,7 @@ body {
 
 /* 縮圖：正方形（通用） */
 .jyc-gallery-thumb {
-  width: 100%;
+  width: 80%;
   aspect-ratio: 1 / 1;
   border-radius: 6px;
   background: #e0e0e0;
@@ -609,7 +609,7 @@ body {
 @media (min-width: 1024px) {
   /* 首頁產品卡片圖片：再矮一點 */
   .jyc-card-image {
-    height: 150px;
+    height: 250px;
     border-radius: 6px;
     background-size: cover;
     background-position: center;
