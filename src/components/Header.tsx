@@ -27,14 +27,14 @@ export function Header() {
   const navLinks = isEnglish
     ? [
         { href: "/en", label: "Home" },
-        { href: "/en/products", label: "Products" },
+        { href: "/en/products", label: "Products" },   // 👉 英文产品页
         { href: "/en/about", label: "About" },
         { href: "/en/gallery", label: "Gallery" },
         { href: "/en/contact", label: "Contact" },
       ]
     : [
         { href: "/", label: "首页" },
-        { href: "/products", label: "产品介绍" },
+        { href: "/products", label: "产品介绍" },       // 👉 中文产品页
         { href: "/about", label: "公司介绍" },
         { href: "/gallery", label: "图片集" },
         { href: "/contact", label: "联系我们" },
