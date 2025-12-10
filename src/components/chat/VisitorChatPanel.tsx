@@ -43,6 +43,7 @@ type Props = {
   sessionId: string;
   initialMessage: string;
   onConsumeInitialMessage: () => void;
+  onClose?: () => void; // 👈 新增：让外层 ChatBubble 可以传收起函数进来
 };
 
 /** FAQ 关键字应答（用当前语言文案） */
@@ -294,39 +295,59 @@ export function VisitorChatPanel(props: Props) {
   };
 
   // 访客发送讯息
+// 访客发送讯息
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   const text = input.trim();
   if (!text || !sessionId) return;
 
+  // 1) 先在前端把这条消息加到 messages 里（乐观渲染）
+  setMessages((prev) => [
+    ...prev,
+    {
+      id: `local-${Date.now()}`, // 临时 id，等 Firestore 回来会被覆盖
+      from: "user",
+      text,
+    },
+  ]);
+
+  // 2) 清空输入框
   setInput("");
 
-  // 1) 先写入访客讯息（未读）
+  // 3) 再真正写入 Firestore（未读）
   await saveChatMessage("user", text, false);
 
-  // 2) 如果管理员在线，就完全交给真人在后台回复，不再自动发任何感谢信息
+  // 4) 如果管理员在线，就完全交给真人回复，不走自动问答
   if (adminOnline) {
     return;
   }
 
-  // 3) 管理员不在线时，才走离线自动问答 / 资料收集流程
+  // 5) 管理员不在线时，才走离线自动问答 / 资料收集流程
   handleOfflineFlow(text);
 };
 
-
   return (
-    <div className="jyc-chat-panel">
-      <div className="jyc-chat-header">
-        <div>
-          <div className="jyc-chat-title">{texts.title}</div>
-          <div className="jyc-chat-status">
-            {isEnglish ? "Status: " : "状态："}
-            {adminOnline ? texts.statusOnline : texts.statusOffline}
-          </div>
+  <div className="jyc-chat-panel">
+    <div className="jyc-chat-header">
+      <div>
+        <div className="jyc-chat-title">{texts.title}</div>
+        <div className="jyc-chat-status">
+          {isEnglish ? "Status: " : "状态："}
+          {adminOnline ? texts.statusOnline : texts.statusOffline}
         </div>
-        {/* 关闭按钮交给外层 ChatBubble 控制，这里保持简单 */}
-        {/* 不放关闭按钮，避免和 ChatBubble 的重复；如果你想保留可以再加一个 props onClose */}
       </div>
+
+      {props.onClose && (
+        <button
+          type="button"
+          className="jyc-chat-close"
+          onClick={props.onClose}
+          aria-label={isEnglish ? "Close chat" : "收起对话"}
+        >
+          ×
+        </button>
+      )}
+    </div>
 
       <div className="jyc-chat-messages">
         {messages.map((m) => (

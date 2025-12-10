@@ -48,6 +48,7 @@ export function ChatBubble() {
       (snap) => {
         const data = snap.data() as any;
         if (data && typeof data.online === "boolean") {
+          // 一旦本地是 true 就保持 true（避免误判掉线）
           setAdminOnline((prev) => prev || data.online);
         }
       },
@@ -118,6 +119,7 @@ export function ChatBubble() {
             sessionId={sessionId}
             initialMessage={prefill}
             onConsumeInitialMessage={() => setPrefill("")}
+            onClose={() => setIsOpen(false)}  // 👈 收起聊天面板
           />
         ))}
     </>
