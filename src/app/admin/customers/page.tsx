@@ -17,10 +17,13 @@ import {
 
 type Lead = {
   id: string; // Firestore doc id
-  name: string;
-  company: string;
-  contact: string;
-  need: string;
+  name: string; // 称呼
+  company: string; // 公司
+  contact: string; // 旧版合并联络方式（兼容用）
+  contactPerson?: string; // 负责人姓名
+  phone?: string; // 电话
+  email?: string; // Email
+  need: string; // 需求说明
   createdAt: string; // ISO string
   source?: string;
 };
@@ -44,7 +47,6 @@ export default function AdminCustomersPage() {
           const c = data.createdAt;
           let createdAtISO = "";
           if (c && typeof c.toDate === "function") {
-            // Firestore Timestamp
             createdAtISO = c.toDate().toISOString();
           } else if (typeof c === "string") {
             createdAtISO = c;
@@ -55,6 +57,9 @@ export default function AdminCustomersPage() {
             name: data.name || "",
             company: data.company || "",
             contact: data.contact || "",
+            contactPerson: data.contactPerson || "",
+            phone: data.phone || "",
+            email: data.email || "",
             need: data.need || "",
             createdAt: createdAtISO,
             source: data.source || "",
@@ -83,36 +88,69 @@ export default function AdminCustomersPage() {
     ) {
       return "来源：在线助手（人工接管会话归档）";
     }
+    if (source === "admin-manual") {
+      return "来源：后台手动添加";
+    }
     return `来源：${source}`;
   };
 
-  // 编辑单条线索
+  // 编辑单条线索（一次编辑所有字段）
   const handleEdit = async (lead: Lead) => {
     if (typeof window === "undefined") return;
 
-    const name = window.prompt("称呼（姓名）", lead.name);
-    if (name === null) return;
+    const name = window.prompt("称呼（姓名）", lead.name) ?? lead.name;
+    const company =
+      window.prompt("公司 / 单位（可留空）", lead.company) ?? lead.company;
+    const contactPerson =
+      window.prompt("负责人姓名（可留空）", lead.contactPerson || "") ??
+      lead.contactPerson ||
+      "";
+    const phone =
+      window.prompt("联系电话（可留空）", lead.phone || "") ??
+      lead.phone ||
+      "";
+    const email =
+      window.prompt("Email（可留空）", lead.email || "") ?? lead.email || "";
+    const need =
+      window.prompt("需求说明（可留空）", lead.need || "") ?? lead.need || "";
 
-    const company = window.prompt("公司 / 单位（可留空）", lead.company);
-    if (company === null) return;
-
-    const contact = window.prompt("联络方式（电话 / 邮箱）", lead.contact);
-    if (contact === null) return;
-
-    const need = window.prompt("需求说明", lead.need);
-    if (need === null) return;
+    // 用电话 + Email 合成一行 contact，兼容旧字段
+    let contact = lead.contact || "";
+    if (phone || email) {
+      if (phone && email) {
+        contact = `电话：${phone} / Email：${email}`;
+      } else if (phone) {
+        contact = `电话：${phone}`;
+      } else if (email) {
+        contact = `Email：${email}`;
+      }
+    }
 
     try {
       await updateDoc(doc(db, "jyc_leads", lead.id), {
         name,
         company,
         contact,
+        contactPerson,
+        phone,
+        email,
         need,
       });
 
       setLeads((prev) =>
         prev.map((l) =>
-          l.id === lead.id ? { ...l, name, company, contact, need } : l
+          l.id === lead.id
+            ? {
+                ...l,
+                name,
+                company,
+                contact,
+                contactPerson,
+                phone,
+                email,
+                need,
+              }
+            : l
         )
       );
     } catch (err) {
@@ -149,7 +187,6 @@ export default function AdminCustomersPage() {
     if (!ok) return;
 
     try {
-      // 逐条删除当前列表里的 leads
       await Promise.all(
         leads.map((lead) => deleteDoc(doc(db, "jyc_leads", lead.id)))
       );
@@ -293,9 +330,28 @@ export default function AdminCustomersPage() {
                     </div>
                   </div>
 
+                  {lead.contactPerson && (
+                    <div style={{ marginBottom: 2 }}>
+                      <span style={{ fontSize: 12, color: "#555" }}>
+                        负责人：{lead.contactPerson}
+                      </span>
+                    </div>
+                  )}
+
                   <div style={{ marginBottom: 4 }}>
                     <span style={{ fontSize: 12, color: "#555" }}>
-                      联络方式：{lead.contact || "（未填写）"}
+                      联络方式：
+                      {lead.phone || lead.email || lead.contact
+                        ? [
+                            lead.phone && `电话：${lead.phone}`,
+                            lead.email && `Email：${lead.email}`,
+                            !lead.phone && !lead.email && lead.contact
+                              ? lead.contact
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" / ")
+                        : "（未填写）"}
                     </span>
                   </div>
 
