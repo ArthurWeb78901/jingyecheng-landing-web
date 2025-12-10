@@ -4,19 +4,53 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+type SiteConfigForHeader = {
+  logoMark: string;
+  logoTextZh: string;
+  logoTextEn: string;
+};
+
+const HEADER_DEFAULTS: SiteConfigForHeader = {
+  logoMark: "JYC",
+  logoTextZh: "太原精业城重工设备有限公司",
+  logoTextEn: "JYC Steel Equip",
+};
 
 export function Header() {
   const pathname = usePathname() || "/";
   const isEnglish = pathname.startsWith("/en");
 
   const [loggedIn, setLoggedIn] = useState(false);
+  const [siteConfig, setSiteConfig] =
+    useState<SiteConfigForHeader>(HEADER_DEFAULTS);
 
+  // 讀取登入狀態（localStorage）
   useEffect(() => {
     if (typeof window !== "undefined") {
       const flag =
         window.localStorage.getItem("jyc_admin_logged_in") === "true";
       setLoggedIn(flag);
     }
+  }, []);
+
+  // 從 Firestore 讀取 config/site（logo 文字）
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const snap = await getDoc(doc(db, "config", "site"));
+        if (snap.exists()) {
+          const data = snap.data() as Partial<SiteConfigForHeader>;
+          setSiteConfig((prev) => ({ ...prev, ...data }));
+        }
+      } catch (err) {
+        console.error("load site config in Header error:", err);
+      }
+    }
+
+    loadConfig();
   }, []);
 
   // 用目前路径推算对应的中 / 英路径（保持同一页）
@@ -27,30 +61,28 @@ export function Header() {
   const navLinks = isEnglish
     ? [
         { href: "/en", label: "Home" },
-        { href: "/en/products", label: "Products" },   // 👉 英文产品页
+        { href: "/en/products", label: "Products" },
         { href: "/en/about", label: "About" },
         { href: "/en/gallery", label: "Gallery" },
         { href: "/en/contact", label: "Contact" },
       ]
     : [
         { href: "/", label: "首页" },
-        { href: "/products", label: "产品介绍" },       // 👉 中文产品页
+        { href: "/products", label: "产品介绍" },
         { href: "/about", label: "公司介绍" },
         { href: "/gallery", label: "图片集" },
         { href: "/contact", label: "联系我们" },
       ];
 
-  const logoText = isEnglish
-    ? "JYC Steel Equip"
-    : "太原精业城重工设备有限公司";
-
   const logoHref = isEnglish ? "/en" : "/";
+  const logoText = isEnglish ? siteConfig.logoTextEn : siteConfig.logoTextZh;
 
   return (
     <header className="jyc-header">
-      {/* Logo：依语言切换文字，并可点击回到对应首页 */}
+      {/* Logo：徽章 + 文字，文字從 Firestore config 來 */}
       <Link href={logoHref} className="jyc-logo">
-        {logoText}
+        <span className="jyc-logo-mark">{siteConfig.logoMark}</span>
+        <span className="jyc-logo-text">{logoText}</span>
       </Link>
 
       <nav className="jyc-nav">
