@@ -7,7 +7,6 @@ import {
   addDoc,
   collection,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   where,
@@ -18,6 +17,7 @@ type Message = {
   id: string;
   from: "user" | "bot";
   text: string;
+  createdAt: number; // 👈 用来排序
 };
 
 type InfoStage =
@@ -43,7 +43,7 @@ type Props = {
   sessionId: string;
   initialMessage: string;
   onConsumeInitialMessage: () => void;
-  onClose?: () => void; // 👈 新增：让外层 ChatBubble 可以传收起函数进来
+  onClose?: () => void;
 };
 
 /** FAQ 关键字应答（用当前语言文案） */
@@ -134,6 +134,7 @@ export function VisitorChatPanel(props: Props) {
     sessionId,
     initialMessage,
     onConsumeInitialMessage,
+    onClose,
   } = props;
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -159,23 +160,35 @@ export function VisitorChatPanel(props: Props) {
   useEffect(() => {
     if (!sessionId) return;
 
+    // ❗ 去掉 orderBy("createdAt")，避免需要 Firestore 组合索引
     const q = query(
       collection(db, "jyc_chat_messages"),
-      where("sessionId", "==", sessionId),
-      orderBy("createdAt", "asc")
+      where("sessionId", "==", sessionId)
     );
 
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const list: Message[] = snap.docs.map((d) => {
-          const data = d.data() as any;
-          return {
-            id: d.id,
-            from: data.from === "user" ? "user" : "bot",
-            text: data.text || "",
-          };
-        });
+        const list: Message[] = snap.docs
+          .map((d) => {
+            const data = d.data() as any;
+            const c = data.createdAt;
+            let ts = 0;
+            if (c && typeof c.toMillis === "function") {
+              ts = c.toMillis();
+            } else if (c && typeof c.seconds === "number") {
+              ts = c.seconds * 1000;
+            }
+
+            return {
+              id: d.id,
+              from: data.from === "user" ? "user" : "bot",
+              text: data.text || "",
+              createdAt: ts,
+            };
+          })
+          .sort((a, b) => a.createdAt - b.createdAt); // 前端自己排序
+
         setMessages(list);
       },
       (err) => {
@@ -218,7 +231,6 @@ export function VisitorChatPanel(props: Props) {
         console.error("send welcome error", err);
       }
     })();
-    // 这里不要把 adminOnline 放进依赖，否则在线/离线切换会重发
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, isEnglish, pathname, texts.welcomeOnline, texts.welcomeOffline]);
 
@@ -295,59 +307,59 @@ export function VisitorChatPanel(props: Props) {
   };
 
   // 访客发送讯息
-// 访客发送讯息
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const text = input.trim();
-  if (!text || !sessionId) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || !sessionId) return;
 
-  // 1) 先在前端把这条消息加到 messages 里（乐观渲染）
-  setMessages((prev) => [
-    ...prev,
-    {
-      id: `local-${Date.now()}`, // 临时 id，等 Firestore 回来会被覆盖
-      from: "user",
-      text,
-    },
-  ]);
+    // 1) 本地乐观渲染一条（立刻看到）
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `local-${Date.now()}`,
+        from: "user",
+        text,
+        createdAt: Date.now(),
+      },
+    ]);
 
-  // 2) 清空输入框
-  setInput("");
+    // 2) 清空输入框
+    setInput("");
 
-  // 3) 再真正写入 Firestore（未读）
-  await saveChatMessage("user", text, false);
+    // 3) 写入 Firestore（未读）
+    await saveChatMessage("user", text, false);
 
-  // 4) 如果管理员在线，就完全交给真人回复，不走自动问答
-  if (adminOnline) {
-    return;
-  }
+    // 4) 管理员在线就交给真人，不走机器人
+    if (adminOnline) {
+      return;
+    }
 
-  // 5) 管理员不在线时，才走离线自动问答 / 资料收集流程
-  handleOfflineFlow(text);
-};
+    // 5) 管理员不在线时，走离线自动问答 / 资料收集
+    handleOfflineFlow(text);
+  };
 
   return (
-  <div className="jyc-chat-panel">
-    <div className="jyc-chat-header">
-      <div>
-        <div className="jyc-chat-title">{texts.title}</div>
-        <div className="jyc-chat-status">
-          {isEnglish ? "Status: " : "状态："}
-          {adminOnline ? texts.statusOnline : texts.statusOffline}
+    <div className="jyc-chat-panel">
+      <div className="jyc-chat-header">
+        <div>
+          <div className="jyc-chat-title">{texts.title}</div>
+          <div className="jyc-chat-status">
+            {isEnglish ? "Status: " : "状态："}
+            {adminOnline ? texts.statusOnline : texts.statusOffline}
+          </div>
         </div>
-      </div>
 
-      {props.onClose && (
-        <button
-          type="button"
-          className="jyc-chat-close"
-          onClick={props.onClose}
-          aria-label={isEnglish ? "Close chat" : "收起对话"}
-        >
-          ×
-        </button>
-      )}
-    </div>
+        {onClose && (
+          <button
+            type="button"
+            className="jyc-chat-close"
+            onClick={onClose}
+            aria-label={isEnglish ? "Close chat" : "收起对话"}
+          >
+            ×
+          </button>
+        )}
+      </div>
 
       <div className="jyc-chat-messages">
         {messages.map((m) => (

@@ -1,7 +1,7 @@
 // src/app/en/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
@@ -33,8 +33,10 @@ type HomeProduct = {
 export default function HomeEn() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-
   const [products, setProducts] = useState<HomeProduct[]>([]);
+
+  // ✅ EN 首页产品横向滚动容器
+  const productsRowRef = useRef<HTMLDivElement | null>(null);
 
   // gallery from jyc_gallery
   useEffect(() => {
@@ -128,6 +130,25 @@ export default function HomeEn() {
   const productThumbs = homeItems.slice(0, products.length || 3);
   const galleryItems = homeItems.slice(0, 4);
 
+  // ✅ 横向滚动逻辑（跟中文首页一致）
+  const scrollProducts = (direction: "left" | "right") => {
+    const container = productsRowRef.current;
+    if (!container) return;
+
+    const firstCard =
+      container.querySelector<HTMLElement>(".jyc-card") || null;
+
+    const step =
+      (firstCard?.offsetWidth || container.clientWidth * 0.8) + 24;
+
+    const delta = direction === "left" ? -step : step;
+
+    container.scrollBy({
+      left: delta,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <main className="jyc-page">
       <Header />
@@ -140,7 +161,7 @@ export default function HomeEn() {
               Turn-key Solutions for Seamless Pipe Mills &amp; Rolling Equipment
             </h1>
             <p>
-              Founded in 1993, Taiyuan Jingyecheng Heavy Equipment Co., Ltd.
+              Founded in 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
               specializes in equipment for hot-rolled seamless steel pipe
               production, including piercing mills, pipe rolling mills, sizing
               and reducing mills, straightening machines, cooling beds, hot
@@ -176,46 +197,104 @@ export default function HomeEn() {
         </p>
 
         {products.length > 0 && (
-          <div className="jyc-card-grid">
-            {products.map((p, index) => {
-              const thumb = productThumbs[index];
-              const bgUrl = p.imageUrl || thumb?.imageUrl || "";
+          <div style={{ position: "relative" }}>
+            {/* 左箭头 */}
+            <button
+              type="button"
+              aria-label="Scroll left to see more products"
+              onClick={() => scrollProducts("left")}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                border: "none",
+                background: "rgba(255,255,255,0.9)",
+                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                borderRadius: "50%",
+                width: 32,
+                height: 32,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 5,
+              }}
+            >
+              ‹
+            </button>
 
-              const displayName = p.nameEn || p.name;
-              const displayBrief = p.briefEn || p.brief;
+            <div
+              className="jyc-home-products-row"
+              ref={productsRowRef}
+              aria-label="Main products horizontal list"
+            >
+              {products.map((p, index) => {
+                const thumb = productThumbs[index];
+                const bgUrl = p.imageUrl || thumb?.imageUrl || "";
 
-              return (
-                <article key={p.id} className="jyc-card">
-                  <div
-                    className="jyc-card-image"
-                    style={
-                      bgUrl
-                        ? { backgroundImage: `url(${bgUrl})` }
-                        : undefined
-                    }
-                  />
-                  <h3>{displayName}</h3>
-                  <p>{displayBrief}</p>
-                  <button
-                    type="button"
-                    className="jyc-card-btn"
-                    onClick={() => {
-                      if (typeof window === "undefined") return;
+                const displayName = p.nameEn || p.name;
+                const displayBrief = p.briefEn || p.brief;
 
-                      const msg = `I would like to learn more about your “${displayName}” equipment, including detailed technical parameters and configuration suggestions.`;
+                return (
+                  <article key={p.id} className="jyc-card">
+                    <div
+                      className="jyc-card-image"
+                      style={
+                        bgUrl
+                          ? { backgroundImage: `url(${bgUrl})` }
+                          : undefined
+                      }
+                    />
+                    <h3>{displayName}</h3>
+                    <p>{displayBrief}</p>
+                    <button
+                      type="button"
+                      className="jyc-card-btn"
+                      onClick={() => {
+                        if (typeof window === "undefined") return;
 
-                      window.dispatchEvent(
-                        new CustomEvent("jyc-open-chat", {
-                          detail: { message: msg },
-                        }) as any
-                      );
-                    }}
-                  >
-                    Learn More
-                  </button>
-                </article>
-              );
-            })}
+                        const msg = `I would like to learn more about your “${displayName}” equipment, including detailed technical parameters and configuration suggestions.`;
+
+                        window.dispatchEvent(
+                          new CustomEvent("jyc-open-chat", {
+                            detail: { message: msg },
+                          }) as any
+                        );
+                      }}
+                    >
+                      Learn More
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+
+            {/* 右箭头 */}
+            <button
+              type="button"
+              aria-label="Scroll right to see more products"
+              onClick={() => scrollProducts("right")}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                border: "none",
+                background: "rgba(255,255,255,0.9)",
+                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                borderRadius: "50%",
+                width: 32,
+                height: 32,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 5,
+              }}
+            >
+              ›
+            </button>
           </div>
         )}
       </section>
