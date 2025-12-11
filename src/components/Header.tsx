@@ -11,14 +11,14 @@ type SiteConfigForHeader = {
   logoMark: string;
   logoTextZh: string;
   logoTextEn: string;
-  logoImageUrl?: string; // 👈 新增：logo 图片
+  logoImageUrl?: string;   // ⬅ 多帶出圖片網址
 };
 
 const HEADER_DEFAULTS: SiteConfigForHeader = {
   logoMark: "JYC",
   logoTextZh: "太原精业城重工设备有限公司",
   logoTextEn: "JYC Steel Equip",
-  logoImageUrl: "", // 👈 默认没有图
+  logoImageUrl: "",
 };
 
 export function Header() {
@@ -38,7 +38,7 @@ export function Header() {
     }
   }, []);
 
-  // 從 Firestore 讀取 config/site（logo 設定）
+  // 從 Firestore 讀取 config/site（logo 文字 + 圖片）
   useEffect(() => {
     async function loadConfig() {
       try {
@@ -55,7 +55,7 @@ export function Header() {
     loadConfig();
   }, []);
 
-  // 用目前路径推算对应的中 / 英路径（保持同一页）
+  // 用目前路徑推算中 / 英對應路徑
   const basePath = isEnglish ? pathname.slice(3) || "/" : pathname;
   const chinesePath = basePath === "/" ? "/" : basePath;
   const englishPath = "/en" + (basePath === "/" ? "" : basePath);
@@ -81,25 +81,20 @@ export function Header() {
 
   return (
     <header className="jyc-header">
-      {/* Logo：有上传图片就用图片，没有就用圆形 Mark */}
+      {/* Logo：圓形徽章 + 文字；有圖片時顯示圖片，沒有才顯示字 JYC */}
       <Link href={logoHref} className="jyc-logo">
-        {siteConfig.logoImageUrl ? (
-          <>
-            <span className="jyc-logo-img-wrap">
-              <img
-                src={siteConfig.logoImageUrl}
-                alt={logoText || "Site logo"}
-                className="jyc-logo-image"
-              />
-            </span>
-            <span className="jyc-logo-text">{logoText}</span>
-          </>
-        ) : (
-          <>
-            <span className="jyc-logo-mark">{siteConfig.logoMark}</span>
-            <span className="jyc-logo-text">{logoText}</span>
-          </>
-        )}
+        <span className="jyc-logo-mark">
+          {siteConfig.logoImageUrl ? (
+            <img
+              src={siteConfig.logoImageUrl}
+              alt={logoText}
+              className="jyc-logo-mark-img"
+            />
+          ) : (
+            siteConfig.logoMark
+          )}
+        </span>
+        <span className="jyc-logo-text">{logoText}</span>
       </Link>
 
       <nav className="jyc-nav">
