@@ -7,7 +7,14 @@ import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormEn } from "@/components/ContactFormEn";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 
 type HomeGalleryItem = {
   id: string;
@@ -30,13 +37,37 @@ type HomeProduct = {
   imageUrl?: string;
 };
 
+type SiteConfigHome = {
+  logoImageUrl?: string;
+};
+
 export default function HomeEn() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [products, setProducts] = useState<HomeProduct[]>([]);
+  const [siteConfig, setSiteConfig] = useState<SiteConfigHome>({});
 
   // ✅ EN 首页产品横向滚动容器
   const productsRowRef = useRef<HTMLDivElement | null>(null);
+
+  // 讀取 config/site（拿 logoImageUrl 給 About Us 大 logo 用）
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const snap = await getDoc(doc(db, "config", "site"));
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          setSiteConfig({
+            logoImageUrl: data.logoImageUrl || "",
+          });
+        }
+      } catch (err) {
+        console.error("load config/site in HomeEn error", err);
+      }
+    }
+
+    loadConfig();
+  }, []);
 
   // gallery from jyc_gallery
   useEffect(() => {
@@ -128,7 +159,7 @@ export default function HomeEn() {
 
   // thumbs 數量與產品數同步，不足時只是一個備用來源
   const productThumbs = homeItems.slice(0, products.length || 3);
-  const galleryItems = homeItems.slice(0, 4);
+  const galleryItems = homeItems.slice(0, 12); // 跟中文首頁一樣最多 12 張
 
   // ✅ 横向滚动逻辑（跟中文首页一致）
   const scrollProducts = (direction: "left" | "right") => {
@@ -192,7 +223,7 @@ export default function HomeEn() {
 
         <p className="jyc-section-intro">
           {products.length === 0
-            ? "No products have been configured yet in the admin “Product Management” page. Once you add products and tick “Show on website”, they will automatically appear here."
+            ? 'No products have been configured yet in the admin "Product Management" page. Once you add products and tick "Show on website", they will automatically appear here.'
             : "Below are the main product categories currently configured. Detailed line configurations and technical specifications are available on the Products page."}
         </p>
 
@@ -210,7 +241,7 @@ export default function HomeEn() {
                 transform: "translateY(-50%)",
                 border: "none",
                 background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                boxShadow: "0 0 6px rgba(0, 0, 0, 0.15)",
                 borderRadius: "50%",
                 width: 32,
                 height: 32,
@@ -282,7 +313,7 @@ export default function HomeEn() {
                 transform: "translateY(-50%)",
                 border: "none",
                 background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                boxShadow: "0 0 6px rgba(0, 0, 0, 0.15)",
                 borderRadius: "50%",
                 width: 32,
                 height: 32,
@@ -299,9 +330,20 @@ export default function HomeEn() {
         )}
       </section>
 
-      {/* About (short) */}
+      {/* About (short) + big logo */}
       <section id="about" className="jyc-section jyc-section-alt">
-        <h2>About Us</h2>
+        <div className="jyc-about-header">
+          {siteConfig.logoImageUrl && (
+            <div className="jyc-about-logo-wrap">
+              <img
+                src={siteConfig.logoImageUrl}
+                alt="Company logo"
+                className="jyc-about-logo"
+              />
+            </div>
+          )}
+          <h2>About Us</h2>
+        </div>
         <p>
           Taiyuan Jingyecheng Heavy Equipment Co., Ltd. is located in Taiyuan,
           Shanxi Province, with a site area of about 70,000 m². The company is a
@@ -361,7 +403,7 @@ export default function HomeEn() {
 
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0
-            ? [1, 2, 3, 4].map((i) => (
+            ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
                 <div key={i} className="jyc-gallery-thumb" />
               ))
             : galleryItems.map((item) => (

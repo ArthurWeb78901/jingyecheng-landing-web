@@ -69,23 +69,26 @@ body {
   white-space: nowrap;
 }
 
-/* 有图片时的外框：保持圆形、白底 */
+/* 有圖片的 Logo 外框：稍微放大 + 內邊距，避免被裁切 */
 .jyc-logo-img-wrap {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   overflow: hidden;
   background: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 2px;           /* 👈 留一圈安全距離 */
+  box-sizing: border-box; /* 讓 36x36 包含 padding */
 }
 
-/* 真正的 logo 图片 */
+/* Logo 圖片本身 */
 .jyc-logo-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  border-radius: 999px;    /* 再保險一次，確保圖本身也是圓的 */
 }
 
 .jyc-nav {
@@ -302,6 +305,39 @@ body {
   max-width: 720px;
   line-height: 1.6;
   margin-bottom: 24px;
+}
+
+/* 首页「关于我们」标题 + 大 Logo */
+.jyc-about-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.jyc-about-header h2 {
+  margin: 0; /* 让 h2 跟大 logo 垂直置中，不额外多一段空白 */
+}
+
+/* 左侧大 Logo 圆形 */
+.jyc-about-logo-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.jyc-about-logo {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  object-fit: contain;
 }
 
 /* 产品卡片（通用栅格） */

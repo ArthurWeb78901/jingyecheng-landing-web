@@ -7,7 +7,14 @@ import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormCn } from "@/components/ContactFormCn";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 
 type HomeGalleryItem = {
   id: string;
@@ -27,13 +34,38 @@ type HomeProduct = {
   imageUrl?: string;
 };
 
+// 只給首頁用的簡單 config 型別
+type SiteConfigHome = {
+  logoImageUrl?: string;
+};
+
 export default function Home() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [products, setProducts] = useState<HomeProduct[]>([]);
+  const [siteConfig, setSiteConfig] = useState<SiteConfigHome>({});
 
   // ✅ 用于控制产品列表横向滚动
   const productsRowRef = useRef<HTMLDivElement | null>(null);
+
+  // 讀取 config/site（拿 logoImageUrl 給「關於我們」大 logo 用）
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const snap = await getDoc(doc(db, "config", "site"));
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          setSiteConfig({
+            logoImageUrl: data.logoImageUrl || "",
+          });
+        }
+      } catch (err) {
+        console.error("load config/site in Home error", err);
+      }
+    }
+
+    loadConfig();
+  }, []);
 
   // 從 Firestore 讀取 jyc_gallery
   useEffect(() => {
@@ -281,13 +313,24 @@ export default function Home() {
         )}
       </section>
 
-      {/* 公司介绍（首页简版） */}
+      {/* 公司介绍（首页简版）＋ 大 Logo */}
       <section id="about" className="jyc-section jyc-section-alt">
-        <h2>关于我们</h2>
+        <div className="jyc-about-header">
+          {siteConfig.logoImageUrl && (
+            <div className="jyc-about-logo-wrap">
+              <img
+                src={siteConfig.logoImageUrl}
+                alt="公司 Logo"
+                className="jyc-about-logo"
+              />
+            </div>
+          )}
+          <h2>关于我们</h2>
+        </div>
         <p>
-          太原精业城重工设备有限公司位于能源重化工城市——山西省太原市，占地面积约 7 万平方米，
-          是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，集设计、生产、
-          经营于一体，为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
+          太原精业城重工设备有限公司位于能源重化工城市——山西省太原市，占地面积约 7
+          万平方米， 是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，
+          集设计、生产、 经营于一体，为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
         </p>
       </section>
 
