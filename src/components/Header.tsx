@@ -11,12 +11,14 @@ type SiteConfigForHeader = {
   logoMark: string;
   logoTextZh: string;
   logoTextEn: string;
+  logoImageUrl?: string; // 👈 新增：logo 图片
 };
 
 const HEADER_DEFAULTS: SiteConfigForHeader = {
   logoMark: "JYC",
   logoTextZh: "太原精业城重工设备有限公司",
   logoTextEn: "JYC Steel Equip",
+  logoImageUrl: "", // 👈 默认没有图
 };
 
 export function Header() {
@@ -36,7 +38,7 @@ export function Header() {
     }
   }, []);
 
-  // 從 Firestore 讀取 config/site（logo 文字）
+  // 從 Firestore 讀取 config/site（logo 設定）
   useEffect(() => {
     async function loadConfig() {
       try {
@@ -79,10 +81,25 @@ export function Header() {
 
   return (
     <header className="jyc-header">
-      {/* Logo：徽章 + 文字，文字從 Firestore config 來 */}
+      {/* Logo：有上传图片就用图片，没有就用圆形 Mark */}
       <Link href={logoHref} className="jyc-logo">
-        <span className="jyc-logo-mark">{siteConfig.logoMark}</span>
-        <span className="jyc-logo-text">{logoText}</span>
+        {siteConfig.logoImageUrl ? (
+          <>
+            <span className="jyc-logo-img-wrap">
+              <img
+                src={siteConfig.logoImageUrl}
+                alt={logoText || "Site logo"}
+                className="jyc-logo-image"
+              />
+            </span>
+            <span className="jyc-logo-text">{logoText}</span>
+          </>
+        ) : (
+          <>
+            <span className="jyc-logo-mark">{siteConfig.logoMark}</span>
+            <span className="jyc-logo-text">{logoText}</span>
+          </>
+        )}
       </Link>
 
       <nav className="jyc-nav">
