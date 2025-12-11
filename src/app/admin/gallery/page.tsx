@@ -21,12 +21,12 @@ type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "�
 
 type AdminGalleryItem = {
   id: string; // Firestore doc id
-  title: string;                // 中文標題
-  titleEn?: string;             // 英文標題（可選）
+  title: string; // 中文標題
+  titleEn?: string; // 英文標題（可選）
   category: GalleryCategory;
   filename: string;
-  description?: string;         // 中文說明
-  descriptionEn?: string;       // 英文說明（可選）
+  description?: string; // 中文說明
+  descriptionEn?: string; // 英文說明（可選）
   imageUrl?: string;
   showOnHome: boolean;
   createdAt?: string; // ISO 字串
@@ -45,6 +45,21 @@ export default function AdminGalleryPage() {
   const [uploadDescriptionEn, setUploadDescriptionEn] = useState("");
   const [uploadImageUrl, setUploadImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  // ⭐ 目前正在編輯哪一筆（null = 新增模式）
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setUploadTitle("");
+    setUploadTitleEn("");
+    setUploadCategory("");
+    setUploadFileName("");
+    setUploadFile(null);
+    setUploadDescription("");
+    setUploadDescriptionEn("");
+    setUploadImageUrl("");
+    setEditingId(null);
+  };
 
   // ✅ 讀取 Firestore 裡的 jyc_gallery
   useEffect(() => {
@@ -71,7 +86,24 @@ export default function AdminGalleryPage() {
     fetchItems();
   }, []);
 
-  // 上傳圖片 + 寫入 Firestore
+  // 點「編輯」時，把資料帶回表單
+  const handleStartEdit = (item: AdminGalleryItem) => {
+    setEditingId(item.id);
+    setUploadTitle(item.title || "");
+    setUploadTitleEn(item.titleEn || "");
+    setUploadCategory(item.category);
+    setUploadFileName(item.filename || "");
+    setUploadDescription(item.description || "");
+    setUploadDescriptionEn(item.descriptionEn || "");
+    setUploadImageUrl(item.imageUrl || "");
+    setUploadFile(null); // 先清空，除非要重新選檔
+  };
+
+  const handleCancelEdit = () => {
+    resetForm();
+  };
+
+  // 上傳圖片 + 寫入 / 更新 Firestore
   const handleUpload = async () => {
     if (!uploadCategory) {
       alert("请选择图片类别。");
@@ -102,6 +134,9 @@ export default function AdminGalleryPage() {
       }
 
       const now = new Date().toISOString();
+      const existing = editingId
+        ? items.find((i) => i.id === editingId)
+        : undefined;
 
       const payload = {
         title: uploadTitle.trim() || finalFilename || "未命名图片",
@@ -111,30 +146,32 @@ export default function AdminGalleryPage() {
         description: uploadDescription.trim() || "",
         descriptionEn: uploadDescriptionEn.trim() || "",
         imageUrl: finalUrl || "",
-        showOnHome: true,
-        createdAt: now,
+        showOnHome: existing?.showOnHome ?? true,
+        createdAt: existing?.createdAt || now,
       };
 
-      // ✅ 寫入 Firestore -> jyc_gallery
-      const docRef = await addDoc(collection(db, "jyc_gallery"), payload);
+      if (editingId && existing) {
+        // ⭐ 編輯模式：更新現有文件
+        await updateDoc(doc(db, "jyc_gallery", editingId), payload);
 
-      const newItem: AdminGalleryItem = {
-        id: docRef.id,
-        ...payload,
-      };
+        setItems((prev) =>
+          prev.map((i) => (i.id === editingId ? { ...i, ...payload } : i))
+        );
+      } else {
+        // ✅ 新增模式：新增文件
+        const docRef = await addDoc(collection(db, "jyc_gallery"), payload);
 
-      // 更新本地 state，讓畫面立即顯示
-      setItems((prev) => [newItem, ...prev]);
+        const newItem: AdminGalleryItem = {
+          id: docRef.id,
+          ...payload,
+        };
 
-      // 清空表單
-      setUploadTitle("");
-      setUploadTitleEn("");
-      setUploadCategory("");
-      setUploadFileName("");
-      setUploadFile(null);
-      setUploadDescription("");
-      setUploadDescriptionEn("");
-      setUploadImageUrl("");
+        // 更新本地 state，讓畫面立即顯示
+        setItems((prev) => [newItem, ...prev]);
+      }
+
+      // 清空表單 & 退出編輯模式
+      resetForm();
     } catch (err) {
       console.error("upload error", err);
       alert("上传图片时发生错误，请稍后再试。");
@@ -223,7 +260,9 @@ export default function AdminGalleryPage() {
               background: "#fff",
             }}
           >
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>上传新图片</h2>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>
+              {editingId ? "编辑图片" : "上传新图片"}
+            </h2>
             <p
               style={{
                 fontSize: 12,
@@ -362,8 +401,27 @@ export default function AdminGalleryPage() {
               onClick={handleUpload}
               disabled={isUploading}
             >
-              {isUploading ? "上传中…" : "上传图片"}
+              {isUploading ? "处理中…" : editingId ? "保存修改" : "上传图片"}
             </button>
+
+            {editingId && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                style={{
+                  marginLeft: 8,
+                  fontSize: 13,
+                  padding: "8px 16px",
+                  minWidth: 80,
+                  borderRadius: 4,
+                  border: "1px solid #999",
+                  background: "#fff",
+                  color: "#555",
+                }}
+              >
+                取消编辑
+              </button>
+            )}
 
             {uploadFileName && (
               <div style={{ fontSize: 12, color: "#777", marginTop: 6 }}>
@@ -518,20 +576,37 @@ export default function AdminGalleryPage() {
                         <span>显示在首页轮播</span>
                       </label>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item.id)}
-                        style={{
-                          fontSize: 12,
-                          padding: "4px 8px",
-                          borderRadius: 4,
-                          border: "1px solid #c33",
-                          background: "#fff",
-                          color: "#c33",
-                        }}
-                      >
-                        删除
-                      </button>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(item)}
+                          style={{
+                            fontSize: 12,
+                            padding: "4px 8px",
+                            borderRadius: 4,
+                            border: "1px solid #888",
+                            background: "#fff",
+                            color: "#333",
+                          }}
+                        >
+                          编辑
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item.id)}
+                          style={{
+                            fontSize: 12,
+                            padding: "4px 8px",
+                            borderRadius: 4,
+                            border: "1px solid #c33",
+                            background: "#fff",
+                            color: "#c33",
+                          }}
+                        >
+                          删除
+                        </button>
+                      </div>
                     </div>
                   </article>
                 ))}
