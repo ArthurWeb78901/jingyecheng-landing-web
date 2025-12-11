@@ -28,15 +28,11 @@ type HomeGalleryItem = {
 type HomeProduct = {
   id: string;
   category: string;
-  categoryEn?: string;
   name: string;
-  nameEn?: string;
   brief: string;
-  briefEn?: string;
   enabled: boolean;
   imageUrl?: string;
-  // ⭐ 新增：控制首頁顯示順序（數字越小越前面）
-  sortOrder: number;
+  sortOrder?: number; // ✅ 新增：首頁排序用
 };
 
 // 只給首頁用的簡單 config 型別
@@ -108,39 +104,35 @@ export default function Home() {
     loadHomeGallery();
   }, []);
 
-  // 從 Firestore 讀取 jyc_products（首頁產品區，依 sortOrder 排序）
+  // 從 Firestore 讀取 jyc_products（首頁產品區，前端依 sortOrder 排序）
   useEffect(() => {
     async function loadProducts() {
       try {
-        const q = query(
-          collection(db, "jyc_products"),
-          // ⭐ 先依 sortOrder，再依 name 排，順序穩定
-          orderBy("sortOrder", "asc"),
-          orderBy("name", "asc")
-        );
-        const snap = await getDocs(q);
+        const snap = await getDocs(collection(db, "jyc_products"));
 
         const list: HomeProduct[] = snap.docs
           .map((d) => {
             const data = d.data() as any;
-
-            const sortOrder =
-              typeof data.sortOrder === "number" ? data.sortOrder : 9999;
-
             return {
               id: d.id,
               category: data.category || "",
-              categoryEn: data.categoryEn || "",
               name: data.name || "",
-              nameEn: data.nameEn || "",
               brief: data.brief || "",
-              briefEn: data.briefEn || "",
               enabled: data.enabled ?? true,
               imageUrl: data.imageUrl || "",
-              sortOrder,
+              sortOrder:
+                typeof data.sortOrder === "number" ? data.sortOrder : 9999,
             };
           })
           .filter((p) => p.enabled);
+
+        // 依 sortOrder → 再依中文名稱排序
+        list.sort((a, b) => {
+          const ao = a.sortOrder ?? 9999;
+          const bo = b.sortOrder ?? 9999;
+          if (ao !== bo) return ao - bo;
+          return (a.name || "").localeCompare(b.name || "", "zh-Hans");
+        });
 
         setProducts(list);
       } catch (err) {
@@ -243,7 +235,7 @@ export default function Home() {
                 transform: "translateY(-50%)",
                 border: "none",
                 background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 0 6px rgba(0, 0, 0, 0.15)",
+                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
                 borderRadius: "50%",
                 width: 32,
                 height: 32,
@@ -311,7 +303,7 @@ export default function Home() {
                 transform: "translateY(-50%)",
                 border: "none",
                 background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 0 6px rgba(0, 0, 0, 0.15)",
+                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
                 borderRadius: "50%",
                 width: 32,
                 height: 32,
@@ -344,8 +336,8 @@ export default function Home() {
         </div>
         <p>
           太原精业城重工设备有限公司位于能源重化工城市——山西省太原市，占地面积约 7
-          万平方米，是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，
-          集设计、生产、经营于一体，为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
+          万平方米， 是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，
+          集设计、生产、 经营于一体，为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
         </p>
       </section>
 
