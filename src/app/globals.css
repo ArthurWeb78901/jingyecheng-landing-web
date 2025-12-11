@@ -769,7 +769,11 @@ body {
 
   .jyc-chat-bubble-button {
     right: 12px;
-    bottom: 16px;
+    bottom: 20px;
+    padding: 14px 22px;    /* 比原本 10x16 再大一點 */
+    font-size: 14px;       /* 文字也稍微放大 */
+    transform: scale(1.15);
+    transform-origin: bottom right;
   }
 
   /* 手機版 slide show 高度稍微縮小 */
