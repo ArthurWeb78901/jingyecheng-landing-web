@@ -802,7 +802,7 @@ body {
   .jyc-gallery-item {
     flex: 0 0 100%;       /* 一次只佔滿一整頁寬度 */
     max-width: 100%;
-    aspect-ratio: 4 / 3;  /* 比原來方形高一點，大約放大 2 倍 */
+    aspect-ratio: 1 / 1;  /* 比原來方形高一點，大約放大 2 倍 */
     border-radius: 6px;
     background: #e0e0e0;
     background-size: cover;
