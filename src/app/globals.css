@@ -69,6 +69,25 @@ body {
   white-space: nowrap;
 }
 
+/* 有图片时的外框：保持圆形、白底 */
+.jyc-logo-img-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 真正的 logo 图片 */
+.jyc-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .jyc-nav {
   display: flex;
   gap: 16px;
