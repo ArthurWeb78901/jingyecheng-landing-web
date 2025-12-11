@@ -782,20 +782,31 @@ body {
     max-height: 400px;
   }
 
-  /* 手機版 Gallery：縮小縮圖尺寸 */
+  /* 📱 手機版 Gallery：單張全寬，左右滑動查看 */
   .jyc-gallery-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4 欄 */
-    gap: 6px;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
     margin-top: 10px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;  /* 給手指滑動一點空間 */
   }
 
-  /* Gallery 單張縮圖：正方形 */
+  .jyc-gallery-grid::-webkit-scrollbar {
+    height: 4px;         /* 可以視情況設為 0 隱藏 */
+  }
+
   .jyc-gallery-item {
-    width: 130%;
-    aspect-ratio: 1 / 1;
+    flex: 0 0 100%;       /* 一次只佔滿一整頁寬度 */
+    max-width: 100%;
+    aspect-ratio: 4 / 3;  /* 比原來方形高一點，大約放大 2 倍 */
     border-radius: 6px;
     background: #e0e0e0;
     background-size: cover;
     background-position: center;
+    scroll-snap-align: center;
   }
 }
