@@ -791,7 +791,7 @@ body {
 
   /* Gallery 單張縮圖：正方形 */
   .jyc-gallery-item {
-    width: 100%;
+    width: 130%;
     aspect-ratio: 1 / 1;
     border-radius: 6px;
     background: #e0e0e0;
