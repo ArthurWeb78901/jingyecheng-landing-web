@@ -12,26 +12,34 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  orderBy,
-  query,
+  // orderBy,   // 不再用 name 排序，如要删掉 import 這行也可以一起拿掉
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Firestore 中實際存的欄位
 type FirestoreProduct = {
-  category: string;     // 中文分類
-  categoryEn?: string;  // 英文分類（目前可選）
-  name: string;         // 中文名稱
-  nameEn?: string;      // 英文名稱
-  brief: string;        // 中文簡介
-  briefEn?: string;     // 英文簡介
+  category: string; // 中文分類
+  categoryEn?: string; // 英文分類（目前可選）
+  name: string; // 中文名稱
+  nameEn?: string; // 英文名稱
+  brief: string; // 中文簡介
+  briefEn?: string; // 英文簡介
   enabled: boolean;
   imageUrl?: string;
+  homeOrder?: number; // ✅ 新增：首頁顯示順序（1,2,3...，數字越小越前面）
 };
 
 // 前端用的型別（多一個 id）
 type AdminProduct = FirestoreProduct & {
   id: string;
+};
+
+// 統一用這個排序函式：先看 homeOrder，再看 name
+const sortByHomeOrder = (a: AdminProduct, b: AdminProduct) => {
+  const ao = a.homeOrder ?? 9999;
+  const bo = b.homeOrder ?? 9999;
+  if (ao !== bo) return ao - bo;
+  return a.name.localeCompare(b.name, "zh-Hans");
 };
 
 const INITIAL_PRODUCTS: FirestoreProduct[] = [
@@ -45,6 +53,7 @@ const INITIAL_PRODUCTS: FirestoreProduct[] = [
     briefEn:
       "Turn-key hot rolling lines covering billet heating, piercing, pipe rolling, sizing / reducing, cooling beds, straightening and cutting for seamless pipes with diameters approx. φ50–φ325 mm.",
     enabled: true,
+    homeOrder: 1,
   },
   {
     category: "穿孔与轧管机组",
@@ -56,6 +65,7 @@ const INITIAL_PRODUCTS: FirestoreProduct[] = [
     briefEn:
       "Mannesmann piercing mills, horizontal cone-type piercing mills, automatic / Accu-Roll mills and proprietary two-roll mandrel mills with guide plates, designed for high dimensional accuracy, high elongation and uniform wall thickness.",
     enabled: true,
+    homeOrder: 2,
   },
   {
     category: "精整与辅助设备",
@@ -67,6 +77,7 @@ const INITIAL_PRODUCTS: FirestoreProduct[] = [
     briefEn:
       "Two-roll / three-roll sizing and reducing mills, six-roll / seven-roll straighteners, chain and walking-beam cooling beds, hot centering machines, cold drawing machines and conveying equipment for pipes approx. φ10–φ325 mm.",
     enabled: true,
+    homeOrder: 3,
   },
 ];
 
@@ -98,8 +109,8 @@ export default function AdminProductsPage() {
     const fetchProducts = async () => {
       try {
         const colRef = collection(db, PRODUCTS_COLLECTION);
-        const q = query(colRef, orderBy("name", "asc"));
-        const snap = await getDocs(q);
+        // 不再預設用 name 排序，改由 client 依 homeOrder 排序
+        const snap = await getDocs(colRef);
 
         if (snap.empty) {
           // 第一次：寫入預設三筆
@@ -108,18 +119,24 @@ export default function AdminProductsPage() {
             const docRef = await addDoc(colRef, base);
             created.push({ id: docRef.id, ...base });
           }
-          setProducts(created);
+          setProducts(created.sort(sortByHomeOrder));
           return;
         }
 
-        const list: AdminProduct[] = snap.docs.map((d) => {
+        const list: AdminProduct[] = snap.docs.map((d, index) => {
           const data = d.data() as FirestoreProduct;
-          return {
+          const homeOrder =
+            typeof data.homeOrder === "number"
+              ? data.homeOrder
+              : index + 1; // 沒有的話先用 index 當臨時值
+        return {
             id: d.id,
             ...data,
+            homeOrder,
           };
         });
-        setProducts(list);
+
+        setProducts(list.sort(sortByHomeOrder));
       } catch (err) {
         console.error("load products error", err);
       }
@@ -181,6 +198,44 @@ export default function AdminProductsPage() {
     setUploadFileName(file ? file.name : "");
   };
 
+  // ✅ 調整首頁排序：上移 / 下移
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    const index = products.findIndex((p) => p.id === id);
+    if (index === -1) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= products.length) return;
+
+    const current = products[index];
+    const target = products[targetIndex];
+
+    const currentOrder = current.homeOrder ?? index + 1;
+    const targetOrder = target.homeOrder ?? targetIndex + 1;
+
+    try {
+      await Promise.all([
+        updateDoc(doc(db, PRODUCTS_COLLECTION, current.id), {
+          homeOrder: targetOrder,
+        }),
+        updateDoc(doc(db, PRODUCTS_COLLECTION, target.id), {
+          homeOrder: currentOrder,
+        }),
+      ]);
+
+      setProducts((prev) => {
+        const updated = prev.map((p) => {
+          if (p.id === current.id) return { ...p, homeOrder: targetOrder };
+          if (p.id === target.id) return { ...p, homeOrder: currentOrder };
+          return p;
+        });
+        return [...updated].sort(sortByHomeOrder);
+      });
+    } catch (err) {
+      console.error("update product order error", err);
+      alert("更新首页排序时发生错误，请稍后再试。");
+    }
+  };
+
   const handleSave = async () => {
     if (!formCategory.trim() || !formName.trim() || !formBrief.trim()) {
       alert("请填写产品分类、名称与简介。");
@@ -203,6 +258,22 @@ export default function AdminProductsPage() {
         finalImageUrl = await getDownloadURL(snap.ref);
       }
 
+      // 2) 處理 homeOrder：編輯時沿用原值，新品預設加到最後
+      let homeOrder: number | undefined;
+      if (editingId) {
+        const existing = products.find((p) => p.id === editingId);
+        homeOrder = existing?.homeOrder;
+      } else {
+        const maxOrder = products.reduce(
+          (max, p) =>
+            typeof p.homeOrder === "number" && p.homeOrder > max
+              ? p.homeOrder
+              : max,
+          0
+        );
+        homeOrder = maxOrder + 1;
+      }
+
       const payload: FirestoreProduct = {
         category: formCategory.trim(),
         categoryEn: formCategoryEn.trim() || undefined,
@@ -212,20 +283,27 @@ export default function AdminProductsPage() {
         briefEn: formBriefEn.trim() || undefined,
         enabled: formEnabled,
         imageUrl: finalImageUrl,
+        homeOrder,
       };
 
       if (editingId) {
         // 更新
         const docRef = doc(db, PRODUCTS_COLLECTION, editingId);
         await updateDoc(docRef, payload as any);
-        setProducts((prev) =>
-          prev.map((p) => (p.id === editingId ? { id: editingId, ...payload } : p))
-        );
+        const updated: AdminProduct = { id: editingId, ...payload };
+        setProducts((prev) => {
+          const list = prev.map((p) =>
+            p.id === editingId ? updated : p
+          );
+          return [...list].sort(sortByHomeOrder);
+        });
       } else {
         // 新增
         const docRef = await addDoc(colRef, payload as any);
         const created: AdminProduct = { id: docRef.id, ...payload };
-        setProducts((prev) => [created, ...prev]);
+        setProducts((prev) =>
+          [...prev, created].sort(sortByHomeOrder)
+        );
       }
 
       resetForm();
@@ -487,8 +565,9 @@ export default function AdminProductsPage() {
                 marginBottom: 12,
               }}
             >
-              下方列表直接对应 Firestore 中的产品资料。后续要让首页、产品一览页或英文站共用，
-              只要从 <code>jyc_products</code> 集合读取即可。
+              下方列表直接对应 Firestore 中的产品资料，并决定首页展示顺序（数值越小越靠前）。
+              后续要让首页、产品一览页或英文站共用，只要从{" "}
+              <code>jyc_products</code> 集合读取即可。
             </p>
 
             <div
@@ -498,7 +577,7 @@ export default function AdminProductsPage() {
                 gap: 10,
               }}
             >
-              {products.map((p) => (
+              {products.map((p, index) => (
                 <article
                   key={p.id}
                   style={{
@@ -552,14 +631,31 @@ export default function AdminProductsPage() {
                         </div>
                       </div>
                     </div>
-                    <span
+                    <div
                       style={{
-                        fontSize: 11,
-                        color: p.enabled ? "#0a7d32" : "#999",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 4,
                       }}
                     >
-                      {p.enabled ? "前台显示中" : "已隐藏"}
-                    </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: "#555",
+                        }}
+                      >
+                        首页顺序：{p.homeOrder ?? index + 1}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: p.enabled ? "#0a7d32" : "#999",
+                        }}
+                      >
+                        {p.enabled ? "前台显示中" : "已隐藏"}
+                      </span>
+                    </div>
                   </div>
 
                   <p
@@ -591,8 +687,46 @@ export default function AdminProductsPage() {
                       gap: 8,
                       marginTop: 10,
                       fontSize: 12,
+                      flexWrap: "wrap",
                     }}
                   >
+                    {/* 排序按鈕 */}
+                    <button
+                      type="button"
+                      onClick={() => handleMove(p.id, "up")}
+                      disabled={index === 0}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 4,
+                        border: "1px solid #888",
+                        background: index === 0 ? "#f5f5f5" : "#fff",
+                        color: "#333",
+                        cursor: index === 0 ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      上移
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMove(p.id, "down")}
+                      disabled={index === products.length - 1}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 4,
+                        border: "1px solid #888",
+                        background:
+                          index === products.length - 1 ? "#f5f5f5" : "#fff",
+                        color: "#333",
+                        cursor:
+                          index === products.length - 1
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    >
+                      下移
+                    </button>
+
+                    {/* 編輯 / 刪除 */}
                     <button
                       type="button"
                       onClick={() => handleEditClick(p)}

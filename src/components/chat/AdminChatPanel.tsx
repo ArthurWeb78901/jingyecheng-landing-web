@@ -40,6 +40,17 @@ type Props = {
   onHasUnreadChange?: (hasUnread: boolean) => void;
 };
 
+const MAX_ADMIN_MESSAGE_LENGTH = 2000;
+const MIN_ADMIN_INTERVAL_MS = 800;
+
+function sanitizeAdminText(raw: string): string {
+  let s = raw.trim();
+  s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) =>
+    ch === "\n" || ch === "\r" || ch === "\t" ? ch : ""
+  );
+  return s;
+}
+
 export function AdminChatPanel({
   texts,
   isEnglish,
@@ -58,6 +69,8 @@ export function AdminChatPanel({
   const [leadCompany, setLeadCompany] = useState("");
   const [leadContact, setLeadContact] = useState("");
   const [leadNeed, setLeadNeed] = useState("");
+
+  const [lastAdminSendAt, setLastAdminSendAt] = useState<number>(0);
 
   const hasUnread = useMemo(
     () => sessions.some((s) => s.unreadCount > 0),
@@ -206,8 +219,31 @@ export function AdminChatPanel({
 
   const handleAdminSend = (e: React.FormEvent) => {
     e.preventDefault();
-    const text = adminInput.trim();
-    if (!text || !activeSessionId) return;
+    if (!activeSessionId) return;
+
+    let text = sanitizeAdminText(adminInput);
+    if (!text) return;
+
+    // 長度限制
+    if (text.length > MAX_ADMIN_MESSAGE_LENGTH) {
+      if (typeof window !== "undefined") {
+        window.alert(
+          isEnglish
+            ? `Message is too long. Please keep it within ${MAX_ADMIN_MESSAGE_LENGTH} characters.`
+            : `讯息内容过长，请控制在 ${MAX_ADMIN_MESSAGE_LENGTH} 个字以内。`
+        );
+      }
+      text = text.slice(0, MAX_ADMIN_MESSAGE_LENGTH);
+      setAdminInput(text);
+      return;
+    }
+
+    // 發送頻率限制（避免誤觸連點）
+    const now = Date.now();
+    if (now - lastAdminSendAt < MIN_ADMIN_INTERVAL_MS) {
+      return;
+    }
+    setLastAdminSendAt(now);
 
     setAdminInput("");
     void saveChatMessage("bot", text, activeSessionId, true);
@@ -266,7 +302,7 @@ export function AdminChatPanel({
     }
   };
 
-  const handleDeleteSession = async (sid: string) => {
+  const handleDeleteSession = async (sid: string | null) => {
     if (!sid) return;
 
     if (typeof window !== "undefined") {
@@ -467,6 +503,7 @@ export function AdminChatPanel({
               onChange={(e) => setAdminInput(e.target.value)}
               placeholder={texts.adminInputPlaceholder}
               disabled={!activeSessionId}
+              maxLength={MAX_ADMIN_MESSAGE_LENGTH * 2}
               style={{
                 flex: 1,
                 padding: "6px 8px",

@@ -14,6 +14,28 @@ import {
 import { VisitorChatPanel } from "./chat/VisitorChatPanel";
 import { AdminChatPanel } from "./chat/AdminChatPanel";
 
+const MAX_INITIAL_MESSAGE_LENGTH = 500;
+
+/** 專門處理外部觸發的預填訊息，避免惡意或超長內容 */
+function sanitizeInitialMessage(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+
+  // 去掉頭尾空白
+  let s = raw.trim();
+
+  // 去掉不可見控制字元（換行保留，真的很髒的字符移除）
+  s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) =>
+    ch === "\n" || ch === "\r" || ch === "\t" ? ch : ""
+  );
+
+  // 限制長度，防止一次塞入巨量文字
+  if (s.length > MAX_INITIAL_MESSAGE_LENGTH) {
+    s = s.slice(0, MAX_INITIAL_MESSAGE_LENGTH);
+  }
+
+  return s;
+}
+
 export function ChatBubble() {
   const pathname = usePathname() || "/";
   const isEnglish = pathname.startsWith("/en");
@@ -64,10 +86,14 @@ export function ChatBubble() {
     if (typeof window === "undefined") return;
 
     const handler = (e: Event) => {
-      const ce = e as CustomEvent<{ message?: string }>;
-      const msg = ce.detail?.message || "";
-      setIsOpen(true);
-      if (msg) setPrefill(msg);
+      try {
+        const ce = e as CustomEvent<{ message?: string }>;
+        const safeMsg = sanitizeInitialMessage(ce.detail?.message);
+        setIsOpen(true);
+        if (safeMsg) setPrefill(safeMsg);
+      } catch (err) {
+        console.error("jyc-open-chat event error", err);
+      }
     };
 
     window.addEventListener("jyc-open-chat" as any, handler as any);
@@ -119,7 +145,10 @@ export function ChatBubble() {
             sessionId={sessionId}
             initialMessage={prefill}
             onConsumeInitialMessage={() => setPrefill("")}
-            onClose={() => setIsOpen(false)}  // 👈 收起聊天面板
+            onClose={() => setIsOpen(false)} // 👈 收起聊天面板
+            // 👉 下面兩個是建議你在 VisitorChatPanel 裡實際用到的安全參數
+            maxMessageLength={800}
+            minIntervalMs={2000}
           />
         ))}
     </>

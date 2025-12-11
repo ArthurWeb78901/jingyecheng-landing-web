@@ -43,7 +43,15 @@ type Props = {
   initialMessage: string;
   onConsumeInitialMessage: () => void;
   onClose?: () => void;
+
+  /** 單則訊息最大長度（可由 ChatBubble 傳入），預設 800 */
+  maxMessageLength?: number;
+  /** 兩次送出之間的最短間隔（毫秒），預設 2000 ms */
+  minIntervalMs?: number;
 };
+
+const DEFAULT_MAX_MESSAGE_LENGTH = 800;
+const DEFAULT_MIN_INTERVAL_MS = 2000;
 
 /** FAQ 关键字应答（用当前语言文案） */
 function getFaqAnswer(text: string, isEnglish: boolean, texts: ChatTexts) {
@@ -124,6 +132,15 @@ function saveLeadToLocalStorage(lead: LeadDraft) {
   }
 }
 
+/** 清洗使用者輸入（保留換行 / tab，拿掉其他控制字元） */
+function sanitizeUserText(raw: string): string {
+  let s = raw.trim();
+  s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) =>
+    ch === "\n" || ch === "\r" || ch === "\t" ? ch : ""
+  );
+  return s;
+}
+
 export function VisitorChatPanel(props: Props) {
   const {
     texts,
@@ -134,6 +151,8 @@ export function VisitorChatPanel(props: Props) {
     initialMessage,
     onConsumeInitialMessage,
     onClose,
+    maxMessageLength = DEFAULT_MAX_MESSAGE_LENGTH,
+    minIntervalMs = DEFAULT_MIN_INTERVAL_MS,
   } = props;
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -146,14 +165,21 @@ export function VisitorChatPanel(props: Props) {
     need: "",
   });
 
+  const [lastSendAt, setLastSendAt] = useState<number>(0);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   // 首次打开时如果有预填的讯息（例如“了解某某机组”）
   useEffect(() => {
     if (!initialMessage) return;
-    setInput(initialMessage);
+    // 再保險一次做清洗 + 長度限制
+    const safe = sanitizeUserText(initialMessage).slice(
+      0,
+      maxMessageLength
+    );
+    setInput(safe);
     onConsumeInitialMessage();
-  }, [initialMessage, onConsumeInitialMessage]);
+  }, [initialMessage, onConsumeInitialMessage, maxMessageLength]);
 
   // ✅ 订阅所有消息，再用 sessionId 在前端过滤
   useEffect(() => {
@@ -299,22 +325,48 @@ export function VisitorChatPanel(props: Props) {
     }
   };
 
-  // 访客发送讯息
+  // 访客发送讯息（含長度 / 頻率限制）
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const text = input.trim();
-    if (!text || !sessionId) return;
+    if (!sessionId) return;
 
-    // 可以保留或去掉乐观渲染，这里选择去掉，完全交给 Firestore 回传
+    let text = sanitizeUserText(input);
+    if (!text) return;
+
+    // 長度檢查
+    if (text.length > maxMessageLength) {
+      if (typeof window !== "undefined") {
+        window.alert(
+          isEnglish
+            ? `Your message is too long. Please keep it within ${maxMessageLength} characters.`
+            : `单则讯息过长，请控制在 ${maxMessageLength} 个字以内。`
+        );
+      }
+      text = text.slice(0, maxMessageLength);
+      setInput(text);
+      return;
+    }
+
+    // 發送頻率限制
+    const now = Date.now();
+    if (now - lastSendAt < minIntervalMs) {
+      if (typeof window !== "undefined") {
+        window.alert(
+          isEnglish
+            ? "You are sending messages too fast. Please wait a moment."
+            : "讯息发送过于频繁，请稍后再试。"
+        );
+      }
+      return;
+    }
+
     setInput("");
+    setLastSendAt(now);
 
-    // 写入访客讯息（未读）
     await saveChatMessage("user", text, false);
 
     // 管理员在线就交给真人回复，不走自动脚本
-    if (adminOnline) {
-      return;
-    }
+    if (adminOnline) return;
 
     // 管理员不在线时才走离线流程
     handleOfflineFlow(text);
@@ -365,6 +417,7 @@ export function VisitorChatPanel(props: Props) {
           placeholder={texts.inputPlaceholder}
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          maxLength={maxMessageLength * 2} // 打字時預留一點，但真正送出前還會再檢查
         />
         <button type="submit">{texts.sendLabel}</button>
       </form>

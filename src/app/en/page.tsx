@@ -35,6 +35,8 @@ type HomeProduct = {
   briefEn?: string;
   enabled: boolean;
   imageUrl?: string;
+  // ⭐ 新增：控制首頁顯示順序（數字越小越前面）
+  sortOrder: number;
 };
 
 type SiteConfigHome = {
@@ -108,12 +110,14 @@ export default function HomeEn() {
     loadHomeGallery();
   }, []);
 
-  // products from jyc_products
+  // products from jyc_products（依 sortOrder + name 排序）
   useEffect(() => {
     async function loadProducts() {
       try {
         const q = query(
           collection(db, "jyc_products"),
+          // ⭐ 先依 sortOrder，再用 name 當次排序鍵，確保順序穩定
+          orderBy("sortOrder", "asc"),
           orderBy("name", "asc")
         );
         const snap = await getDocs(q);
@@ -121,6 +125,11 @@ export default function HomeEn() {
         const list: HomeProduct[] = snap.docs
           .map((d) => {
             const data = d.data() as any;
+
+            // ⭐ 若舊資料沒有 sortOrder，就先給一個較大的預設值
+            const sortOrder =
+              typeof data.sortOrder === "number" ? data.sortOrder : 9999;
+
             return {
               id: d.id,
               category: data.category || "",
@@ -131,6 +140,7 @@ export default function HomeEn() {
               briefEn: data.briefEn || "",
               enabled: data.enabled ?? true,
               imageUrl: data.imageUrl || "",
+              sortOrder,
             };
           })
           .filter((p) => p.enabled);
@@ -157,7 +167,7 @@ export default function HomeEn() {
 
   const currentItem = homeItems[currentSlide];
 
-  // thumbs 數量與產品數同步，不足時只是一個備用來源
+  // thumbs 數量與產品數同步，不足時只是備用來源
   const productThumbs = homeItems.slice(0, products.length || 3);
   const galleryItems = homeItems.slice(0, 12); // 跟中文首頁一樣最多 12 張
 

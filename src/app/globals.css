@@ -506,9 +506,9 @@ body {
 }
 
 .jyc-gallery-item {
-  height: 120px;
   border-radius: 6px;
   background: #e0e0e0;
+  background-position: center;
 }
 
 /* 縮圖：正方形（通用） */
