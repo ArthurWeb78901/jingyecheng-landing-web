@@ -331,9 +331,9 @@ body {
   margin: 0;
 }
 
-/* 左侧大 Logo 圆形（加大 & 多一点内边距） */
+/* 左侧大 Logo 圆形（加大白邊） */
 .jyc-about-logo-wrap {
-  width: 80px;              /* 比原來稍微大一點 */
+  width: 80px;
   height: 80px;
   border-radius: 999px;
   background: #fff;
@@ -341,16 +341,16 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 6px;             /* ✅ 留更寬的白邊，避免圖的圓被切到 */
   box-sizing: border-box;
 }
 
-/* 大 Logo 圖片本身 */
+/* 讓圖本身再縮小一點，留出明顯白邊 */
 .jyc-about-logo {
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;      /* 保險，再做一次圓角 */
-  object-fit: contain;       /* 完整顯示整顆圓，不拉伸 */
+  width: 88%;         /* 👈 調小到 88%（必要時你可以再改 85%） */
+  height: 88%;
+  border-radius: 999px;
+  object-fit: contain;
+  display: block;
 }
 
 /* 产品卡片（通用栅格） */
