@@ -4,17 +4,18 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ChatBubble } from "@/components/ChatBubble"; // 👈 新增：在线助手浮窗
+import { ChatBubble } from "@/components/ChatBubble";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
 type ProductDoc = {
   id: string;            // Firestore doc id
   category: string;      // 产品分类
-  name: string;          // 产品名称
-  brief: string;         // 简短简介
+  name: string;          // 产品名称（中文）
+  brief: string;         // 简短简介（中文）
   heroImageUrl?: string; // 列表 / 首页用的主图
   enabled: boolean;      // 是否在前台显示
+  homeOrder?: number;    // ⭐ 首页 / 列表排序（1,2,3…，数字越小越靠前）
 };
 
 export default function ProductsPage() {
@@ -30,24 +31,53 @@ export default function ProductsPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        // 和首页一样，用 name 排序，避免 createdAt 带来的查询问题
-        const q = query(collection(db, "jyc_products"), orderBy("name", "asc"));
+        // Firestore 仍然用 name 排序，避免 createdAt 相关问题
+        const q = query(
+          collection(db, "jyc_products"),
+          orderBy("name", "asc")
+        );
         const snap = await getDocs(q);
 
         const list: ProductDoc[] = snap.docs.map((d) => {
           const data = d.data() as any;
+
+          const homeOrderRaw = data.homeOrder;
+          const homeOrder =
+            typeof homeOrderRaw === "number"
+              ? homeOrderRaw
+              : Number.MAX_SAFE_INTEGER; // 没设定的排在最后
+
           return {
             id: d.id,
             category: data.category || "",
             name: data.name || "",
             brief: data.brief || "",
             heroImageUrl: data.heroImageUrl || data.imageUrl || "",
-            // 没填 enabled 就当作 true
             enabled: data.enabled ?? true,
+            homeOrder,
           };
         });
 
+        // 只保留「前台显示」的
         const enabledList = list.filter((p) => p.enabled);
+
+        // ⭐ 依 homeOrder 排序；同一个数字时再用名称当次序
+        enabledList.sort((a, b) => {
+          const ao =
+            typeof a.homeOrder === "number"
+              ? a.homeOrder
+              : Number.MAX_SAFE_INTEGER;
+          const bo =
+            typeof b.homeOrder === "number"
+              ? b.homeOrder
+              : Number.MAX_SAFE_INTEGER;
+
+          if (ao !== bo) return ao - bo;
+
+          // 次要排序：按中文名称
+          return a.name.localeCompare(b.name, "zh-Hans");
+        });
+
         setProducts(enabledList);
       } catch (err) {
         console.error("load products from Firestore error", err);
@@ -186,7 +216,7 @@ export default function ProductsPage() {
 
       <Footer />
 
-      {/* 👇 在线助手浮窗（全站共用） */}
+      {/* 在线助手浮窗（全站共用） */}
       <ChatBubble />
     </main>
   );

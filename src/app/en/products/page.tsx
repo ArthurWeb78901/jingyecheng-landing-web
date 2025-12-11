@@ -18,6 +18,7 @@ type ProductDoc = {
   imageUrl?: string;
   enabled: boolean;
   createdAt?: string;
+  homeOrder?: number;   // ⭐ 首頁 / 列表排序
 };
 
 export default function ProductsEnPage() {
@@ -30,7 +31,7 @@ export default function ProductsEnPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        // 和首頁邏輯統一：用 name 排序
+        // 和首頁邏輯統一：先用 name 排序，再在前端用 homeOrder 排序
         const q = query(
           collection(db, "jyc_products"),
           orderBy("name", "asc")
@@ -39,6 +40,12 @@ export default function ProductsEnPage() {
 
         const list: ProductDoc[] = snap.docs.map((d) => {
           const data = d.data() as any;
+          const homeOrderRaw = data.homeOrder;
+          const homeOrder =
+            typeof homeOrderRaw === "number"
+              ? homeOrderRaw
+              : Number.MAX_SAFE_INTEGER;
+
           return {
             id: d.id,
             category: data.category || "",
@@ -48,13 +55,30 @@ export default function ProductsEnPage() {
             briefEn: data.briefEn || "",
             heroImageUrl: data.heroImageUrl || data.imageUrl || "",
             imageUrl: data.imageUrl || "",
-            // 沒填 enabled 就當作 true
             enabled: data.enabled ?? true,
             createdAt: data.createdAt || "",
+            homeOrder,
           };
         });
 
         const enabled = list.filter((p) => p.enabled);
+
+        enabled.sort((a, b) => {
+          const ao =
+            typeof a.homeOrder === "number"
+              ? a.homeOrder
+              : Number.MAX_SAFE_INTEGER;
+          const bo =
+            typeof b.homeOrder === "number"
+              ? b.homeOrder
+              : Number.MAX_SAFE_INTEGER;
+          if (ao !== bo) return ao - bo;
+
+          const aName = a.nameEn || a.name;
+          const bName = b.nameEn || b.name;
+          return aName.localeCompare(bName);
+        });
+
         setProducts(enabled);
       } catch (err) {
         console.error("load products from Firestore (EN) error", err);
@@ -79,7 +103,8 @@ export default function ProductsEnPage() {
             Products Overview
           </h1>
           <p className="jyc-section-intro">
-            Below are the products currently provided by Taiyuan Jingyecheng Steel Equip Co., Ltd. Detailed technical specifications and line
+            Below are the products currently provided by Taiyuan Jingyecheng
+            Steel Equip Co., Ltd. Detailed technical specifications and line
             configurations can be tailored to process, capacity and plant layout
             requirements, and are subject to the final technical proposal and
             quotation.

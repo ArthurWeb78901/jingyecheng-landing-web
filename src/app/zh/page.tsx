@@ -32,10 +32,9 @@ type HomeProduct = {
   brief: string;
   enabled: boolean;
   imageUrl?: string;
-  sortOrder?: number; // ✅ 新增：首頁排序用
+  homeOrder?: number; // ⭐ 首頁排序
 };
 
-// 只給首頁用的簡單 config 型別
 type SiteConfigHome = {
   logoImageUrl?: string;
 };
@@ -46,7 +45,6 @@ export default function Home() {
   const [products, setProducts] = useState<HomeProduct[]>([]);
   const [siteConfig, setSiteConfig] = useState<SiteConfigHome>({});
 
-  // ✅ 用于控制产品列表横向滚动
   const productsRowRef = useRef<HTMLDivElement | null>(null);
 
   // 讀取 config/site（拿 logoImageUrl 給「關於我們」大 logo 用）
@@ -104,15 +102,25 @@ export default function Home() {
     loadHomeGallery();
   }, []);
 
-  // 從 Firestore 讀取 jyc_products（首頁產品區，前端依 sortOrder 排序）
+  // 從 Firestore 讀取 jyc_products（首頁產品區，用 homeOrder 排序）
   useEffect(() => {
     async function loadProducts() {
       try {
-        const snap = await getDocs(collection(db, "jyc_products"));
+        const q = query(
+          collection(db, "jyc_products"),
+          orderBy("name", "asc")
+        );
+        const snap = await getDocs(q);
 
-        const list: HomeProduct[] = snap.docs
+        const raw: HomeProduct[] = snap.docs
           .map((d) => {
             const data = d.data() as any;
+            const homeOrderRaw = data.homeOrder;
+            const homeOrder =
+              typeof homeOrderRaw === "number"
+                ? homeOrderRaw
+                : Number.MAX_SAFE_INTEGER;
+
             return {
               id: d.id,
               category: data.category || "",
@@ -120,21 +128,26 @@ export default function Home() {
               brief: data.brief || "",
               enabled: data.enabled ?? true,
               imageUrl: data.imageUrl || "",
-              sortOrder:
-                typeof data.sortOrder === "number" ? data.sortOrder : 9999,
+              homeOrder,
             };
           })
           .filter((p) => p.enabled);
 
-        // 依 sortOrder → 再依中文名稱排序
-        list.sort((a, b) => {
-          const ao = a.sortOrder ?? 9999;
-          const bo = b.sortOrder ?? 9999;
+        raw.sort((a, b) => {
+          const ao =
+            typeof a.homeOrder === "number"
+              ? a.homeOrder
+              : Number.MAX_SAFE_INTEGER;
+          const bo =
+            typeof b.homeOrder === "number"
+              ? b.homeOrder
+              : Number.MAX_SAFE_INTEGER;
           if (ao !== bo) return ao - bo;
-          return (a.name || "").localeCompare(b.name || "", "zh-Hans");
+
+          return a.name.localeCompare(b.name, "zh-Hans");
         });
 
-        setProducts(list);
+        setProducts(raw);
       } catch (err) {
         console.error("load home products from Firestore error", err);
       }
@@ -143,7 +156,7 @@ export default function Home() {
     loadProducts();
   }, []);
 
-  // 简单自动轮播：每 5 秒切一张（有 1 张图时不轮播）
+  // 简单自动轮播
   useEffect(() => {
     if (homeItems.length <= 1) return;
 
@@ -158,9 +171,9 @@ export default function Home() {
 
   // 首页要用到的图
   const productThumbs = homeItems.slice(0, products.length || 3);
-  const galleryItems = homeItems.slice(0, 12); // Gallery 區塊最多 12 張
+  const galleryItems = homeItems.slice(0, 12);
 
-  // 🔧 桌机左右滚动产品列表（手机一样可用）
+  // 桌机左右滚动产品列表（手机一样可用）
   const scrollProducts = (direction: "left" | "right") => {
     const container = productsRowRef.current;
     if (!container) return;
@@ -168,7 +181,6 @@ export default function Home() {
     const firstCard =
       container.querySelector<HTMLElement>(".jyc-card") || null;
 
-    // 滚动一张卡片的宽度（加上大致间距）
     const step =
       (firstCard?.offsetWidth || container.clientWidth * 0.8) + 24;
 
@@ -207,7 +219,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 产品概要区块（從 Firestore 的 jyc_products 來） */}
+      {/* 产品概要区块 */}
       <section id="products" className="jyc-section">
         <h2>主要产品一览</h2>
 
@@ -223,7 +235,7 @@ export default function Home() {
               position: "relative",
             }}
           >
-            {/* 左右导航按钮（桌机特别好用，手机也可以点） */}
+            {/* 左右导航按钮 */}
             <button
               type="button"
               aria-label="向左查看更多产品"

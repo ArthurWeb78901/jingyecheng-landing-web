@@ -35,7 +35,7 @@ type HomeProduct = {
   briefEn?: string;
   enabled: boolean;
   imageUrl?: string;
-  sortOrder?: number; // ✅ 新增：首頁排序用
+  homeOrder?: number; // ⭐ 首頁排序
 };
 
 type SiteConfigHome = {
@@ -48,7 +48,7 @@ export default function HomeEn() {
   const [products, setProducts] = useState<HomeProduct[]>([]);
   const [siteConfig, setSiteConfig] = useState<SiteConfigHome>({});
 
-  // ✅ EN 首页产品横向滚动容器
+  // EN 首页产品横向滚动容器
   const productsRowRef = useRef<HTMLDivElement | null>(null);
 
   // 讀取 config/site（拿 logoImageUrl 給 About Us 大 logo 用）
@@ -109,15 +109,25 @@ export default function HomeEn() {
     loadHomeGallery();
   }, []);
 
-  // ✅ products from jyc_products（不在 query 裡排序，改在前端依 sortOrder 排）
+  // products from jyc_products（用 homeOrder 排序）
   useEffect(() => {
     async function loadProducts() {
       try {
-        const snap = await getDocs(collection(db, "jyc_products"));
+        const q = query(
+          collection(db, "jyc_products"),
+          orderBy("name", "asc")
+        );
+        const snap = await getDocs(q);
 
-        const list: HomeProduct[] = snap.docs
+        const raw: HomeProduct[] = snap.docs
           .map((d) => {
             const data = d.data() as any;
+            const homeOrderRaw = data.homeOrder;
+            const homeOrder =
+              typeof homeOrderRaw === "number"
+                ? homeOrderRaw
+                : Number.MAX_SAFE_INTEGER;
+
             return {
               id: d.id,
               category: data.category || "",
@@ -128,25 +138,28 @@ export default function HomeEn() {
               briefEn: data.briefEn || "",
               enabled: data.enabled ?? true,
               imageUrl: data.imageUrl || "",
-              // 沒有 sortOrder 的舊資料，先排在後面
-              sortOrder:
-                typeof data.sortOrder === "number" ? data.sortOrder : 9999,
+              homeOrder,
             };
           })
           .filter((p) => p.enabled);
 
-        // 前端排序：依 sortOrder，再依英文 / 中文名稱
-        list.sort((a, b) => {
-          const ao = a.sortOrder ?? 9999;
-          const bo = b.sortOrder ?? 9999;
+        raw.sort((a, b) => {
+          const ao =
+            typeof a.homeOrder === "number"
+              ? a.homeOrder
+              : Number.MAX_SAFE_INTEGER;
+          const bo =
+            typeof b.homeOrder === "number"
+              ? b.homeOrder
+              : Number.MAX_SAFE_INTEGER;
           if (ao !== bo) return ao - bo;
 
-          const an = (a.nameEn || a.name || "").toString();
-          const bn = (b.nameEn || b.name || "").toString();
-          return an.localeCompare(bn, "en");
+          const aName = a.nameEn || a.name;
+          const bName = b.nameEn || b.name;
+          return aName.localeCompare(bName);
         });
 
-        setProducts(list);
+        setProducts(raw);
       } catch (err) {
         console.error("load home products from Firestore error (en)", err);
       }
@@ -172,7 +185,7 @@ export default function HomeEn() {
   const productThumbs = homeItems.slice(0, products.length || 3);
   const galleryItems = homeItems.slice(0, 12); // 跟中文首頁一樣最多 12 張
 
-  // ✅ 横向滚动逻辑（跟中文首页一致）
+  // 横向滚动逻辑
   const scrollProducts = (direction: "left" | "right") => {
     const container = productsRowRef.current;
     if (!container) return;
