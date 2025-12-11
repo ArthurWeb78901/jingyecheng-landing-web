@@ -19,6 +19,9 @@ import {
 
 type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
 
+// ⭐ 冷/热设备类型
+type MachineTemp = "hot" | "cold";
+
 type AdminGalleryItem = {
   id: string; // Firestore doc id
   title: string; // 中文標題
@@ -30,6 +33,9 @@ type AdminGalleryItem = {
   imageUrl?: string;
   showOnHome: boolean;
   createdAt?: string; // ISO 字串
+
+  // 冷/热分类
+  machineTemp?: MachineTemp; // "hot" | "cold" | undefined
 };
 
 export default function AdminGalleryPage() {
@@ -46,6 +52,10 @@ export default function AdminGalleryPage() {
   const [uploadImageUrl, setUploadImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
+  // ⭐ 冷/热选择，额外加一个 "" 用来表示「未分类」
+  const [uploadMachineTemp, setUploadMachineTemp] =
+    useState<MachineTemp | "">("");
+
   // ⭐ 目前正在編輯哪一筆（null = 新增模式）
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -58,6 +68,7 @@ export default function AdminGalleryPage() {
     setUploadDescription("");
     setUploadDescriptionEn("");
     setUploadImageUrl("");
+    setUploadMachineTemp("");
     setEditingId(null);
   };
 
@@ -96,6 +107,7 @@ export default function AdminGalleryPage() {
     setUploadDescription(item.description || "");
     setUploadDescriptionEn(item.descriptionEn || "");
     setUploadImageUrl(item.imageUrl || "");
+    setUploadMachineTemp(item.machineTemp ?? "");
     setUploadFile(null); // 先清空，除非要重新選檔
   };
 
@@ -138,7 +150,10 @@ export default function AdminGalleryPage() {
         ? items.find((i) => i.id === editingId)
         : undefined;
 
-      const payload = {
+      const machineTempValue: MachineTemp | undefined =
+        uploadMachineTemp === "" ? undefined : uploadMachineTemp;
+
+      const payload: Omit<AdminGalleryItem, "id"> = {
         title: uploadTitle.trim() || finalFilename || "未命名图片",
         titleEn: uploadTitleEn.trim() || "",
         category: uploadCategory as GalleryCategory,
@@ -148,14 +163,18 @@ export default function AdminGalleryPage() {
         imageUrl: finalUrl || "",
         showOnHome: existing?.showOnHome ?? true,
         createdAt: existing?.createdAt || now,
+        machineTemp: machineTempValue,
       };
 
       if (editingId && existing) {
         // ⭐ 編輯模式：更新現有文件
         await updateDoc(doc(db, "jyc_gallery", editingId), payload);
 
-        setItems((prev) =>
-          prev.map((i) => (i.id === editingId ? { ...i, ...payload } : i))
+        setItems((prev: AdminGalleryItem[]) =>
+          prev.map(
+            (i): AdminGalleryItem =>
+              i.id === editingId ? { ...i, ...payload } : i
+          )
         );
       } else {
         // ✅ 新增模式：新增文件
@@ -340,6 +359,37 @@ export default function AdminGalleryPage() {
                   fontSize: 13,
                 }}
               />
+            </div>
+
+            {/* 冷/热设备分类 */}
+            <div
+              style={{
+                marginBottom: 8,
+                fontSize: 13,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span>设备类型（冷 / 热）：</span>
+              <select
+                value={uploadMachineTemp}
+                onChange={(e) =>
+                  setUploadMachineTemp(
+                    e.target.value as MachineTemp | ""
+                  )
+                }
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  fontSize: 13,
+                }}
+              >
+                <option value="">未分类 / 不区分</option>
+                <option value="hot">热加工设备</option>
+                <option value="cold">冷加工设备</option>
+              </select>
             </div>
 
             <div
@@ -549,6 +599,22 @@ export default function AdminGalleryPage() {
                     <div style={{ marginBottom: 6, color: "#777" }}>
                       类别：{item.category}
                     </div>
+
+                    {/* 冷/热显示 */}
+                    {item.machineTemp && (
+                      <div
+                        style={{
+                          marginBottom: 6,
+                          color: "#777",
+                          fontSize: 12,
+                        }}
+                      >
+                        设备类型：
+                        {item.machineTemp === "hot"
+                          ? "热加工设备"
+                          : "冷加工设备"}
+                      </div>
+                    )}
 
                     <div
                       style={{
