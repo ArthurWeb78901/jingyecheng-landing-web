@@ -328,31 +328,30 @@ body {
 }
 
 .jyc-about-header h2 {
-  margin: 0; /* 让 h2 跟大 logo 垂直置中，不额外多一段空白 */
+  margin: 0;
 }
 
-/* 「關於我們」區塊的大 Logo 圓形 */
+/* 左侧大 Logo 圆形（加大 & 多一点内边距） */
 .jyc-about-logo-wrap {
-  width: 88px;               /* 略放大，讓圓更有存在感 */
-  height: 88px;
+  width: 80px;              /* 比原來稍微大一點 */
+  height: 80px;
   border-radius: 999px;
   background: #fff;
-  border: 1px solid #e0e0e0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;              /* 🔑 明顯一圈內距，不會貼邊 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 6px;             /* ✅ 留更寬的白邊，避免圖的圓被切到 */
   box-sizing: border-box;
-  overflow: hidden;
 }
 
+/* 大 Logo 圖片本身 */
 .jyc-about-logo {
   width: 100%;
   height: 100%;
-  object-fit: contain;       /* 同樣用 contain 保證整顆圓都在框裡 */
-  /* 這裡也不用再加 border-radius，圓形由外框決定就夠了 */
+  border-radius: 999px;      /* 保險，再做一次圓角 */
+  object-fit: contain;       /* 完整顯示整顆圓，不拉伸 */
 }
-
 
 /* 产品卡片（通用栅格） */
 .jyc-card-grid {
