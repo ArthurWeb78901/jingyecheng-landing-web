@@ -331,23 +331,24 @@ body {
   margin: 0;
 }
 
-/* 左侧大 Logo 圆形（加大白邊） */
+/* 左侧大 Logo 圆形（加大整体尺寸 + 白边） */
 .jyc-about-logo-wrap {
-  width: 80px;
-  height: 80px;
+  width: 84px;          /* 比原本 80px 再大一点 */
+  height: 84px;
   border-radius: 999px;
   background: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 8px;         /* ⬅ 白邊再加厚，裡面圖騰自然縮進去 */
   box-sizing: border-box;
 }
 
-/* 讓圖本身再縮小一點，留出明顯白邊 */
+/* 圖片本身填滿內圈，但因為有 padding，所以不會頂到外圈 */
 .jyc-about-logo {
-  width: 88%;         /* 👈 調小到 88%（必要時你可以再改 85%） */
-  height: 88%;
+  width: 100%;
+  height: 100%;
   border-radius: 999px;
   object-fit: contain;
   display: block;
