@@ -108,16 +108,16 @@ export function Header() {
       <div className="jyc-header-right">
         <div className="jyc-lang-switch">
           <Link
-            href={chinesePath}
-            className={isEnglish ? "" : "jyc-lang-active"}
-          >
-            中文
-          </Link>
-          <Link
             href={englishPath}
             className={isEnglish ? "jyc-lang-active" : ""}
           >
             EN
+          </Link>
+                    <Link
+            href={chinesePath}
+            className={isEnglish ? "" : "jyc-lang-active"}
+          >
+            中文
           </Link>
         </div>
 
