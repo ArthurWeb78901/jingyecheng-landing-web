@@ -22,17 +22,17 @@ const HEADER_DEFAULTS: SiteConfigForHeader = {
 };
 
 export function Header() {
-  const rawPathname = usePathname() || "/";
+  const pathname = usePathname() || "/";
 
-  // 更嚴謹的英文路由判斷：/en 或 /en/ 或 /en/xxx
+  // 粗略判断目前是不是英文版：/en 或 /en/xxx
   const isEnglish =
-    rawPathname === "/en" || rawPathname.startsWith("/en/");
+    pathname === "/en" || pathname.startsWith("/en/");
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [siteConfig, setSiteConfig] =
     useState<SiteConfigForHeader>(HEADER_DEFAULTS);
 
-  // 讀取登入狀態（localStorage）
+  // 讀取登入狀態
   useEffect(() => {
     if (typeof window !== "undefined") {
       const flag =
@@ -41,7 +41,7 @@ export function Header() {
     }
   }, []);
 
-  // 從 Firestore 讀取 config/site（logo 文字 + 圖片）
+  // 讀取 config/site
   useEffect(() => {
     async function loadConfig() {
       try {
@@ -58,21 +58,6 @@ export function Header() {
     loadConfig();
   }, []);
 
-  // ===== 語言切換路徑計算 =====
-  // 把 /en 前綴去掉，得到「對應中文的 path」
-  const withoutEnPrefix = isEnglish
-    ? rawPathname.replace(/^\/en/, "") || "/"
-    : rawPathname;
-
-  const chinesePath =
-    withoutEnPrefix === "" ? "/" : withoutEnPrefix;
-
-  const englishPath = isEnglish
-    ? rawPathname // 已經在英文，不改路徑
-    : rawPathname === "/"
-    ? "/en"
-    : `/en${rawPathname}`;
-
   // ===== 導覽列 =====
   const navLinks = isEnglish
     ? [
@@ -84,19 +69,19 @@ export function Header() {
       ]
     : [
         { href: "/zh", label: "首页" },
-        // ✅ 這裡改成真正的中文產品頁路由
-        { href: "/products", label: "产品介绍" },
+        // 如果目前产品页只提供英文，就指到 /en/products
+        { href: "/en/products", label: "产品介绍" },
         { href: "/about", label: "公司介绍" },
         { href: "/gallery", label: "图片集" },
         { href: "/contact", label: "联系我们" },
       ];
 
-  const logoHref = isEnglish ? "/en" : "/";
+  const logoHref = isEnglish ? "/en" : "/zh";
   const logoText = isEnglish ? siteConfig.logoTextEn : siteConfig.logoTextZh;
 
   return (
     <header className="jyc-header">
-      {/* Logo：有圖片就顯示圖片，沒有就顯示字 JYC */}
+      {/* Logo */}
       <Link href={logoHref} className="jyc-logo">
         <span className="jyc-logo-mark">
           {siteConfig.logoImageUrl ? (
@@ -121,18 +106,16 @@ export function Header() {
       </nav>
 
       <div className="jyc-header-right">
+        {/* 語言切換：固定指到 /en 和 /zh */}
         <div className="jyc-lang-switch">
-          {/* EN */}
           <Link
-            href={englishPath}
+            href="/en"
             className={isEnglish ? "jyc-lang-active" : ""}
           >
             EN
           </Link>
-
-          {/* 中文：不論現在在 /en 或 /en/... 都會導回對應中文路徑 */}
           <Link
-            href={chinesePath}
+            href="/zh"
             className={isEnglish ? "" : "jyc-lang-active"}
           >
             中文
