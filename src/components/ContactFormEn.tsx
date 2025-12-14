@@ -38,7 +38,7 @@ export function ContactFormEn() {
       e.currentTarget.reset();
     } catch (err) {
       console.error(err);
-      setError("送出失败，请稍后再试。");
+      setError("Failed to send. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -47,17 +47,17 @@ export function ContactFormEn() {
   return (
     <form className="jyc-contact-form" onSubmit={handleSubmit}>
       <div className="jyc-form-row">
-        <input type="text" name="name" placeholder="姓名 / Name" required />
-        <input type="text" name="company" placeholder="公司 / 单位" />
+        <input type="text" name="name" placeholder="Name" required />
+        <input type="text" name="company" placeholder="Company" />
       </div>
       <div className="jyc-form-row">
         <input type="email" name="email" placeholder="Email" />
-        <input type="tel" name="phone" placeholder="电话 / 手机" />
+        <input type="tel" name="phone" placeholder="Phone" />
       </div>
       <textarea
         rows={4}
         name="content"
-        placeholder="请输入您的需求或问题…"
+        placeholder="Please describe your requirements or questions…"
         required
       />
       <button
@@ -65,12 +65,12 @@ export function ContactFormEn() {
         className="jyc-btn-primary jyc-contact-submit"
         disabled={loading}
       >
-        {loading ? "送出中…" : "送出咨询"}
+        {loading ? "Sending…" : "Send Inquiry"}
       </button>
 
       {done && (
         <p style={{ fontSize: 12, color: "#0a7d32", marginTop: 6 }}>
-          已成功送出，我们会尽快与您联系。
+          Your inquiry has been sent. We will contact you shortly.
         </p>
       )}
       {error && (
