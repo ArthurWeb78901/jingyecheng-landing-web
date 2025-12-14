@@ -70,7 +70,7 @@ export function Header() {
     : [
         { href: "/zh", label: "首页" },
         // 如果目前产品页只提供英文，就指到 /en/products
-        { href: "/en/products", label: "产品介绍" },
+        { href: "/products", label: "产品介绍" },
         { href: "/about", label: "公司介绍" },
         { href: "/gallery", label: "图片集" },
         { href: "/contact", label: "联系我们" },
