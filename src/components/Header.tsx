@@ -11,7 +11,7 @@ type SiteConfigForHeader = {
   logoMark: string;
   logoTextZh: string;
   logoTextEn: string;
-  logoImageUrl?: string;   // ⬅ 多帶出圖片網址
+  logoImageUrl?: string;
 };
 
 const HEADER_DEFAULTS: SiteConfigForHeader = {
@@ -22,8 +22,11 @@ const HEADER_DEFAULTS: SiteConfigForHeader = {
 };
 
 export function Header() {
-  const pathname = usePathname() || "/";
-  const isEnglish = pathname.startsWith("/en");
+  const rawPathname = usePathname() || "/";
+
+  // 更嚴謹的英文路由判斷：/en 或 /en/ 或 /en/xxx
+  const isEnglish =
+    rawPathname === "/en" || rawPathname.startsWith("/en/");
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [siteConfig, setSiteConfig] =
@@ -55,11 +58,22 @@ export function Header() {
     loadConfig();
   }, []);
 
-  // 用目前路徑推算中 / 英對應路徑
-  const basePath = isEnglish ? pathname.slice(3) || "/" : pathname;
-  const chinesePath = basePath === "/" ? "/" : basePath;
-  const englishPath = "/en" + (basePath === "/" ? "" : basePath);
+  // ===== 語言切換路徑計算 =====
+  // 把 /en 前綴去掉，得到「對應中文的 path」
+  const withoutEnPrefix = isEnglish
+    ? rawPathname.replace(/^\/en/, "") || "/"
+    : rawPathname;
 
+  const chinesePath =
+    withoutEnPrefix === "" ? "/" : withoutEnPrefix;
+
+  const englishPath = isEnglish
+    ? rawPathname // 已經在英文，不改路徑
+    : rawPathname === "/"
+    ? "/en"
+    : `/en${rawPathname}`;
+
+  // ===== 導覽列 =====
   const navLinks = isEnglish
     ? [
         { href: "/en", label: "Home" },
@@ -70,7 +84,8 @@ export function Header() {
       ]
     : [
         { href: "/", label: "首页" },
-        { href: "/en/products", label: "Products" },
+        // ✅ 這裡改成真正的中文產品頁路由
+        { href: "/products", label: "产品介绍" },
         { href: "/about", label: "公司介绍" },
         { href: "/gallery", label: "图片集" },
         { href: "/contact", label: "联系我们" },
@@ -81,7 +96,7 @@ export function Header() {
 
   return (
     <header className="jyc-header">
-      {/* Logo：圓形徽章 + 文字；有圖片時顯示圖片，沒有才顯示字 JYC */}
+      {/* Logo：有圖片就顯示圖片，沒有就顯示字 JYC */}
       <Link href={logoHref} className="jyc-logo">
         <span className="jyc-logo-mark">
           {siteConfig.logoImageUrl ? (
@@ -107,13 +122,16 @@ export function Header() {
 
       <div className="jyc-header-right">
         <div className="jyc-lang-switch">
+          {/* EN */}
           <Link
             href={englishPath}
             className={isEnglish ? "jyc-lang-active" : ""}
           >
             EN
           </Link>
-                    <Link
+
+          {/* 中文：不論現在在 /en 或 /en/... 都會導回對應中文路徑 */}
+          <Link
             href={chinesePath}
             className={isEnglish ? "" : "jyc-lang-active"}
           >
