@@ -44,7 +44,7 @@ export default function AboutPage() {
           <section style={{ marginTop: 24 }}>
             <h2 style={{ fontSize: '20px', marginBottom: '8px' }}>联系方式</h2>
             <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.8, marginBottom: 8 }}>
-              邮箱：sxtkgg@aliyun.com
+              邮箱：wendy@jycsteelequip.com
             </p>
           </section>
         </div>
