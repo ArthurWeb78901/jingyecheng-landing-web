@@ -83,7 +83,7 @@ export function Header() {
         { href: "/en/contact", label: "Contact" },
       ]
     : [
-        { href: "/", label: "首页" },
+        { href: "/zh", label: "首页" },
         // ✅ 這裡改成真正的中文產品頁路由
         { href: "/products", label: "产品介绍" },
         { href: "/about", label: "公司介绍" },
