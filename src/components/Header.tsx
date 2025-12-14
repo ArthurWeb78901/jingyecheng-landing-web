@@ -70,7 +70,7 @@ export function Header() {
       ]
     : [
         { href: "/", label: "首页" },
-        { href: "/products", label: "产品介绍" },
+        { href: "/en/products", label: "Products" },
         { href: "/about", label: "公司介绍" },
         { href: "/gallery", label: "图片集" },
         { href: "/contact", label: "联系我们" },

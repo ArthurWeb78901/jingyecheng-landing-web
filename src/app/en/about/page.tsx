@@ -67,15 +67,8 @@ export default function AboutEnPage() {
                 marginBottom: 8,
               }}
             >
-              Address: Baihuagu, Taiyuan, Shanxi Province, China
-              <br />
-              Tel: 0351-2028121
               <br />
               Email: wendy@jycsteelequip.com
-            </p>
-            <p style={{ fontSize: "12px", color: "#888", marginTop: 4 }}>
-              © Shanxi Taikuang Steel Pipe Equipment Co., Ltd. ICP No.
-              晋ICP备07000249号-1
             </p>
           </section>
         </div>

@@ -44,14 +44,7 @@ export default function AboutPage() {
           <section style={{ marginTop: 24 }}>
             <h2 style={{ fontSize: '20px', marginBottom: '8px' }}>联系方式</h2>
             <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.8, marginBottom: 8 }}>
-              地址：山西省太原市百花谷
-              <br />
-              电话：0351-2028121
-              <br />
               邮箱：sxtkgg@aliyun.com
-            </p>
-            <p style={{ fontSize: '12px', color: '#888', marginTop: 4 }}>
-              版权所有：山西太矿钢管设备有限公司　晋ICP备07000249号-1
             </p>
           </section>
         </div>

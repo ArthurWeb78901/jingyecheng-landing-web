@@ -60,12 +60,12 @@ export function Footer() {
       <div className="jyc-footer-sub">
         {isEnglish ? (
           <>
-            Address: {address}　Tel: {siteConfig.phone}　Email:{" "}
+            Email:{" "}
             {siteConfig.email}
           </>
         ) : (
           <>
-            地址：{address}　电话：{siteConfig.phone}　邮箱：
+            邮箱：
             {siteConfig.email}
           </>
         )}

@@ -1,5 +1,5 @@
 // functions/index.js
-const functions = require("firebase-functions/v1");  // 👈 改成 v1 相容層
+const { firestore } = require("firebase-functions/v1");  // 👈 用 v1，強制 1st Gen
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 
@@ -9,10 +9,10 @@ admin.initializeApp();
 const WEBSITE_NAME = "JYC Steel Equip 网站";
 const ADMIN_EMAIL = "jycsteelequip@hotmail.com";
 
-// ⚠️ 這裡用 Hotmail/Outlook 的「應用程式密碼」，不要用一般登入密碼
+// 這裡用你剛剛申請好的「應用程式密碼」，不要用登入密碼
 const SMTP_PASS = "kqnwsfbgqxoctxgg";
 
-// Hotmail / Outlook 用的 SMTP 設定
+// Hotmail / Outlook SMTP 設定
 const transporter = nodemailer.createTransport({
   host: "smtp.office365.com",
   port: 587,
@@ -23,8 +23,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Firestore 觸發：有新的聊天訊息時
-exports.notifyNewChatMessage = functions.firestore
+// Firestore 觸發：有新的聊天訊息寫入 jyc_chat_messages
+exports.notifyNewChatMessage = firestore
   .document("jyc_chat_messages/{docId}")
   .onCreate(async (snap, context) => {
     const data = snap.data() || {};
@@ -34,7 +34,7 @@ exports.notifyNewChatMessage = functions.firestore
     const text = (data.text || "").toString().slice(0, 2000);
     const pathname = data.pathname || "/";
 
-    // 只針對「訪客」發的訊息；機器人 / 管理員的不發信
+    // 只針對「訪客」發的訊息寄信；bot / admin 的一律忽略
     if (from !== "user") {
       return;
     }
@@ -42,22 +42,21 @@ exports.notifyNewChatMessage = functions.firestore
     const db = admin.firestore();
 
     try {
-      // 用 jyc_chat_sessions/{sessionId} 做「只寄一次」的鎖
+      // 用 jyc_chat_sessions 做「此 session 只寄一次信」的鎖
       const sessionRef = db.collection("jyc_chat_sessions").doc(sessionId);
       const sessionSnap = await sessionRef.get();
 
-      // 如果這個 session 已經做過通知，就不再寄信
       if (sessionSnap.exists) {
+        // 這個 session 已經寄過通知，就不再寄
         return;
       }
 
-      // 第一次看到這個 session：記錄一下
+      // 第一次看到這個 session：建立鎖
       await sessionRef.set({
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         firstMessageId: snap.id,
       });
 
-      // 粗略判斷語系：看 path 是否以 /en 開頭
       const isEnglish =
         typeof pathname === "string" && pathname.startsWith("/en");
 
@@ -65,7 +64,7 @@ exports.notifyNewChatMessage = functions.firestore
         ? "New website chat inquiry (JYC)"
         : "【JYC 官网】有新的访客在线咨询";
 
-      const body = isEnglish
+      const bodyLines = isEnglish
         ? [
             "A visitor has started a new chat on the JYC website.",
             "",
@@ -76,7 +75,7 @@ exports.notifyNewChatMessage = functions.firestore
             text || "(empty)",
             "",
             "Please reply in the admin chat window on the website.",
-          ].join("\n")
+          ]
         : [
             "有访客在 JYC 官网发起新的在线咨询。",
             "",
@@ -87,13 +86,13 @@ exports.notifyNewChatMessage = functions.firestore
             text || "（空白讯息）",
             "",
             "请登入后台在线客服视窗进行回复。",
-          ].join("\n");
+          ];
 
       await transporter.sendMail({
         from: `"${WEBSITE_NAME}" <${ADMIN_EMAIL}>`,
         to: ADMIN_EMAIL,
         subject,
-        text: body,
+        text: bodyLines.join("\n"),
       });
 
       console.log("Notify email sent for session:", sessionId);
