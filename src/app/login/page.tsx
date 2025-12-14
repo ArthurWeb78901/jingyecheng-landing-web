@@ -28,7 +28,6 @@ export default function LoginPage() {
         await markAdminOnline();
 
         setError("");
-        // 登入成功，导到后台首页
         router.push("/admin");
       } catch (err) {
         console.error("login / markAdminOnline error", err);

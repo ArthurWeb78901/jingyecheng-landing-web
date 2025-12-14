@@ -20,15 +20,13 @@ const MAX_INITIAL_MESSAGE_LENGTH = 500;
 function sanitizeInitialMessage(raw: unknown): string {
   if (typeof raw !== "string") return "";
 
-  // 去掉頭尾空白
   let s = raw.trim();
 
-  // 去掉不可見控制字元（換行保留，真的很髒的字符移除）
+  // 去掉不可見控制字元（保留常用換行 / tab）
   s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) =>
     ch === "\n" || ch === "\r" || ch === "\t" ? ch : ""
   );
 
-  // 限制長度，防止一次塞入巨量文字
   if (s.length > MAX_INITIAL_MESSAGE_LENGTH) {
     s = s.slice(0, MAX_INITIAL_MESSAGE_LENGTH);
   }
@@ -38,31 +36,36 @@ function sanitizeInitialMessage(raw: unknown): string {
 
 export function ChatBubble() {
   const pathname = usePathname() || "/";
-  const isEnglish = pathname.startsWith("/en");
+  const isEnglish = pathname === "/en" || pathname.startsWith("/en/");
   const texts: ChatTexts = isEnglish ? enTexts : zhTexts;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [adminOnline, setAdminOnline] = useState(false);
+
+  // 是否是「正在使用後台的瀏覽器」
   const [isAdminClient, setIsAdminClient] = useState(false);
+
+  // Firestore 上的客服在線狀態（給所有訪客共用）
+  const [adminOnline, setAdminOnline] = useState(false);
+
   const [sessionId, setSessionId] = useState("");
   const [hasUnread, setHasUnread] = useState(false);
   const [prefill, setPrefill] = useState("");
 
-  // 访客 sessionId
+  // 生成 / 取得訪客 sessionId
   useEffect(() => {
     if (typeof window === "undefined") return;
     setSessionId(getOrCreateSessionId());
   }, []);
 
-  // 判断当前浏览器是否后台登入
+  // 檢查本機是不是後台登入中的瀏覽器（只用來決定顯示 AdminChatPanel）
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const flag = window.localStorage.getItem("jyc_admin_logged_in") === "true";
+    const flag =
+      window.localStorage.getItem("jyc_admin_logged_in") === "true";
     setIsAdminClient(flag);
-    if (flag) setAdminOnline(true);
   }, []);
 
-  // Firestore 在线状态
+  // 🔄 監聽 Firestore 的 adminStatus，決定「客服是否在線」
   useEffect(() => {
     const statusRef = doc(db, "jyc_meta", "adminStatus");
     const unsub = onSnapshot(
@@ -70,18 +73,22 @@ export function ChatBubble() {
       (snap) => {
         const data = snap.data() as any;
         if (data && typeof data.online === "boolean") {
-          // 一旦本地是 true 就保持 true（避免误判掉线）
-          setAdminOnline((prev) => prev || data.online);
+          // 直接使用 Firestore 的值（true / false 都即時更新）
+          setAdminOnline(!!data.online);
+        } else {
+          setAdminOnline(false);
         }
       },
       (err) => {
         console.error("listen adminStatus error", err);
+        // 出錯時保守處理：當作離線，讓訪客跑離線腳本
+        setAdminOnline(false);
       }
     );
     return () => unsub();
   }, []);
 
-  // 其它地方触发打开聊天（并预填文字）
+  // 其它地方（例如產品頁上的「詢問此類設備」按鈕）觸發開啟聊天並預填內容
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -106,7 +113,7 @@ export function ChatBubble() {
 
   return (
     <>
-      {/* 浮动按钮 */}
+      {/* 浮動按鈕 */}
       <button
         type="button"
         className="jyc-chat-bubble-button"
@@ -127,7 +134,7 @@ export function ChatBubble() {
         )}
       </button>
 
-      {/* 面板 */}
+      {/* 面板：後台 → AdminChatPanel；訪客 → VisitorChatPanel */}
       {isOpen &&
         (isAdminClient ? (
           <AdminChatPanel
@@ -141,12 +148,11 @@ export function ChatBubble() {
             texts={texts}
             isEnglish={isEnglish}
             pathname={pathname}
-            adminOnline={adminOnline}
+            adminOnline={adminOnline} // 這裡會決定走「真人」還是「離線自動」模式
             sessionId={sessionId}
             initialMessage={prefill}
             onConsumeInitialMessage={() => setPrefill("")}
-            onClose={() => setIsOpen(false)} // 👈 收起聊天面板
-            // 👉 下面兩個是建議你在 VisitorChatPanel 裡實際用到的安全參數
+            onClose={() => setIsOpen(false)}
             maxMessageLength={800}
             minIntervalMs={2000}
           />

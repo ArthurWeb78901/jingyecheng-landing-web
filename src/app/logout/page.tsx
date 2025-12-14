@@ -5,22 +5,32 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { markAdminOffline } from "@/lib/adminStatus";
 
 export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // 清除登入状态
-      window.localStorage.removeItem("jyc_admin_logged_in");
+    async function doLogout() {
+      if (typeof window !== "undefined") {
+        // 清除登入状态（本机）
+        window.localStorage.removeItem("jyc_admin_logged_in");
+      }
+
+      // ✅ 更新 Firestore，标记管理员离线
+      try {
+        await markAdminOffline();
+      } catch (err) {
+        console.error("markAdminOffline error", err);
+      }
+
+      // 稍微停一下再导回首页
+      setTimeout(() => {
+        router.push("/");
+      }, 800);
     }
 
-    // 稍微停一下再导回首页
-    const timer = setTimeout(() => {
-      router.push("/");
-    }, 800);
-
-    return () => clearTimeout(timer);
+    void doLogout();
   }, [router]);
 
   return (

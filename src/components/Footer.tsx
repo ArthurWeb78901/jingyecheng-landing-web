@@ -55,7 +55,7 @@ export function Footer() {
   return (
     <footer className="jyc-footer">
       <div>
-        © {year} {footerText}
+        © 2025 All rights reserved: JYC Steel Equip {year} {footerText}
       </div>
       <div className="jyc-footer-sub">
         {isEnglish ? (
