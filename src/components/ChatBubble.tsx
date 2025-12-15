@@ -13,24 +13,18 @@ import {
 } from "./chat/chatShared";
 import { VisitorChatPanel } from "./chat/VisitorChatPanel";
 import { AdminChatPanel } from "./chat/AdminChatPanel";
+import { setAdminOnlineStatus } from "./chat/adminStatus"; // ✅ 新增
 
 const MAX_INITIAL_MESSAGE_LENGTH = 500;
 
 /** 專門處理外部觸發的預填訊息，避免惡意或超長內容 */
 function sanitizeInitialMessage(raw: unknown): string {
   if (typeof raw !== "string") return "";
-
   let s = raw.trim();
-
-  // 去掉不可見控制字元（保留常用換行 / tab）
   s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) =>
     ch === "\n" || ch === "\r" || ch === "\t" ? ch : ""
   );
-
-  if (s.length > MAX_INITIAL_MESSAGE_LENGTH) {
-    s = s.slice(0, MAX_INITIAL_MESSAGE_LENGTH);
-  }
-
+  if (s.length > MAX_INITIAL_MESSAGE_LENGTH) s = s.slice(0, MAX_INITIAL_MESSAGE_LENGTH);
   return s;
 }
 
@@ -60,10 +54,32 @@ export function ChatBubble() {
   // 檢查本機是不是後台登入中的瀏覽器（只用來決定顯示 AdminChatPanel）
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const flag =
-      window.localStorage.getItem("jyc_admin_logged_in") === "true";
+    const flag = window.localStorage.getItem("jyc_admin_logged_in") === "true";
     setIsAdminClient(flag);
   }, []);
+
+  // ✅ Admin presence：只有 admin client 才寫 online + 心跳；離開時嘗試寫 offline
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isAdminClient) return; // ✅ 访客绝对不能写 adminStatus
+
+    void setAdminOnlineStatus(true);
+
+    const timer = window.setInterval(() => {
+      void setAdminOnlineStatus(true); // 刷新 updatedAt（心跳）
+    }, 30_000);
+
+    const handleUnload = () => {
+      void setAdminOnlineStatus(false);
+    };
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("beforeunload", handleUnload);
+      void setAdminOnlineStatus(false);
+    };
+  }, [isAdminClient]);
 
   // 🔄 監聽 Firestore 的 adminStatus，決定「客服是否在線」
   useEffect(() => {
@@ -72,12 +88,19 @@ export function ChatBubble() {
       statusRef,
       (snap) => {
         const data = snap.data() as any;
-        if (data && typeof data.online === "boolean") {
-          // 直接使用 Firestore 的值（true / false 都即時更新）
-          setAdminOnline(!!data.online);
-        } else {
-          setAdminOnline(false);
-        }
+
+        const online = !!data?.online;
+
+        // ✅ 过期保护：超过 2 分钟没心跳就当离线（避免卡在线）
+        const ts =
+          data?.updatedAt?.toMillis?.() ??
+          (typeof data?.updatedAt?.seconds === "number"
+            ? data.updatedAt.seconds * 1000
+            : 0);
+
+        const fresh = ts > 0 && Date.now() - ts < 120_000;
+
+        setAdminOnline(online && fresh);
       },
       (err) => {
         console.error("listen adminStatus error", err);
@@ -88,7 +111,7 @@ export function ChatBubble() {
     return () => unsub();
   }, []);
 
-  // 其它地方（例如產品頁上的「詢問此類設備」按鈕）觸發開啟聊天並預填內容
+  // 其它地方觸發開啟聊天並預填內容
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -113,7 +136,6 @@ export function ChatBubble() {
 
   return (
     <>
-      {/* 浮動按鈕 */}
       <button
         type="button"
         className="jyc-chat-bubble-button"
@@ -134,7 +156,6 @@ export function ChatBubble() {
         )}
       </button>
 
-      {/* 面板：後台 → AdminChatPanel；訪客 → VisitorChatPanel */}
       {isOpen &&
         (isAdminClient ? (
           <AdminChatPanel
@@ -148,7 +169,7 @@ export function ChatBubble() {
             texts={texts}
             isEnglish={isEnglish}
             pathname={pathname}
-            adminOnline={adminOnline} // 這裡會決定走「真人」還是「離線自動」模式
+            adminOnline={adminOnline}
             sessionId={sessionId}
             initialMessage={prefill}
             onConsumeInitialMessage={() => setPrefill("")}

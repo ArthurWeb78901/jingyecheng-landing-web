@@ -12,6 +12,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import type { ChatTexts } from "./chatShared";
+import { saveLeadToLocalStorage } from "./chatShared"; // ✅ 改：用 chatShared 统一写 Firestore
 
 type Message = {
   id: string;
@@ -100,38 +101,6 @@ function getFaqAnswer(text: string, isEnglish: boolean, texts: ChatTexts) {
   return null;
 }
 
-/** 离线模式：把收集到的客户资料存到 localStorage */
-function saveLeadToLocalStorage(lead: LeadDraft) {
-  if (typeof window === "undefined") return;
-
-  try {
-    const key = "jyc_crm_leads";
-    const raw = window.localStorage.getItem(key);
-    const list: any[] = raw ? JSON.parse(raw) : [];
-
-    const exists = list.some(
-      (item) =>
-        item.name === lead.name &&
-        item.company === lead.company &&
-        item.contact === lead.contact &&
-        item.need === lead.need
-    );
-    if (exists) return;
-
-    const newLead = {
-      id: Date.now(),
-      ...lead,
-      createdAt: new Date().toISOString(),
-      source: "chat-bubble",
-    };
-
-    list.push(newLead);
-    window.localStorage.setItem(key, JSON.stringify(list));
-  } catch (err) {
-    console.error("saveLeadToLocalStorage error", err);
-  }
-}
-
 /** 清洗使用者輸入（保留換行 / tab，拿掉其他控制字元） */
 function sanitizeUserText(raw: string): string {
   let s = raw.trim();
@@ -172,11 +141,7 @@ export function VisitorChatPanel(props: Props) {
   // 首次打开时如果有预填的讯息（例如“了解某某机组”）
   useEffect(() => {
     if (!initialMessage) return;
-    // 再保險一次做清洗 + 長度限制
-    const safe = sanitizeUserText(initialMessage).slice(
-      0,
-      maxMessageLength
-    );
+    const safe = sanitizeUserText(initialMessage).slice(0, maxMessageLength);
     setInput(safe);
     onConsumeInitialMessage();
   }, [initialMessage, onConsumeInitialMessage, maxMessageLength]);
@@ -196,9 +161,7 @@ export function VisitorChatPanel(props: Props) {
         const list: Message[] = snap.docs
           .map((d) => {
             const data = d.data() as any;
-            if (!data.sessionId || data.sessionId !== sessionId) {
-              return null;
-            }
+            if (!data.sessionId || data.sessionId !== sessionId) return null;
             return {
               id: d.id,
               from: data.from === "user" ? "user" : "bot",
@@ -253,11 +216,7 @@ export function VisitorChatPanel(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, isEnglish, pathname, texts.welcomeOnline, texts.welcomeOffline]);
 
-  async function saveChatMessage(
-    from: "user" | "bot",
-    text: string,
-    read: boolean
-  ) {
+  async function saveChatMessage(from: "user" | "bot", text: string, read: boolean) {
     if (!sessionId) return;
     try {
       await addDoc(collection(db, "jyc_chat_messages"), {
@@ -284,33 +243,42 @@ export function VisitorChatPanel(props: Props) {
         replies.push(texts.askName);
         setInfoStage("ask-name");
         break;
+
       case "ask-name":
         setLeadDraft((prev) => ({ ...prev, name: userText }));
         replies.push(texts.askCompany(userText));
         setInfoStage("ask-company");
         break;
+
       case "ask-company":
         setLeadDraft((prev) => ({ ...prev, company: userText }));
         replies.push(texts.askContact);
         setInfoStage("ask-contact");
         break;
+
       case "ask-contact":
         setLeadDraft((prev) => ({ ...prev, contact: userText }));
         replies.push(texts.askNeed);
         setInfoStage("ask-need");
         break;
+
       case "ask-need":
         setLeadDraft((prev) => {
           const full: LeadDraft = { ...prev, need: userText };
-          saveLeadToLocalStorage(full);
+
+          // ✅ 关键修复：写入 Firestore jyc_leads（source=offline-bot）
+          saveLeadToLocalStorage(full, isEnglish);
+
           return full;
         });
         replies.push(texts.afterSaved);
         setInfoStage("done");
         break;
+
       case "done":
         replies.push(texts.afterDone);
         break;
+
       default:
         break;
     }
@@ -417,7 +385,7 @@ export function VisitorChatPanel(props: Props) {
           placeholder={texts.inputPlaceholder}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          maxLength={maxMessageLength * 2} // 打字時預留一點，但真正送出前還會再檢查
+          maxLength={maxMessageLength * 2}
         />
         <button type="submit">{texts.sendLabel}</button>
       </form>
