@@ -52,7 +52,7 @@ export type ChatTexts = {
 
 /** 文案表：中文 */
 export const zhTexts: ChatTexts = {
-  bubbleLabel: "在线助手",
+  bubbleLabel: "在线咨询",
   adminBubbleLabel: "客服讯息",
   title: "在线咨询",
   adminTitle: "访客留言",
@@ -91,7 +91,7 @@ export const zhTexts: ChatTexts = {
 
 /** 文案表：英文 */
 export const enTexts: ChatTexts = {
-  bubbleLabel: "Online Assistant",
+  bubbleLabel: "Online Inquiry",
   adminBubbleLabel: "Inbox",
   title: "Online Inquiry",
   adminTitle: "Visitor Inquiries",
