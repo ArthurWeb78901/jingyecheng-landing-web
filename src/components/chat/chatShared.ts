@@ -4,6 +4,22 @@
 import { db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
+/**
+ * ✅ Email 通知配置
+ * 1) 如果你装的是 Firebase Trigger Email extension：
+ *    - 它通常监听的集合叫 "mail"
+ *    - 写入该集合会触发寄信
+ *
+ * 2) 请把 NOTIFY_EMAILS 改成你要收通知的邮箱
+ */
+const EMAIL_OUTBOX_COLLECTION = "mail"; // 如果 extension 监听的集合不是 mail，请改这里
+const NOTIFY_EMAILS = ["your_notify_email@example.com"]; // TODO: 改成你的收件邮箱
+
+/** 是否对某种 lead source 发送 email（避免 chat-archive 归档狂寄） */
+function shouldNotifyByEmail(source: LeadSource) {
+  return source === "offline-bot" || source === "admin-manual";
+}
+
 export type ChatTexts = {
   bubbleLabel: string;
   adminBubbleLabel: string;
@@ -182,7 +198,7 @@ export type LeadDraft = {
 
 export type LeadSource = "offline-bot" | "chat-archive" | "admin-manual";
 
-/** 统一写入 Firestore: jyc_leads */
+/** 统一写入 Firestore: jyc_leads，并可选触发 Email */
 async function saveLeadToFirestore(
   lead: LeadDraft,
   options: {
@@ -195,23 +211,55 @@ async function saveLeadToFirestore(
   const lang = options.isEnglish ? "en" : "zh";
 
   try {
-    await addDoc(collection(db, "jyc_leads"), {
+    // 1) 写入 leads
+    const leadDoc = await addDoc(collection(db, "jyc_leads"), {
       name: lead.name || "",
       company: lead.company || "",
       contact: lead.contact || "",
       need: lead.need || options.transcript || "",
       createdAt: serverTimestamp(),
-      source: options.source,         // offline-bot / chat-archive / admin-manual
-      lang,                           // 給原本 rule / 後台用
-      language: lang,                 // 額外存一份，方便之後查詢
+      source: options.source, // offline-bot / chat-archive / admin-manual
+      lang,
+      language: lang,
       sessionId: options.sessionId || null,
     });
+
+    // 2) ✅ 触发 Email（Trigger Email extension 监听 mail 集合）
+    if (shouldNotifyByEmail(options.source) && NOTIFY_EMAILS.length > 0) {
+      const subject =
+        lang === "en"
+          ? `New Lead (${options.source})`
+          : `新线索通知（${options.source}）`;
+
+      const bodyText =
+        `source: ${options.source}\n` +
+        `lang: ${lang}\n` +
+        `leadId: ${leadDoc.id}\n` +
+        `sessionId: ${options.sessionId || ""}\n\n` +
+        `name: ${lead.name || ""}\n` +
+        `company: ${lead.company || ""}\n` +
+        `contact: ${lead.contact || ""}\n\n` +
+        `need:\n${lead.need || options.transcript || ""}\n`;
+
+      await addDoc(collection(db, EMAIL_OUTBOX_COLLECTION), {
+        to: NOTIFY_EMAILS, // Trigger Email 支援 array
+        message: {
+          subject,
+          text: bodyText,
+        },
+        createdAt: serverTimestamp(),
+        meta: {
+          leadId: leadDoc.id,
+          source: options.source,
+          sessionId: options.sessionId || null,
+          lang,
+        },
+      });
+    }
   } catch (err) {
     console.error("saveLeadToFirestore error", err);
   }
 }
-
-
 
 /**
  * 兼容旧接口：离线脚本收集的线索
@@ -256,13 +304,10 @@ export function archiveChatSessionToLocalStorage(
     .join("\n");
 
   const pseudoLead: LeadDraft = {
-    name:
-      (isEnglish ? "Visitor " : "访客 ") +
-      (sessionId ? sessionId.slice(-4) : ""),
+    name: (isEnglish ? "Visitor " : "访客 ") + (sessionId ? sessionId.slice(-4) : ""),
     company: "",
     contact: "",
-    need:
-      transcript || (isEnglish ? "No conversation content." : "无会话内容。"),
+    need: transcript || (isEnglish ? "No conversation content." : "无会话内容。"),
   };
 
   void saveLeadToFirestore(pseudoLead, {
