@@ -813,3 +813,43 @@ body {
     scroll-snap-align: center;
   }
 }
+
+/* ✅ 全站段落：两端对齐（桌机 + 手机） */
+.jyc-page p,
+.jyc-page li,
+.jyc-hero-text p,
+.jyc-section p,
+.jyc-section-intro,
+.jyc-section-intro p,
+.jyc-card p {
+  text-align: justify;
+  text-justify: inter-word;
+  text-align-last: left;     /* 最后一行不拉开 */
+  overflow-wrap: break-word; /* 防止长单字/网址撑破 */
+}
+
+/* ❗表单不要 justify（否则看起来很怪） */
+.jyc-contact-form input,
+.jyc-contact-form textarea {
+  text-align: left;
+}
+
+/* ✅ 英文：自动断字，减少 justify 造成的大空隙（需要 html lang="en" 才最有效） */
+html:lang(en) .jyc-page p,
+html:lang(en) .jyc-page li,
+html:lang(en) .jyc-section-intro,
+html:lang(en) .jyc-section-intro p {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphenate-limit-chars: 6 3 3;
+}
+
+/* ✅ 中文：让 CJK 更像“报纸排版”的对齐方式（浏览器支持度不一，但无副作用） */
+html:lang(zh) .jyc-page p,
+html:lang(zh) .jyc-page li,
+html:lang(zh) .jyc-section-intro,
+html:lang(zh-Hant) .jyc-page p,
+html:lang(zh-Hans) .jyc-page p {
+  text-justify: inter-ideograph;
+}
+
