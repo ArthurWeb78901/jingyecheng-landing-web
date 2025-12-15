@@ -11,7 +11,7 @@ admin.initializeApp();
 
 // ====== 基本設定 ======
 const WEBSITE_NAME = "JYC Steel Equip 网站";
-const ADMIN_EMAIL = "jycsteelequip@hotmail.com";
+const ADMIN_EMAIL = "jycsteelequipment@gmail.com";
 
 // 先双收验证：wendy + hotmail 自己
 const LEAD_TO = ["wendy@jycsteelequip.com", ADMIN_EMAIL];
