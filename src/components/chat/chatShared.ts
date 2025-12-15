@@ -5,15 +5,18 @@ import { db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 /**
- * ✅ Email 通知配置
- * 1) 如果你装的是 Firebase Trigger Email extension：
- *    - 它通常监听的集合叫 "mail"
- *    - 写入该集合会触发寄信
+ * ✅ Email 通知配置（Trigger Email extension 方案）
+ * - extension 通常监听集合名 "mail"
+ * - 写入该集合会触发寄信
  *
- * 2) 请把 NOTIFY_EMAILS 改成你要收通知的邮箱
+ * ⚠️ 你必须：
+ * 1) 真的有安装 Trigger Email extension（或你自己的后端监听 mail）
+ * 2) Firestore rules 必须允许写入 mail 集合（见下方说明）
  */
-const EMAIL_OUTBOX_COLLECTION = "mail"; // 如果 extension 监听的集合不是 mail，请改这里
-const NOTIFY_EMAILS = ["your_notify_email@example.com"]; // TODO: 改成你的收件邮箱
+const EMAIL_OUTBOX_COLLECTION = "mail";
+
+// ✅ 改成你要收通知的邮箱（可多个）
+const NOTIFY_EMAILS = ["wendy@jycsteelequip.com"]; // <- 这里改
 
 /** 是否对某种 lead source 发送 email（避免 chat-archive 归档狂寄） */
 function shouldNotifyByEmail(source: LeadSource) {
@@ -211,8 +214,8 @@ async function saveLeadToFirestore(
   const lang = options.isEnglish ? "en" : "zh";
 
   try {
-    // 1) 写入 leads
-    const leadDoc = await addDoc(collection(db, "jyc_leads"), {
+    // ✅ 1) 写入 leads（不要写 null）
+    const leadPayload: any = {
       name: lead.name || "",
       company: lead.company || "",
       contact: lead.contact || "",
@@ -221,10 +224,15 @@ async function saveLeadToFirestore(
       source: options.source, // offline-bot / chat-archive / admin-manual
       lang,
       language: lang,
-      sessionId: options.sessionId || null,
-    });
+    };
 
-    // 2) ✅ 触发 Email（Trigger Email extension 监听 mail 集合）
+    if (options.sessionId && typeof options.sessionId === "string") {
+      leadPayload.sessionId = options.sessionId;
+    }
+
+    const leadDoc = await addDoc(collection(db, "jyc_leads"), leadPayload);
+
+    // ✅ 2) 触发 Email outbox（不要写 null）
     if (shouldNotifyByEmail(options.source) && NOTIFY_EMAILS.length > 0) {
       const subject =
         lang === "en"
@@ -241,8 +249,8 @@ async function saveLeadToFirestore(
         `contact: ${lead.contact || ""}\n\n` +
         `need:\n${lead.need || options.transcript || ""}\n`;
 
-      await addDoc(collection(db, EMAIL_OUTBOX_COLLECTION), {
-        to: NOTIFY_EMAILS, // Trigger Email 支援 array
+      const mailPayload: any = {
+        to: NOTIFY_EMAILS,
         message: {
           subject,
           text: bodyText,
@@ -251,10 +259,15 @@ async function saveLeadToFirestore(
         meta: {
           leadId: leadDoc.id,
           source: options.source,
-          sessionId: options.sessionId || null,
           lang,
         },
-      });
+      };
+
+      if (options.sessionId && typeof options.sessionId === "string") {
+        mailPayload.meta.sessionId = options.sessionId;
+      }
+
+      await addDoc(collection(db, EMAIL_OUTBOX_COLLECTION), mailPayload);
     }
   } catch (err) {
     console.error("saveLeadToFirestore error", err);
@@ -264,20 +277,26 @@ async function saveLeadToFirestore(
 /**
  * 兼容旧接口：离线脚本收集的线索
  * 以前是写 localStorage，现在改为写 Firestore (source = offline-bot)
- * 第二个参数 isEnglish 可选，不传就当中文。
  */
 export function saveLeadToLocalStorage(lead: LeadDraft, isEnglish = false) {
+  // ✅ 给离线 lead 补 sessionId（避免缺失）
+  const sid = typeof window === "undefined" ? "" : getOrCreateSessionId();
+
   void saveLeadToFirestore(lead, {
     source: "offline-bot",
     isEnglish,
+    sessionId: sid || undefined,
   });
 }
 
 /** Admin 手动输入的线索（聊天窗旁边“加入客户资料”） */
 export async function saveAdminLead(lead: LeadDraft, isEnglish: boolean) {
+  const sid = typeof window === "undefined" ? "" : getOrCreateSessionId();
+
   await saveLeadToFirestore(lead, {
     source: "admin-manual",
     isEnglish,
+    sessionId: sid || undefined,
   });
 }
 
@@ -288,9 +307,6 @@ export type ArchiveMessage = {
   createdAt: number;
 };
 
-/**
- * 名称保持不变（兼容旧代码），现在实际也是写 Firestore。
- */
 export function archiveChatSessionToLocalStorage(
   sessionId: string,
   msgs: ArchiveMessage[],
@@ -304,10 +320,13 @@ export function archiveChatSessionToLocalStorage(
     .join("\n");
 
   const pseudoLead: LeadDraft = {
-    name: (isEnglish ? "Visitor " : "访客 ") + (sessionId ? sessionId.slice(-4) : ""),
+    name:
+      (isEnglish ? "Visitor " : "访客 ") +
+      (sessionId ? sessionId.slice(-4) : ""),
     company: "",
     contact: "",
-    need: transcript || (isEnglish ? "No conversation content." : "无会话内容。"),
+    need:
+      transcript || (isEnglish ? "No conversation content." : "无会话内容。"),
   };
 
   void saveLeadToFirestore(pseudoLead, {

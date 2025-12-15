@@ -1,7 +1,11 @@
 // functions/index.js
-const { firestore } = require("firebase-functions/v1"); // 1st Gen
+const { firestore } = require("firebase-functions/v1"); // 1st Gen triggers
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
+
+// ✅ v7 用 params（你 deploy 时已经会要求输入，并写入 .env.nooko-hub）
+const { defineString } = require("firebase-functions/params");
+const SMTP_PASS = defineString("SMTP_PASS");
 
 admin.initializeApp();
 
@@ -9,27 +13,27 @@ admin.initializeApp();
 const WEBSITE_NAME = "JYC Steel Equip 网站";
 const ADMIN_EMAIL = "jycsteelequip@hotmail.com";
 
-// 這裡用 Hotmail / Outlook 的「應用程式密碼」，不要用登入密碼
-const SMTP_PASS = "kqnwsfbgqxoctxgg";
+// 先双收验证：wendy + hotmail 自己
+const LEAD_TO = ["wendy@jycsteelequip.com", ADMIN_EMAIL];
 
-// Hotmail / Outlook SMTP 設定
-const transporter = nodemailer.createTransport({
-  host: "smtp.office365.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: ADMIN_EMAIL,
-    pass: SMTP_PASS,
-  },
-});
+// ✅ runtime 才创建 transporter（不要放在顶层）
+function createTransporter() {
+  const pass = SMTP_PASS.value(); // ✅ 只在 runtime 才会有值
+  return nodemailer.createTransport({
+    service: "hotmail",
+    auth: {
+      user: ADMIN_EMAIL,
+      pass,
+    },
+  });
+}
 
 // =======================================================
-// 1) Firestore 觸發：有新的聊天訊息寫入 jyc_chat_messages
-//    只在「每個 session 的第一則訪客訊息」時寄信一次
+// 1) Firestore 觸發：新聊天首则访客讯息 -> 发信（每个 session 只发一次）
 // =======================================================
 exports.notifyNewChatMessage = firestore
   .document("jyc_chat_messages/{docId}")
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap) => {
     const data = snap.data() || {};
 
     const from = data.from || "user";
@@ -37,24 +41,16 @@ exports.notifyNewChatMessage = firestore
     const text = (data.text || "").toString().slice(0, 2000);
     const pathname = data.pathname || "/";
 
-    // 只針對「訪客」發的訊息寄信；bot / admin 的一律忽略
-    if (from !== "user") {
-      return;
-    }
+    if (from !== "user") return null;
 
     const db = admin.firestore();
 
     try {
-      // 用 jyc_chat_sessions 做「此 session 只寄一次信」的鎖
+      // 锁：每个 session 只寄一次
       const sessionRef = db.collection("jyc_chat_sessions").doc(sessionId);
       const sessionSnap = await sessionRef.get();
+      if (sessionSnap.exists) return null;
 
-      if (sessionSnap.exists) {
-        // 這個 session 已經寄過通知，就不再寄
-        return;
-      }
-
-      // 第一次看到這個 session：建立鎖
       await sessionRef.set({
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         firstMessageId: snap.id,
@@ -76,8 +72,6 @@ exports.notifyNewChatMessage = firestore
             "",
             "Customer first message:",
             text || "(empty)",
-            "",
-            "Please log in to the website admin chat console to reply.",
           ]
         : [
             "有访客在 JYC 官网发起新的在线咨询。",
@@ -87,9 +81,12 @@ exports.notifyNewChatMessage = firestore
             "",
             "客户的首条留言：",
             text || "（空白讯息）",
-            "",
-            "请登入网站后台的在线客服视窗进行回复。",
           ];
+
+      const transporter = createTransporter();
+
+      // ✅ 建议先保留 verify，方便 logs 直接看到 SMTP 是否被封
+      await transporter.verify();
 
       await transporter.sendMail({
         from: `"${WEBSITE_NAME}" <${ADMIN_EMAIL}>`,
@@ -99,14 +96,15 @@ exports.notifyNewChatMessage = firestore
       });
 
       console.log("notifyNewChatMessage: email sent for session:", sessionId);
+      return null;
     } catch (err) {
       console.error("notifyNewChatMessage error:", err);
+      return null;
     }
   });
 
 // =======================================================
-// 2) Firestore 觸發：有新的客户線索寫入 jyc_leads
-//    （離線機器人 & admin 手動保存都會寫入這個 collection）
+// 2) Firestore 觸發：新 lead 写入 jyc_leads -> 发信
 // =======================================================
 exports.notifyNewLead = firestore
   .document("jyc_leads/{leadId}")
@@ -133,7 +131,6 @@ exports.notifyNewLead = firestore
       ? [
           "You have a new customer inquiry from the JYC Steel Equip website.",
           "",
-          "Customer information:",
           `Name: ${name}`,
           `Company: ${company || "(not provided)"}`,
           `Contact: ${contact || "(not provided)"}`,
@@ -141,15 +138,11 @@ exports.notifyNewLead = firestore
           `Source: ${source}`,
           `Session ID: ${sessionId}`,
           "",
-          "Customer requirement / message:",
           need || "(no content)",
-          "",
-          "This email was generated automatically by the website.",
         ]
       : [
           "您在 JYC 官网有一条新的客户线索。",
           "",
-          "客户基本资料：",
           `姓名：${name}`,
           `公司 / 单位：${company || "（未填写）"}`,
           `联系方式：${contact || "（未填写）"}`,
@@ -157,24 +150,30 @@ exports.notifyNewLead = firestore
           `来源：${source}`,
           `会话编号：${sessionId}`,
           "",
-          "客户留言 / 需求说明：",
           need || "（无内容）",
-          "",
-          "本邮件由网站自动发送。",
         ];
 
     try {
       console.log("notifyNewLead: sending email for lead:", sessionId);
 
-      await transporter.sendMail({
+      const transporter = createTransporter();
+      await transporter.verify();
+
+      const info = await transporter.sendMail({
         from: `"${WEBSITE_NAME}" <${ADMIN_EMAIL}>`,
-        to: "wendy@jycsteelequip.com", // 也可以改成多個收件人
+        to: LEAD_TO, // ✅ 双收验证
         subject,
         text: bodyLines.join("\n"),
       });
 
-      console.log("notifyNewLead: email sent for lead:", sessionId);
+      console.log("notifyNewLead: email sent:", info.messageId, sessionId);
+      return null;
     } catch (err) {
       console.error("notifyNewLead error:", err);
+      if (err && typeof err === "object") {
+        console.error("code:", err.code);
+        console.error("response:", err.response);
+      }
+      return null;
     }
   });
