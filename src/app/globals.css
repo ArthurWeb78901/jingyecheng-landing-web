@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-
 /* 基础重设 & 全站字体 */
 html,
 body {
@@ -63,8 +62,6 @@ body {
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-
-  /* 新增：給圖片一點空間，避免邊緣碰到圓框 */
   padding: 2px;
   overflow: hidden;
 }
@@ -74,7 +71,7 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  object-fit: contain; /* ✅ 保證整顆圖都在圓內，不會被切到 */
+  object-fit: contain;
 }
 
 .jyc-logo-text {
@@ -94,8 +91,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;           /* 👈 留一圈安全距離 */
-  box-sizing: border-box; /* 讓 36x36 包含 padding */
+  padding: 2px;
+  box-sizing: border-box;
 }
 
 /* Logo 圖片本身 */
@@ -103,7 +100,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 999px;    /* 再保險一次，確保圖本身也是圓的 */
+  border-radius: 999px;
 }
 
 .jyc-nav {
@@ -336,7 +333,7 @@ body {
 
 /* 左侧大 Logo 圆形（加大整体尺寸 + 白边） */
 .jyc-about-logo-wrap {
-  width: 84px;          /* 比原本 80px 再大一点 */
+  width: 84px;
   height: 84px;
   border-radius: 999px;
   background: #fff;
@@ -344,11 +341,11 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 8px;         /* ⬅ 白邊再加厚，裡面圖騰自然縮進去 */
+  padding: 8px;
   box-sizing: border-box;
 }
 
-/* 圖片本身填滿內圈，但因為有 padding，所以不會頂到外圈 */
+/* 圖片本身填滿內圈 */
 .jyc-about-logo {
   width: 100%;
   height: 100%;
@@ -372,7 +369,6 @@ body {
   padding: 16px;
 }
 
-/* 默認：16:9，手機看圖比較清楚 */
 .jyc-card-image {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -411,8 +407,8 @@ body {
 /* ===== 首页「主要产品一览」横向滑动容器（修正版） ===== */
 .jyc-home-products-row {
   display: flex;
-  flex-wrap: nowrap;               /* 一律排成一行 */
-  overflow-x: auto;                /* 允许横向滚动 */
+  flex-wrap: nowrap;
+  overflow-x: auto;
   overflow-y: hidden;
   gap: 24px;
   margin-top: 24px;
@@ -421,7 +417,6 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 桌机上显示细一点的横向滚动条 */
 .jyc-home-products-row::-webkit-scrollbar {
   height: 8px;
 }
@@ -432,7 +427,6 @@ body {
   scroll-snap-align: start;
 }
 
-/* 平板以上：一次大约 2 张 */
 @media (min-width: 768px) {
   .jyc-home-products-row .jyc-card {
     flex: 0 0 45%;
@@ -440,7 +434,6 @@ body {
   }
 }
 
-/* 大桌机：一次 3 张多一点，保证有溢出可滚动 */
 @media (min-width: 1200px) {
   .jyc-home-products-row .jyc-card {
     flex: 0 0 30%;
@@ -449,17 +442,14 @@ body {
 }
 
 /* ===== Gallery & 首页轮播 ===== */
-
-/* 首页轮播（Gallery 上方） */
 .jyc-home-slideshow {
   margin-bottom: 24px;
 }
 
-/* 默認：滿寬、16:9 */
 .jyc-home-slideshow-main {
   position: relative;
   width: 85%;
-  padding-top: 56.25%; /* 16:9 */
+  padding-top: 56.25%;
   border-radius: 8px;
   overflow: hidden;
   background: #e0e0e0;
@@ -500,7 +490,6 @@ body {
   border-color: #333;
 }
 
-/* Gallery 四宫格（默认：适合桌机 / 大平板） */
 .jyc-gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -514,7 +503,6 @@ body {
   background-position: center;
 }
 
-/* 縮圖：正方形（通用） */
 .jyc-gallery-thumb {
   width: 80%;
   aspect-ratio: 1 / 1;
@@ -702,9 +690,8 @@ body {
   background: #111;
 }
 
-/* 🖥 桌机：缩小产品图片与 Gallery 缩图，不影响手机 */
+/* 🖥 桌机 */
 @media (min-width: 1024px) {
-  /* 首頁產品卡片圖片：再矮一點 */
   .jyc-card-image {
     height: 300px;
     border-radius: 6px;
@@ -712,7 +699,6 @@ body {
     background-position: center;
   }
 
-  /* Gallery 縮圖：固定小正方形 */
   .jyc-gallery-grid {
     grid-template-columns: repeat(auto-fit, 140px);
     gap: 10px;
@@ -727,13 +713,12 @@ body {
     background-position: center;
   }
 
-  /* 首頁上方輪播：再矮一點 */
   .jyc-home-slideshow-main {
     padding-top: 40%;
   }
 }
 
-/* 📱 手机与小平板（响应式） */
+/* 📱 手机与小平板 */
 @media (max-width: 768px) {
   .jyc-header {
     padding: 12px 16px;
@@ -773,19 +758,17 @@ body {
   .jyc-chat-bubble-button {
     right: 12px;
     bottom: 20px;
-    padding: 14px 22px;    /* 比原本 10x16 再大一點 */
-    font-size: 14px;       /* 文字也稍微放大 */
+    padding: 14px 22px;
+    font-size: 14px;
     transform: scale(1.15);
     transform-origin: bottom right;
   }
 
-  /* 手機版 slide show 高度稍微縮小 */
   .jyc-home-slideshow-main {
     padding-top: 42%;
     max-height: 400px;
   }
 
-  /* 📱 手機版 Gallery：單張全寬，左右滑動查看 */
   .jyc-gallery-grid {
     display: flex;
     flex-wrap: nowrap;
@@ -795,17 +778,17 @@ body {
     margin-top: 10px;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 8px;  /* 給手指滑動一點空間 */
+    padding-bottom: 8px;
   }
 
   .jyc-gallery-grid::-webkit-scrollbar {
-    height: 4px;         /* 可以視情況設為 0 隱藏 */
+    height: 4px;
   }
 
   .jyc-gallery-item {
-    flex: 0 0 100%;       /* 一次只佔滿一整頁寬度 */
+    flex: 0 0 100%;
     max-width: 100%;
-    aspect-ratio: 1 / 1;  /* 比原來方形高一點，大約放大 2 倍 */
+    aspect-ratio: 1 / 1;
     border-radius: 6px;
     background: #e0e0e0;
     background-size: cover;
@@ -824,17 +807,17 @@ body {
 .jyc-card p {
   text-align: justify;
   text-justify: inter-word;
-  text-align-last: left;     /* 最后一行不拉开 */
-  overflow-wrap: break-word; /* 防止长单字/网址撑破 */
+  text-align-last: left;
+  overflow-wrap: break-word;
 }
 
-/* ❗表单不要 justify（否则看起来很怪） */
+/* ❗表单不要 justify */
 .jyc-contact-form input,
 .jyc-contact-form textarea {
   text-align: left;
 }
 
-/* ✅ 英文：自动断字，减少 justify 造成的大空隙（需要 html lang="en" 才最有效） */
+/* ✅ 英文：自动断字 */
 html:lang(en) .jyc-page p,
 html:lang(en) .jyc-page li,
 html:lang(en) .jyc-section-intro,
@@ -844,7 +827,7 @@ html:lang(en) .jyc-section-intro p {
   hyphenate-limit-chars: 6 3 3;
 }
 
-/* ✅ 中文：让 CJK 更像“报纸排版”的对齐方式（浏览器支持度不一，但无副作用） */
+/* ✅ 中文：更像报纸排版 */
 html:lang(zh) .jyc-page p,
 html:lang(zh) .jyc-page li,
 html:lang(zh) .jyc-section-intro,
@@ -853,3 +836,34 @@ html:lang(zh-Hans) .jyc-page p {
   text-justify: inter-ideograph;
 }
 
+/* =======================================================
+   ✅ 新增：Hero 区按钮增强（让 View Products 不再看不见）
+   ======================================================= */
+.jyc-hero .jyc-btn-secondary {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.jyc-hero .jyc-btn-secondary:hover {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+}
+
+.jyc-hero .jyc-btn-secondary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* （可选）如果你也想让 Contact Us 更“高级”一点，可以打开这段
+.jyc-hero .jyc-btn-primary {
+  background: #fff;
+  color: #111;
+  border: 1px solid #fff;
+}
+.jyc-hero .jyc-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+*/
