@@ -1,38 +1,55 @@
 // functions/index.js
-const { firestore } = require("firebase-functions/v1"); // 1st Gen triggers
+const functions = require("firebase-functions/v1"); // 1st Gen triggers + runWith
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 
-// ✅ v7 用 params（你 deploy 时已经会要求输入，并写入 .env.nooko-hub）
-const { defineString } = require("firebase-functions/params");
-const SMTP_PASS = defineString("SMTP_PASS");
+// ✅ v7 params
+const { defineString, defineSecret } = require("firebase-functions/params");
+
+// ✅ 用 Gmail App Password（你已经用 firebase functions:secrets:set 建好了）
+const GMAIL_APP_PASS = defineSecret("GMAIL_APP_PASS");
+
+// 这些 deploy 时会写入 .env.nooko-hub（或你也可以不设，直接用默认值）
+const WEBSITE_NAME = defineString("WEBSITE_NAME", { default: "JYC Steel Equip 网站" });
+const ADMIN_EMAIL = defineString("ADMIN_EMAIL", { default: "jycsteelequipment@gmail.com" });
+
+// ✅ 收件人：先双收验证（wendy + 自己）
+const LEAD_TO = defineString(
+  "LEAD_TO",
+  { default: "wendy@jycsteelequip.com,jycsteelequipment@gmail.com" }
+);
 
 admin.initializeApp();
 
-// ====== 基本設定 ======
-const WEBSITE_NAME = "JYC Steel Equip 网站";
-const ADMIN_EMAIL = "jycsteelequipment@gmail.com";
-
-// 先双收验证：wendy + hotmail 自己
-const LEAD_TO = ["wendy@jycsteelequip.com", ADMIN_EMAIL];
-
-// ✅ runtime 才创建 transporter（不要放在顶层）
+// ✅ runtime 才创建 transporter（不要放顶层）
 function createTransporter() {
-  const pass = SMTP_PASS.value(); // ✅ 只在 runtime 才会有值
+  const pass = GMAIL_APP_PASS.value(); // ✅ secret only runtime
+  const user = ADMIN_EMAIL.value();
+
   return nodemailer.createTransport({
-    service: "hotmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // 465 必须 true
     auth: {
-      user: ADMIN_EMAIL,
+      user,
       pass,
     },
   });
 }
 
+function parseToList(csv) {
+  return (csv || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 // =======================================================
 // 1) Firestore 觸發：新聊天首则访客讯息 -> 发信（每个 session 只发一次）
 // =======================================================
-exports.notifyNewChatMessage = firestore
-  .document("jyc_chat_messages/{docId}")
+exports.notifyNewChatMessage = functions
+  .runWith({ secrets: [GMAIL_APP_PASS] })
+  .firestore.document("jyc_chat_messages/{docId}")
   .onCreate(async (snap) => {
     const data = snap.data() || {};
 
@@ -56,8 +73,7 @@ exports.notifyNewChatMessage = firestore
         firstMessageId: snap.id,
       });
 
-      const isEnglish =
-        typeof pathname === "string" && pathname.startsWith("/en");
+      const isEnglish = typeof pathname === "string" && pathname.startsWith("/en");
 
       const subject = isEnglish
         ? "New live chat started on JYC Steel Equip website"
@@ -85,12 +101,12 @@ exports.notifyNewChatMessage = firestore
 
       const transporter = createTransporter();
 
-      // ✅ 建议先保留 verify，方便 logs 直接看到 SMTP 是否被封
+      // ✅ 可留 verify（方便 logs 直接看到 smtp 是否能登入）
       await transporter.verify();
 
       await transporter.sendMail({
-        from: `"${WEBSITE_NAME}" <${ADMIN_EMAIL}>`,
-        to: ADMIN_EMAIL,
+        from: `"${WEBSITE_NAME.value()}" <${ADMIN_EMAIL.value()}>`,
+        to: ADMIN_EMAIL.value(),
         subject,
         text: bodyLines.join("\n"),
       });
@@ -99,6 +115,10 @@ exports.notifyNewChatMessage = firestore
       return null;
     } catch (err) {
       console.error("notifyNewChatMessage error:", err);
+      if (err && typeof err === "object") {
+        console.error("code:", err.code);
+        console.error("response:", err.response);
+      }
       return null;
     }
   });
@@ -106,8 +126,9 @@ exports.notifyNewChatMessage = firestore
 // =======================================================
 // 2) Firestore 觸發：新 lead 写入 jyc_leads -> 发信
 // =======================================================
-exports.notifyNewLead = firestore
-  .document("jyc_leads/{leadId}")
+exports.notifyNewLead = functions
+  .runWith({ secrets: [GMAIL_APP_PASS] })
+  .firestore.document("jyc_leads/{leadId}")
   .onCreate(async (snap, context) => {
     const data = snap.data() || {};
 
@@ -138,6 +159,7 @@ exports.notifyNewLead = firestore
           `Source: ${source}`,
           `Session ID: ${sessionId}`,
           "",
+          "Message:",
           need || "(no content)",
         ]
       : [
@@ -150,6 +172,7 @@ exports.notifyNewLead = firestore
           `来源：${source}`,
           `会话编号：${sessionId}`,
           "",
+          "客户留言 / 需求说明：",
           need || "（无内容）",
         ];
 
@@ -160,8 +183,8 @@ exports.notifyNewLead = firestore
       await transporter.verify();
 
       const info = await transporter.sendMail({
-        from: `"${WEBSITE_NAME}" <${ADMIN_EMAIL}>`,
-        to: LEAD_TO, // ✅ 双收验证
+        from: `"${WEBSITE_NAME.value()}" <${ADMIN_EMAIL.value()}>`,
+        to: parseToList(LEAD_TO.value()), // ✅ 双收验证
         subject,
         text: bodyLines.join("\n"),
       });
