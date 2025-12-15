@@ -192,29 +192,25 @@ async function saveLeadToFirestore(
     transcript?: string;
   }
 ) {
+  const lang = options.isEnglish ? "en" : "zh";
+
   try {
-    // 先組一個符合規則的物件
-    const docData: any = {
+    await addDoc(collection(db, "jyc_leads"), {
       name: lead.name || "",
       company: lead.company || "",
       contact: lead.contact || "",
-      // need 沒有就用 transcript 兜底
       need: lead.need || options.transcript || "",
       createdAt: serverTimestamp(),
-      source: options.source,                 // offline-bot / chat-archive / admin-manual
-      lang: options.isEnglish ? "en" : "zh",  // 👈 跟 Firestore rules 對齊，用 lang
-    };
-
-    // 只有真的有 sessionId 才寫入欄位，避免寫 null 破壞 safeStringField
-    if (options.sessionId) {
-      docData.sessionId = options.sessionId;
-    }
-
-    await addDoc(collection(db, "jyc_leads"), docData);
+      source: options.source,         // offline-bot / chat-archive / admin-manual
+      lang,                           // 給原本 rule / 後台用
+      language: lang,                 // 額外存一份，方便之後查詢
+      sessionId: options.sessionId || null,
+    });
   } catch (err) {
     console.error("saveLeadToFirestore error", err);
   }
 }
+
 
 
 /**

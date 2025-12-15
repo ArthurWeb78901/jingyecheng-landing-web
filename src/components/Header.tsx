@@ -16,8 +16,8 @@ type SiteConfigForHeader = {
 
 const HEADER_DEFAULTS: SiteConfigForHeader = {
   logoMark: "JYC",
-  logoTextZh: "太原精业城重工设备有限公司",
-  logoTextEn: "JYC Steel Equip",
+  logoTextZh: "太原精业成重工设备有限公司",
+  logoTextEn: "JYC Steel Equipment",
   logoImageUrl: "",
 };
 
@@ -62,16 +62,16 @@ export function Header() {
   const navLinks = isEnglish
     ? [
         { href: "/en", label: "Home" },
-        { href: "/en/products", label: "Products" },
         { href: "/en/about", label: "About" },
+        { href: "/en/products", label: "Products" },
         { href: "/en/gallery", label: "Gallery" },
         { href: "/en/contact", label: "Contact" },
       ]
     : [
         { href: "/zh", label: "首页" },
         // 如果目前产品页只提供英文，就指到 /en/products
-        { href: "/products", label: "产品介绍" },
         { href: "/about", label: "公司介绍" },
+        { href: "/products", label: "产品介绍" },
         { href: "/gallery", label: "图片集" },
         { href: "/contact", label: "联系我们" },
       ];

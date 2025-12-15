@@ -12,11 +12,11 @@ export default function AboutPage() {
       <section className="jyc-section jyc-section-alt">
         <div style={{ maxWidth: 920, margin: '0 auto' }}>
           <h1 style={{ fontSize: '26px', marginBottom: '12px' }}>
-            山西太矿钢管设备有限公司
+            太原精业成钢管设备有限公司
           </h1>
 
           <p className="jyc-section-intro">
-            山西太矿钢管设备有限公司成立于 1993 年，总占地面积 7 万平方米，公司位于能源重化工城市——山西省太原市，
+            太原精业成钢管设备有限公司成立于 1993 年，总占地面积 7 万平方米，公司位于能源重化工城市——山西省太原市，
             是一家专业从事轧钢设备的重工企业。公司按照专业经营的发展战略，以无缝钢管机组设备的制造为主，
             集设计、生产、经营于一体，为客户提供完善的服务。
           </p>
