@@ -3,39 +3,22 @@ const functions = require("firebase-functions/v1"); // 1st Gen triggers + runWit
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 
-// ✅ v7 params
+// v7 params
 const { defineString, defineSecret } = require("firebase-functions/params");
 
-// ✅ 用 Gmail App Password（你已经用 firebase functions:secrets:set 建好了）
+// ✅ Gmail App Password secret
 const GMAIL_APP_PASS = defineSecret("GMAIL_APP_PASS");
 
-// 这些 deploy 时会写入 .env.nooko-hub（或你也可以不设，直接用默认值）
 const WEBSITE_NAME = defineString("WEBSITE_NAME", { default: "JYC Steel Equip 网站" });
 const ADMIN_EMAIL = defineString("ADMIN_EMAIL", { default: "jycsteelequipment@gmail.com" });
+const LEAD_TO = defineString("LEAD_TO", {
+  default: "wendy@jycsteelequip.com,jycsteelequipment@gmail.com",
+});
 
-// ✅ 收件人：先双收验证（wendy + 自己）
-const LEAD_TO = defineString(
-  "LEAD_TO",
-  { default: "wendy@jycsteelequip.com,jycsteelequipment@gmail.com" }
-);
+// ✅ 用这个确保你看 log 就知道是不是新代码
+const CODE_VERSION = "2025-12-15_gmail_smtp_force_v1";
 
 admin.initializeApp();
-
-// ✅ runtime 才创建 transporter（不要放顶层）
-function createTransporter() {
-  const pass = GMAIL_APP_PASS.value(); // ✅ secret only runtime
-  const user = ADMIN_EMAIL.value();
-
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // 465 必须 true
-    auth: {
-      user,
-      pass,
-    },
-  });
-}
 
 function parseToList(csv) {
   return (csv || "")
@@ -44,15 +27,31 @@ function parseToList(csv) {
     .filter(Boolean);
 }
 
+function createTransporter() {
+  const user = ADMIN_EMAIL.value();
+  const pass = GMAIL_APP_PASS.value();
+
+  // ✅ 关键：log 一定要出现，没出现就表示你云端不是跑这份代码
+  console.log("CODE_VERSION =", CODE_VERSION);
+  console.log("SMTP_HOST =", "smtp.gmail.com", "USER =", user, "PASS_LEN =", pass ? pass.length : 0);
+
+  // ✅ 强制 Gmail SMTP（不要用 service: hotmail / office365）
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user, pass },
+  });
+}
+
 // =======================================================
-// 1) Firestore 觸發：新聊天首则访客讯息 -> 发信（每个 session 只发一次）
+// 1) 新聊天首则访客讯息 -> 发信（每个 session 只发一次）
 // =======================================================
 exports.notifyNewChatMessage = functions
   .runWith({ secrets: [GMAIL_APP_PASS] })
   .firestore.document("jyc_chat_messages/{docId}")
   .onCreate(async (snap) => {
     const data = snap.data() || {};
-
     const from = data.from || "user";
     const sessionId = data.sessionId || "unknown";
     const text = (data.text || "").toString().slice(0, 2000);
@@ -63,7 +62,6 @@ exports.notifyNewChatMessage = functions
     const db = admin.firestore();
 
     try {
-      // 锁：每个 session 只寄一次
       const sessionRef = db.collection("jyc_chat_sessions").doc(sessionId);
       const sessionSnap = await sessionRef.get();
       if (sessionSnap.exists) return null;
@@ -74,7 +72,6 @@ exports.notifyNewChatMessage = functions
       });
 
       const isEnglish = typeof pathname === "string" && pathname.startsWith("/en");
-
       const subject = isEnglish
         ? "New live chat started on JYC Steel Equip website"
         : "【JYC 官网】有新的访客在线咨询";
@@ -100,8 +97,6 @@ exports.notifyNewChatMessage = functions
           ];
 
       const transporter = createTransporter();
-
-      // ✅ 可留 verify（方便 logs 直接看到 smtp 是否能登入）
       await transporter.verify();
 
       await transporter.sendMail({
@@ -124,7 +119,7 @@ exports.notifyNewChatMessage = functions
   });
 
 // =======================================================
-// 2) Firestore 觸發：新 lead 写入 jyc_leads -> 发信
+// 2) 新 lead 写入 jyc_leads -> 发信
 // =======================================================
 exports.notifyNewLead = functions
   .runWith({ secrets: [GMAIL_APP_PASS] })
@@ -184,12 +179,12 @@ exports.notifyNewLead = functions
 
       const info = await transporter.sendMail({
         from: `"${WEBSITE_NAME.value()}" <${ADMIN_EMAIL.value()}>`,
-        to: parseToList(LEAD_TO.value()), // ✅ 双收验证
+        to: parseToList(LEAD_TO.value()),
         subject,
         text: bodyLines.join("\n"),
       });
 
-      console.log("notifyNewLead: email sent:", info.messageId, sessionId);
+      console.log("notifyNewLead: email sent:", info && info.messageId, sessionId);
       return null;
     } catch (err) {
       console.error("notifyNewLead error:", err);

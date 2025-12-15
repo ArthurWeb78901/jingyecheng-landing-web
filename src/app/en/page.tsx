@@ -369,7 +369,7 @@ export default function HomeEn() {
           <h2>About Us</h2>
         </div>
         <p>
-          Taiyuan Jingyecheng Heavy Equipment Co., Ltd. is located in Taiyuan,
+          Taiyuan Jingyecheng Heavy Equipment Ltd. is located in Taiyuan,
           Shanxi Province, with a site area of about 70,000 m². The company is a
           heavy-industry manufacturer specialized in rolling equipment for
           seamless steel pipes, covering piercing mills, pipe rolling mills,
