@@ -216,7 +216,7 @@ export default function HomeEn() {
               Turn-key Solutions for Seamless Pipe Mills &amp; Rolling Equipment
             </h1>
             <p>
-              Founded in 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
+              Founded in 1993, Taiyuan Jingyecheng Steel Equip Ltd.
               specializes in equipment for hot-rolled seamless steel pipe
               production, including piercing mills, pipe rolling mills, sizing
               and reducing mills, straightening machines, cooling beds, hot
@@ -234,9 +234,6 @@ export default function HomeEn() {
               </a>
             </div>
 
-            <p className="jyc-hero-caption">
-              Sample view of a seamless pipe mill line
-            </p>
           </div>
         </div>
       </section>
