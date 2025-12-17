@@ -161,8 +161,6 @@ export function Header() {
             aria-label="Language"
           >
             <option value="en">EN</option>
-            <option value="hi">Hindi</option>
-            <option value="id">Indonesian</option>
           </select>
         </div>
 
