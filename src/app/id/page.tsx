@@ -1,45 +1,56 @@
-// src/app/page.tsx
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
-import { ContactFormCn } from "@/components/ContactFormCn";
+import { ContactFormId } from "@/components/ContactFormId";
 import { db } from "@/lib/firebase";
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  doc,
-  getDoc,
-} from "firebase/firestore";
+import { collection, getDocs, orderBy, query, doc, getDoc } from "firebase/firestore";
 
 type HomeGalleryItem = {
   id: string;
   title: string;
-  description?: string;
+  titleEn?: string;
+  titleHi?: string;
+  titleId?: string;
   imageUrl?: string;
-  showOnHome: boolean;
+  showOnHome?: boolean;
   createdAt?: string;
 };
 
 type HomeProduct = {
   id: string;
   category: string;
+  categoryEn?: string;
+  categoryHi?: string;
+  categoryId?: string;
   name: string;
+  nameEn?: string;
+  nameHi?: string;
+  nameId?: string;
   brief: string;
+  briefEn?: string;
+  briefHi?: string;
+  briefId?: string;
   enabled: boolean;
   imageUrl?: string;
-  homeOrder?: number; // ⭐ 首頁排序
+  homeOrder?: number;
 };
 
 type SiteConfigHome = {
   logoImageUrl?: string;
 };
 
-export default function Home() {
+function pickTextId(id?: string, en?: string, fallback?: string) {
+  const vId = id?.trim();
+  if (vId) return vId;
+  const vEn = en?.trim();
+  if (vEn) return vEn;
+  return fallback || "";
+}
+
+export default function HomeId() {
   const [homeItems, setHomeItems] = useState<HomeGalleryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [products, setProducts] = useState<HomeProduct[]>([]);
@@ -47,33 +58,25 @@ export default function Home() {
 
   const productsRowRef = useRef<HTMLDivElement | null>(null);
 
-  // 讀取 config/site（拿 logoImageUrl 給「關於我們」大 logo 用）
   useEffect(() => {
     async function loadConfig() {
       try {
         const snap = await getDoc(doc(db, "config", "site"));
         if (snap.exists()) {
           const data = snap.data() as any;
-          setSiteConfig({
-            logoImageUrl: data.logoImageUrl || "",
-          });
+          setSiteConfig({ logoImageUrl: data.logoImageUrl || "" });
         }
       } catch (err) {
-        console.error("load config/site in Home error", err);
+        console.error("load config/site in HomeId error", err);
       }
     }
-
     loadConfig();
   }, []);
 
-  // 從 Firestore 讀取 jyc_gallery
   useEffect(() => {
     async function loadHomeGallery() {
       try {
-        const q = query(
-          collection(db, "jyc_gallery"),
-          orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, "jyc_gallery"), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
 
         const all: HomeGalleryItem[] = snap.docs.map((d) => {
@@ -81,51 +84,51 @@ export default function Home() {
           return {
             id: d.id,
             title: data.title || "",
-            description: data.description || "",
+            titleEn: data.titleEn || "",
+            titleHi: data.titleHi || "",
+            titleId: data.titleId || "",
             imageUrl: data.imageUrl || "",
             showOnHome: !!data.showOnHome,
             createdAt: data.createdAt || "",
           };
         });
 
-        const filtered = all.filter(
-          (item) => item.imageUrl && item.showOnHome
-        );
-
+        const filtered = all.filter((item) => item.imageUrl && item.showOnHome);
         setHomeItems(filtered);
         setCurrentSlide(0);
       } catch (err) {
-        console.error("load home gallery items from Firestore error", err);
+        console.error("load home gallery items from Firestore error (id)", err);
       }
     }
-
     loadHomeGallery();
   }, []);
 
-  // 從 Firestore 讀取 jyc_products（首頁產品區，用 homeOrder 排序）
   useEffect(() => {
     async function loadProducts() {
       try {
-        const q = query(
-          collection(db, "jyc_products"),
-          orderBy("name", "asc")
-        );
+        const q = query(collection(db, "jyc_products"), orderBy("name", "asc"));
         const snap = await getDocs(q);
 
         const raw: HomeProduct[] = snap.docs
           .map((d) => {
             const data = d.data() as any;
             const homeOrderRaw = data.homeOrder;
-            const homeOrder =
-              typeof homeOrderRaw === "number"
-                ? homeOrderRaw
-                : Number.MAX_SAFE_INTEGER;
+            const homeOrder = typeof homeOrderRaw === "number" ? homeOrderRaw : Number.MAX_SAFE_INTEGER;
 
             return {
               id: d.id,
               category: data.category || "",
+              categoryEn: data.categoryEn || "",
+              categoryHi: data.categoryHi || "",
+              categoryId: data.categoryId || "",
               name: data.name || "",
+              nameEn: data.nameEn || "",
+              nameHi: data.nameHi || "",
+              nameId: data.nameId || "",
               brief: data.brief || "",
+              briefEn: data.briefEn || "",
+              briefHi: data.briefHi || "",
+              briefId: data.briefId || "",
               enabled: data.enabled ?? true,
               imageUrl: data.imageUrl || "",
               homeOrder,
@@ -134,111 +137,89 @@ export default function Home() {
           .filter((p) => p.enabled);
 
         raw.sort((a, b) => {
-          const ao =
-            typeof a.homeOrder === "number"
-              ? a.homeOrder
-              : Number.MAX_SAFE_INTEGER;
-          const bo =
-            typeof b.homeOrder === "number"
-              ? b.homeOrder
-              : Number.MAX_SAFE_INTEGER;
+          const ao = typeof a.homeOrder === "number" ? a.homeOrder : Number.MAX_SAFE_INTEGER;
+          const bo = typeof b.homeOrder === "number" ? b.homeOrder : Number.MAX_SAFE_INTEGER;
           if (ao !== bo) return ao - bo;
 
-          return a.name.localeCompare(b.name, "zh-Hans");
+          const aName = pickTextId(a.nameId, a.nameEn, a.name);
+          const bName = pickTextId(b.nameId, b.nameEn, b.name);
+          return aName.localeCompare(bName);
         });
 
         setProducts(raw);
       } catch (err) {
-        console.error("load home products from Firestore error", err);
+        console.error("load home products from Firestore error (id)", err);
       }
     }
-
     loadProducts();
   }, []);
 
-  // 简单自动轮播
   useEffect(() => {
     if (homeItems.length <= 1) return;
-
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % homeItems.length);
-    }, 5000);
-
+    const timer = setInterval(() => setCurrentSlide((prev) => (prev + 1) % homeItems.length), 5000);
     return () => clearInterval(timer);
   }, [homeItems.length]);
 
   const currentItem = homeItems[currentSlide];
-
-  // 首页要用到的图
   const productThumbs = homeItems.slice(0, products.length || 3);
   const galleryItems = homeItems.slice(0, 12);
 
-  // 桌机左右滚动产品列表（手机一样可用）
   const scrollProducts = (direction: "left" | "right") => {
     const container = productsRowRef.current;
     if (!container) return;
 
-    const firstCard =
-      container.querySelector<HTMLElement>(".jyc-card") || null;
-
-    const step =
-      (firstCard?.offsetWidth || container.clientWidth * 0.8) + 24;
-
+    const firstCard = container.querySelector<HTMLElement>(".jyc-card") || null;
+    const step = (firstCard?.offsetWidth || container.clientWidth * 0.8) + 24;
     const delta = direction === "left" ? -step : step;
 
-    container.scrollBy({
-      left: delta,
-      behavior: "smooth",
-    });
+    container.scrollBy({ left: delta, behavior: "smooth" });
   };
 
   return (
     <main className="jyc-page">
       <Header />
 
-      {/* Hero：整块背景图 + 文字叠在左侧 */}
-      <section className="jyc-hero">
+      {/* Hero - ID */}
+      <section className="jyc-hero jyc-hero-en">
         <div className="jyc-hero-inner">
           <div className="jyc-hero-text">
-            <h1>无缝钢管机组与轧钢设备整体解决方案提供商</h1>
+            <h1>Solusi Turn-key untuk Seamless Pipe Mills &amp; Rolling Equipment</h1>
             <p>
-              太原精业成重工设备有限公司成立于 1993 年，深耕无缝钢管机组设备与轧钢设备领域，
-              覆盖穿孔机、轧管机、定径 / 减径机、矫直机、冷床、热定心机及冷拔机等关键设备，
-              以专业设计、制造与服务能力，为客户提供稳定可靠的生产线与完善的技术支持。
+              Didirikan pada tahun 1993, Taiyuan Jingyecheng Steel Equip Ltd. berfokus pada
+              peralatan untuk produksi pipa baja seamless hot-rolled, termasuk piercing mills,
+              pipe rolling mills, sizing / reducing mills, straightening machines, cooling beds,
+              hot centering machines, dan cold drawing machines. Kami menyediakan lini produksi
+              yang andal serta dukungan teknis dengan kemampuan desain, manufaktur, dan layanan
+              yang profesional.
             </p>
 
             <div className="jyc-hero-actions">
               <a href="#contact" className="jyc-btn-primary">
-                立即咨询
+                Hubungi Kami
               </a>
-              <a href="/products" className="jyc-btn-secondary">
-                查看产品一览
+              <a href="/id/products" className="jyc-btn-secondary">
+                Lihat Produk
               </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 产品概要区块 */}
+      {/* Products */}
       <section id="products" className="jyc-section">
-        <h2>主要产品一览</h2>
+        <h2>Produk Utama</h2>
 
         <p className="jyc-section-intro">
           {products.length === 0
-            ? "目前尚未在后台「产品资讯管理」新增任何产品。新增产品并勾选「在前台显示此产品」后，将自动显示在此区块。"
-            : "以下为目前已在后台配置的主要产品方向，详细机组配置与技术参数可在「产品与设备一览」页面查看。"}
+            ? 'Belum ada produk yang dikonfigurasi di halaman admin "Product Management". Setelah Anda menambahkan produk dan mencentang "Show on website", produk akan muncul otomatis di sini.'
+            : "Berikut kategori produk utama yang saat ini telah dikonfigurasi. Konfigurasi lini dan spesifikasi teknis detail tersedia di halaman Products."}
         </p>
 
         {products.length > 0 && (
-          <div
-            style={{
-              position: "relative",
-            }}
-          >
-            {/* 左右导航按钮 */}
+          <div style={{ position: "relative" }}>
             <button
               type="button"
-              aria-label="向左查看更多产品"
+              aria-label="Scroll kiri"
               onClick={() => scrollProducts("left")}
               style={{
                 position: "absolute",
@@ -247,7 +228,7 @@ export default function Home() {
                 transform: "translateY(-50%)",
                 border: "none",
                 background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                boxShadow: "0 0 6px rgba(0, 0, 0, 0.15)",
                 borderRadius: "50%",
                 width: 32,
                 height: 32,
@@ -261,34 +242,28 @@ export default function Home() {
               ‹
             </button>
 
-            <div
-              className="jyc-home-products-row"
-              ref={productsRowRef}
-              aria-label="主要产品横向列表"
-            >
+            <div className="jyc-home-products-row" ref={productsRowRef} aria-label="Daftar produk utama (horizontal)">
               {products.map((p, index) => {
                 const thumb = productThumbs[index];
                 const bgUrl = p.imageUrl || thumb?.imageUrl || "";
 
+                const displayName = pickTextId(p.nameId, p.nameEn, p.name);
+                const displayBrief = pickTextId(p.briefId, p.briefEn, p.brief);
+
                 return (
                   <article key={p.id} className="jyc-card">
-                    <div
-                      className="jyc-card-image"
-                      style={
-                        bgUrl
-                          ? { backgroundImage: `url(${bgUrl})` }
-                          : undefined
-                      }
-                    />
-                    <h3>{p.name}</h3>
-                    <p>{p.brief}</p>
+                    <div className="jyc-card-image" style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined} />
+                    <h3>{displayName}</h3>
+                    <p>{displayBrief}</p>
                     <button
                       type="button"
                       className="jyc-card-btn"
                       onClick={() => {
                         if (typeof window === "undefined") return;
 
-                        const msg = `我想进一步了解贵公司的「${p.name}」设备，请协助提供更详细的技术参数与配置建议。`;
+                        const msg =
+                          `Saya ingin mengetahui lebih lanjut tentang peralatan “${displayName}”, ` +
+                          `termasuk parameter teknis detail dan saran konfigurasi.`;
 
                         window.dispatchEvent(
                           new CustomEvent("jyc-open-chat", {
@@ -297,7 +272,7 @@ export default function Home() {
                         );
                       }}
                     >
-                      了解更多
+                      Pelajari Lebih Lanjut
                     </button>
                   </article>
                 );
@@ -306,7 +281,7 @@ export default function Home() {
 
             <button
               type="button"
-              aria-label="向右查看更多产品"
+              aria-label="Scroll kanan"
               onClick={() => scrollProducts("right")}
               style={{
                 position: "absolute",
@@ -315,7 +290,7 @@ export default function Home() {
                 transform: "translateY(-50%)",
                 border: "none",
                 background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+                boxShadow: "0 0 6px rgba(0, 0, 0, 0.15)",
                 borderRadius: "50%",
                 width: 32,
                 height: 32,
@@ -332,34 +307,34 @@ export default function Home() {
         )}
       </section>
 
-      {/* 公司介绍（首页简版）＋ 大 Logo */}
+      {/* About */}
       <section id="about" className="jyc-section jyc-section-alt">
         <div className="jyc-about-header">
           {siteConfig.logoImageUrl && (
             <div className="jyc-about-logo-wrap">
-              <img
-                src={siteConfig.logoImageUrl}
-                alt="公司 Logo"
-                className="jyc-about-logo"
-              />
+              <img src={siteConfig.logoImageUrl} alt="Logo perusahaan" className="jyc-about-logo" />
             </div>
           )}
-          <h2>关于我们</h2>
+          <h2>Tentang Kami</h2>
         </div>
         <p>
-          太原精业成重工设备有限公司位于能源重化工城市——山西省太原市，占地面积约 7
-          万平方米， 是一家专业从事轧钢设备的重工企业。公司以无缝钢管机组设备的制造为主，
-          集设计、生产、 经营于一体，为国内外客户提供从方案规划、设备制造到安装调试、售后服务的完整支持。
+          Taiyuan Jingyecheng Heavy Equipment Ltd. berlokasi di Taiyuan, Provinsi Shanxi,
+          dengan luas area sekitar 70.000 m². Perusahaan ini merupakan produsen industri berat
+          yang mengkhususkan diri pada rolling equipment untuk pipa baja seamless, mencakup
+          piercing mills, pipe rolling mills, sizing / reducing mills, straightening machines,
+          cooling beds, hot centering machines, dan cold drawing machines. Kami mengintegrasikan
+          desain, manufaktur, dan penjualan, serta menyediakan layanan lengkap mulai dari
+          perencanaan lini dan penyediaan peralatan hingga instalasi, commissioning, dan dukungan purna jual.
         </p>
       </section>
 
       {/* Gallery */}
       <section id="gallery" className="jyc-section">
-        <h2>图片集</h2>
+        <h2>Galeri</h2>
         <p className="jyc-section-intro">
-          设备现场、生产线布局与项目案例照片。后台「图片 / Gallery 管理」中勾选
-          「显示在首页轮播」的图片，会同步显示在此处与首页产品卡片缩略图，并统一由
-          Firestore 管理。
+          Foto peralatan utama dan lini produksi—seperti piercing mills, pipe rolling mills,
+          sizing / reducing mills, straightening machines, cooling beds, hot centering machines,
+          dan cold drawing machines—serta referensi proyek tipikal.
         </p>
 
         {homeItems.length > 0 && (
@@ -367,29 +342,20 @@ export default function Home() {
             <div className="jyc-home-slideshow-main">
               <div
                 className="jyc-home-slideshow-main-inner"
-                style={
-                  currentItem?.imageUrl
-                    ? { backgroundImage: `url(${currentItem.imageUrl})` }
-                    : undefined
-                }
+                style={currentItem?.imageUrl ? { backgroundImage: `url(${currentItem.imageUrl})` } : undefined}
               />
             </div>
             <div className="jyc-home-slideshow-caption">
-              {currentItem?.title}
+              {pickTextId(currentItem?.titleId, currentItem?.titleEn, currentItem?.title)}
             </div>
             <div className="jyc-home-slideshow-dots">
               {homeItems.map((_, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  className={
-                    "jyc-home-slideshow-dot" +
-                    (idx === currentSlide
-                      ? " jyc-home-slideshow-dot-active"
-                      : "")
-                  }
+                  className={"jyc-home-slideshow-dot" + (idx === currentSlide ? " jyc-home-slideshow-dot-active" : "")}
                   onClick={() => setCurrentSlide(idx)}
-                  aria-label={`切换到第 ${idx + 1} 张`}
+                  aria-label={`Slide ${idx + 1}`}
                 />
               ))}
             </div>
@@ -398,19 +364,13 @@ export default function Home() {
 
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0
-            ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
-                <div key={i} className="jyc-gallery-thumb" />
-              ))
+            ? [1,2,3,4,5,6,7,8,9,10,11,12].map((i) => <div key={i} className="jyc-gallery-thumb" />)
             : galleryItems.map((item) => (
                 <div
                   key={item.id}
                   className="jyc-gallery-thumb"
-                  style={
-                    item.imageUrl
-                      ? { backgroundImage: `url(${item.imageUrl})` }
-                      : undefined
-                  }
-                  title={item.title}
+                  style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}
+                  title={pickTextId(item.titleId, item.titleEn, item.title)}
                 />
               ))}
         </div>
@@ -418,12 +378,13 @@ export default function Home() {
 
       {/* Contact */}
       <section id="contact" className="jyc-section jyc-section-alt">
-        <h2>联系我们</h2>
+        <h2>Hubungi Kami</h2>
         <p className="jyc-section-intro">
-          请留下您的联络资讯与需求，我们会尽快由相关人员与您联系，也可直接拨打电话或来信洽询。
+          Silakan tinggalkan informasi kontak dan kebutuhan proyek Anda. Tim sales kami akan menghubungi Anda sesegera mungkin.
+          Anda juga dapat menghubungi kami langsung melalui telepon atau email.
         </p>
 
-        <ContactFormCn />
+        <ContactFormId />
       </section>
 
       <Footer />

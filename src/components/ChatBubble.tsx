@@ -6,18 +6,18 @@ import { usePathname } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import {
-  zhTexts,
-  enTexts,
   ChatTexts,
   getOrCreateSessionId,
+  langFromPathname,
+  getTextsByLang,
+  LangCode,
 } from "./chat/chatShared";
 import { VisitorChatPanel } from "./chat/VisitorChatPanel";
 import { AdminChatPanel } from "./chat/AdminChatPanel";
-import { setAdminOnlineStatus } from "./chat/adminStatus"; // ✅ 新增
+import { setAdminOnlineStatus } from "./chat/adminStatus";
 
 const MAX_INITIAL_MESSAGE_LENGTH = 500;
 
-/** 專門處理外部觸發的預填訊息，避免惡意或超長內容 */
 function sanitizeInitialMessage(raw: unknown): string {
   if (typeof raw !== "string") return "";
   let s = raw.trim();
@@ -30,43 +30,36 @@ function sanitizeInitialMessage(raw: unknown): string {
 
 export function ChatBubble() {
   const pathname = usePathname() || "/";
-  const isEnglish = pathname === "/en" || pathname.startsWith("/en/");
-  const texts: ChatTexts = isEnglish ? enTexts : zhTexts;
+  const lang: LangCode = langFromPathname(pathname);
+  const texts: ChatTexts = getTextsByLang(lang);
 
   const [isOpen, setIsOpen] = useState(false);
-
-  // 是否是「正在使用後台的瀏覽器」
   const [isAdminClient, setIsAdminClient] = useState(false);
-
-  // Firestore 上的客服在線狀態（給所有訪客共用）
   const [adminOnline, setAdminOnline] = useState(false);
 
   const [sessionId, setSessionId] = useState("");
   const [hasUnread, setHasUnread] = useState(false);
   const [prefill, setPrefill] = useState("");
 
-  // 生成 / 取得訪客 sessionId
   useEffect(() => {
     if (typeof window === "undefined") return;
     setSessionId(getOrCreateSessionId());
   }, []);
 
-  // 檢查本機是不是後台登入中的瀏覽器（只用來決定顯示 AdminChatPanel）
   useEffect(() => {
     if (typeof window === "undefined") return;
     const flag = window.localStorage.getItem("jyc_admin_logged_in") === "true";
     setIsAdminClient(flag);
   }, []);
 
-  // ✅ Admin presence：只有 admin client 才寫 online + 心跳；離開時嘗試寫 offline
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!isAdminClient) return; // ✅ 访客绝对不能写 adminStatus
+    if (!isAdminClient) return;
 
     void setAdminOnlineStatus(true);
 
     const timer = window.setInterval(() => {
-      void setAdminOnlineStatus(true); // 刷新 updatedAt（心跳）
+      void setAdminOnlineStatus(true);
     }, 30_000);
 
     const handleUnload = () => {
@@ -81,37 +74,29 @@ export function ChatBubble() {
     };
   }, [isAdminClient]);
 
-  // 🔄 監聽 Firestore 的 adminStatus，決定「客服是否在線」
   useEffect(() => {
     const statusRef = doc(db, "jyc_meta", "adminStatus");
     const unsub = onSnapshot(
       statusRef,
       (snap) => {
         const data = snap.data() as any;
-
         const online = !!data?.online;
 
-        // ✅ 过期保护：超过 2 分钟没心跳就当离线（避免卡在线）
         const ts =
           data?.updatedAt?.toMillis?.() ??
-          (typeof data?.updatedAt?.seconds === "number"
-            ? data.updatedAt.seconds * 1000
-            : 0);
+          (typeof data?.updatedAt?.seconds === "number" ? data.updatedAt.seconds * 1000 : 0);
 
         const fresh = ts > 0 && Date.now() - ts < 120_000;
-
         setAdminOnline(online && fresh);
       },
       (err) => {
         console.error("listen adminStatus error", err);
-        // 出錯時保守處理：當作離線，讓訪客跑離線腳本
         setAdminOnline(false);
       }
     );
     return () => unsub();
   }, []);
 
-  // 其它地方觸發開啟聊天並預填內容
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -160,14 +145,14 @@ export function ChatBubble() {
         (isAdminClient ? (
           <AdminChatPanel
             texts={texts}
-            isEnglish={isEnglish}
+            lang={lang}
             pathname={pathname}
             onHasUnreadChange={setHasUnread}
           />
         ) : (
           <VisitorChatPanel
             texts={texts}
-            isEnglish={isEnglish}
+            lang={lang}
             pathname={pathname}
             adminOnline={adminOnline}
             sessionId={sessionId}

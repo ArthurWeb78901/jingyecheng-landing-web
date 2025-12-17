@@ -1,47 +1,55 @@
-// src/components/Header.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 type SiteConfigForHeader = {
   logoMark: string;
-  logoTextZh: string;
   logoTextEn: string;
+  logoTextHi?: string;
+  logoTextId?: string;
   logoImageUrl?: string;
 };
 
 const HEADER_DEFAULTS: SiteConfigForHeader = {
   logoMark: "JYC",
-  logoTextZh: "太原精业成重工设备有限公司",
   logoTextEn: "JYC Steel Equipment",
+  logoTextHi: "JYC स्टील उपकरण",
+  logoTextId: "Peralatan Baja JYC",
   logoImageUrl: "",
 };
 
+const SUPPORTED_LOCALES = ["en", "hi", "id"] as const;
+type Locale = (typeof SUPPORTED_LOCALES)[number];
+
+// 這些頁面不是語系路由，切換語言時不要拼 /hi/admin 之類
+const NON_LOCALE_PATH_PREFIXES = ["/admin", "/login", "/logout"];
+
+function pickLocaleFromPath(pathname: string): Locale {
+  const seg = pathname.split("/")[1];
+  if (SUPPORTED_LOCALES.includes(seg as Locale)) return seg as Locale;
+  return "en";
+}
+
 export function Header() {
   const pathname = usePathname() || "/";
+  const router = useRouter();
 
-  // 粗略判断目前是不是英文版：/en 或 /en/xxx
-  const isEnglish =
-    pathname === "/en" || pathname.startsWith("/en/");
+  const locale = useMemo(() => pickLocaleFromPath(pathname), [pathname]);
 
   const [loggedIn, setLoggedIn] = useState(false);
-  const [siteConfig, setSiteConfig] =
-    useState<SiteConfigForHeader>(HEADER_DEFAULTS);
+  const [siteConfig, setSiteConfig] = useState<SiteConfigForHeader>(HEADER_DEFAULTS);
 
-  // 讀取登入狀態
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const flag =
-        window.localStorage.getItem("jyc_admin_logged_in") === "true";
+      const flag = window.localStorage.getItem("jyc_admin_logged_in") === "true";
       setLoggedIn(flag);
     }
   }, []);
 
-  // 讀取 config/site
   useEffect(() => {
     async function loadConfig() {
       try {
@@ -54,34 +62,73 @@ export function Header() {
         console.error("load site config in Header error:", err);
       }
     }
-
     loadConfig();
   }, []);
 
-  // ===== 導覽列 =====
-  const navLinks = isEnglish
-    ? [
-        { href: "/en", label: "Home" },
-        { href: "/en/about", label: "About" },
-        { href: "/en/products", label: "Products" },
-        { href: "/en/gallery", label: "Gallery" },
-        { href: "/en/contact", label: "Contact" },
-      ]
-    : [
-        { href: "/zh", label: "首页" },
-        // 如果目前产品页只提供英文，就指到 /en/products
-        { href: "/about", label: "公司介绍" },
-        { href: "/products", label: "产品介绍" },
-        { href: "/gallery", label: "图片集" },
-        { href: "/contact", label: "联系我们" },
-      ];
+  const navByLocale: Record<Locale, { path: string; label: string }[]> = {
+    en: [
+      { path: "", label: "Home" },
+      { path: "/about", label: "About" },
+      { path: "/products", label: "Products" },
+      { path: "/gallery", label: "Gallery" },
+      { path: "/contact", label: "Contact" },
+    ],
+    hi: [
+      { path: "", label: "मुखपृष्ठ" },
+      { path: "/about", label: "हमारे बारे में" },
+      { path: "/products", label: "उत्पाद" },
+      { path: "/gallery", label: "गैलरी" },
+      { path: "/contact", label: "संपर्क" },
+    ],
+    id: [
+      { path: "", label: "Beranda" },
+      { path: "/about", label: "Tentang" },
+      { path: "/products", label: "Produk" },
+      { path: "/gallery", label: "Galeri" },
+      { path: "/contact", label: "Kontak" },
+    ],
+  };
 
-  const logoHref = isEnglish ? "/en" : "/zh";
-  const logoText = isEnglish ? siteConfig.logoTextEn : siteConfig.logoTextZh;
+  const navLinks = navByLocale[locale].map((item) => ({
+    href: `/${locale}${item.path}`,
+    label: item.label,
+  }));
+
+  const logoHref = `/${locale}`;
+  const logoText =
+    locale === "hi"
+      ? siteConfig.logoTextHi || siteConfig.logoTextEn
+      : locale === "id"
+        ? siteConfig.logoTextId || siteConfig.logoTextEn
+        : siteConfig.logoTextEn;
+
+  function isNonLocalePage(path: string) {
+    return NON_LOCALE_PATH_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
+  }
+
+  // 切換語言：保留目前子路徑，例如 /hi/products -> /id/products
+  function buildPathForLocale(target: Locale) {
+    // 在 /admin /login /logout 這類頁面，切換語言就回到該語言首頁
+    if (isNonLocalePage(pathname)) return `/${target}`;
+
+    const parts = pathname.split("/");
+    const first = parts[1];
+
+    // 已經是 /en /hi /id 開頭 -> 取後面的 path
+    const rest = SUPPORTED_LOCALES.includes(first as Locale)
+      ? "/" + parts.slice(2).join("/")
+      : pathname;
+
+    const cleanRest = rest === "/" ? "" : rest;
+    return `/${target}${cleanRest}`;
+  }
+
+  function onLocaleChange(nextLocale: Locale) {
+    router.push(buildPathForLocale(nextLocale));
+  }
 
   return (
     <header className="jyc-header">
-      {/* Logo */}
       <Link href={logoHref} className="jyc-logo">
         <span className="jyc-logo-mark">
           {siteConfig.logoImageUrl ? (
@@ -106,20 +153,17 @@ export function Header() {
       </nav>
 
       <div className="jyc-header-right">
-        {/* 語言切換：固定指到 /en 和 /zh */}
         <div className="jyc-lang-switch">
-          <Link
-            href="/en"
-            className={isEnglish ? "jyc-lang-active" : ""}
+          <select
+            className="jyc-lang-select"
+            value={locale}
+            onChange={(e) => onLocaleChange(e.target.value as Locale)}
+            aria-label="Language"
           >
-            EN
-          </Link>
-          <Link
-            href="/zh"
-            className={isEnglish ? "" : "jyc-lang-active"}
-          >
-            中文
-          </Link>
+            <option value="en">EN</option>
+            <option value="hi">Hindi</option>
+            <option value="id">Indonesian</option>
+          </select>
         </div>
 
         {loggedIn ? (

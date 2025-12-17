@@ -11,8 +11,8 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import type { ChatTexts } from "./chatShared";
-import { saveLeadToLocalStorage } from "./chatShared"; // ✅ 改：用 chatShared 统一写 Firestore
+import type { ChatTexts, LangCode } from "./chatShared";
+import { saveLeadToLocalStorage, getFaqAnswer } from "./chatShared";
 
 type Message = {
   id: string;
@@ -20,13 +20,7 @@ type Message = {
   text: string;
 };
 
-type InfoStage =
-  | "none"
-  | "ask-name"
-  | "ask-company"
-  | "ask-contact"
-  | "ask-need"
-  | "done";
+type InfoStage = "none" | "ask-name" | "ask-company" | "ask-contact" | "ask-need" | "done";
 
 type LeadDraft = {
   name: string;
@@ -37,7 +31,7 @@ type LeadDraft = {
 
 type Props = {
   texts: ChatTexts;
-  isEnglish: boolean;
+  lang: LangCode;
   pathname: string;
   adminOnline: boolean;
   sessionId: string;
@@ -45,63 +39,13 @@ type Props = {
   onConsumeInitialMessage: () => void;
   onClose?: () => void;
 
-  /** 單則訊息最大長度（可由 ChatBubble 傳入），預設 800 */
   maxMessageLength?: number;
-  /** 兩次送出之間的最短間隔（毫秒），預設 2000 ms */
   minIntervalMs?: number;
 };
 
 const DEFAULT_MAX_MESSAGE_LENGTH = 800;
 const DEFAULT_MIN_INTERVAL_MS = 2000;
 
-/** FAQ 关键字应答（用当前语言文案） */
-function getFaqAnswer(text: string, isEnglish: boolean, texts: ChatTexts) {
-  const t = text.toLowerCase();
-
-  if (
-    t.includes("报价") ||
-    t.includes("价格") ||
-    t.includes("price") ||
-    t.includes("quote") ||
-    t.includes("quotation")
-  ) {
-    return texts.faqPrice;
-  }
-  if (
-    t.includes("交期") ||
-    t.includes("交货") ||
-    t.includes("交付") ||
-    t.includes("delivery") ||
-    t.includes("lead time")
-  ) {
-    return texts.faqDelivery;
-  }
-  if (
-    t.includes("安装") ||
-    t.includes("调试") ||
-    t.includes("售后") ||
-    t.includes("服务") ||
-    t.includes("installation") ||
-    t.includes("commissioning") ||
-    t.includes("service") ||
-    t.includes("after-sales")
-  ) {
-    return texts.faqService;
-  }
-  if (
-    t.includes("改造") ||
-    t.includes("升级") ||
-    t.includes("技改") ||
-    t.includes("upgrade") ||
-    t.includes("revamp") ||
-    t.includes("modernization")
-  ) {
-    return texts.faqUpgrade;
-  }
-  return null;
-}
-
-/** 清洗使用者輸入（保留換行 / tab，拿掉其他控制字元） */
 function sanitizeUserText(raw: string): string {
   let s = raw.trim();
   s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, (ch) =>
@@ -113,7 +57,7 @@ function sanitizeUserText(raw: string): string {
 export function VisitorChatPanel(props: Props) {
   const {
     texts,
-    isEnglish,
+    lang,
     pathname,
     adminOnline,
     sessionId,
@@ -135,10 +79,8 @@ export function VisitorChatPanel(props: Props) {
   });
 
   const [lastSendAt, setLastSendAt] = useState<number>(0);
-
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // 首次打开时如果有预填的讯息（例如“了解某某机组”）
   useEffect(() => {
     if (!initialMessage) return;
     const safe = sanitizeUserText(initialMessage).slice(0, maxMessageLength);
@@ -146,14 +88,10 @@ export function VisitorChatPanel(props: Props) {
     onConsumeInitialMessage();
   }, [initialMessage, onConsumeInitialMessage, maxMessageLength]);
 
-  // ✅ 订阅所有消息，再用 sessionId 在前端过滤
   useEffect(() => {
     if (!sessionId) return;
 
-    const q = query(
-      collection(db, "jyc_chat_messages"),
-      orderBy("createdAt", "asc")
-    );
+    const q = query(collection(db, "jyc_chat_messages"), orderBy("createdAt", "asc"));
 
     const unsub = onSnapshot(
       q,
@@ -180,18 +118,16 @@ export function VisitorChatPanel(props: Props) {
     return () => unsub();
   }, [sessionId]);
 
-  // 每次 messages 变化，自动滚到底部
   useEffect(() => {
     if (!bottomRef.current) return;
     bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length]);
 
-  // 欢迎语：每个 session + 语言只发一次
   useEffect(() => {
     if (!sessionId) return;
     if (typeof window === "undefined") return;
 
-    const key = `jyc_chat_welcome_sent_${sessionId}_${isEnglish ? "en" : "zh"}`;
+    const key = `jyc_chat_welcome_sent_${sessionId}_${lang}`;
     const sent = window.localStorage.getItem(key) === "true";
     if (sent) return;
 
@@ -212,9 +148,8 @@ export function VisitorChatPanel(props: Props) {
         console.error("send welcome error", err);
       }
     })();
-    // 不要把 adminOnline 放依赖里，避免切换状态重复发
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, isEnglish, pathname, texts.welcomeOnline, texts.welcomeOffline]);
+  }, [sessionId, lang, pathname, texts.welcomeOnline, texts.welcomeOffline]);
 
   async function saveChatMessage(from: "user" | "bot", text: string, read: boolean) {
     if (!sessionId) return;
@@ -232,7 +167,6 @@ export function VisitorChatPanel(props: Props) {
     }
   }
 
-  // 离线模式自动问答 + 资料收集
   const handleOfflineFlow = (userText: string) => {
     if (!sessionId) return;
 
@@ -265,10 +199,7 @@ export function VisitorChatPanel(props: Props) {
       case "ask-need":
         setLeadDraft((prev) => {
           const full: LeadDraft = { ...prev, need: userText };
-
-          // ✅ 关键修复：写入 Firestore jyc_leads（source=offline-bot）
-          saveLeadToLocalStorage(full, isEnglish);
-
+          saveLeadToLocalStorage(full, lang);
           return full;
         });
         replies.push(texts.afterSaved);
@@ -283,17 +214,14 @@ export function VisitorChatPanel(props: Props) {
         break;
     }
 
-    const faq = getFaqAnswer(userText, isEnglish, texts);
+    const faq = getFaqAnswer(userText, lang, texts);
     if (faq) replies.push(faq);
-
-    if (replies.length === 0) return;
 
     for (const r of replies) {
       void saveChatMessage("bot", r, true);
     }
   };
 
-  // 访客发送讯息（含長度 / 頻率限制）
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sessionId) return;
@@ -301,30 +229,16 @@ export function VisitorChatPanel(props: Props) {
     let text = sanitizeUserText(input);
     if (!text) return;
 
-    // 長度檢查
     if (text.length > maxMessageLength) {
-      if (typeof window !== "undefined") {
-        window.alert(
-          isEnglish
-            ? `Your message is too long. Please keep it within ${maxMessageLength} characters.`
-            : `单则讯息过长，请控制在 ${maxMessageLength} 个字以内。`
-        );
-      }
+      window.alert(texts.errTooLong(maxMessageLength));
       text = text.slice(0, maxMessageLength);
       setInput(text);
       return;
     }
 
-    // 發送頻率限制
     const now = Date.now();
     if (now - lastSendAt < minIntervalMs) {
-      if (typeof window !== "undefined") {
-        window.alert(
-          isEnglish
-            ? "You are sending messages too fast. Please wait a moment."
-            : "讯息发送过于频繁，请稍后再试。"
-        );
-      }
+      window.alert(texts.errTooFast);
       return;
     }
 
@@ -333,10 +247,7 @@ export function VisitorChatPanel(props: Props) {
 
     await saveChatMessage("user", text, false);
 
-    // 管理员在线就交给真人回复，不走自动脚本
     if (adminOnline) return;
-
-    // 管理员不在线时才走离线流程
     handleOfflineFlow(text);
   };
 
@@ -346,7 +257,7 @@ export function VisitorChatPanel(props: Props) {
         <div>
           <div className="jyc-chat-title">{texts.title}</div>
           <div className="jyc-chat-status">
-            {isEnglish ? "Status: " : "状态："}
+            {texts.statusPrefix}
             {adminOnline ? texts.statusOnline : texts.statusOffline}
           </div>
         </div>
@@ -356,7 +267,7 @@ export function VisitorChatPanel(props: Props) {
             type="button"
             className="jyc-chat-close"
             onClick={onClose}
-            aria-label={isEnglish ? "Close chat" : "收起对话"}
+            aria-label={texts.closeAriaLabel}
           >
             ×
           </button>

@@ -17,113 +17,124 @@ import {
   query,
 } from "firebase/firestore";
 
+// ✅ 保留旧 category 值（中文）以确保旧前台/旧数据不被破坏
 type GalleryCategory = "设备展示" | "生产线现场" | "工程案例" | "展会与交流";
-
-// ⭐ 冷/热设备类型
 type MachineTemp = "hot" | "cold";
 
 type AdminGalleryItem = {
-  id: string; // Firestore doc id
-  title: string; // 中文標題
-  titleEn?: string; // 英文標題（可選）
+  id: string;
+
+  // legacy / compatibility（旧前台仍可能用到）
+  title: string; // legacy zh title（admin 不编辑）
+  description?: string; // legacy zh description（admin 不编辑）
+
+  // EN/HI/ID（admin 可编辑）
+  titleEn?: string;
+  titleHi?: string;
+  titleId?: string;
+  descriptionEn?: string;
+  descriptionHi?: string;
+  descriptionId?: string;
+
   category: GalleryCategory;
   filename: string;
-  description?: string; // 中文說明
-  descriptionEn?: string; // 英文說明（可選）
   imageUrl?: string;
   showOnHome: boolean;
-  createdAt?: string; // ISO 字串
+  createdAt?: string;
 
-  // 冷/热分类
-  machineTemp?: MachineTemp; // "hot" | "cold" | undefined
+  machineTemp?: MachineTemp;
 };
 
 export default function AdminGalleryPage() {
   const [items, setItems] = useState<AdminGalleryItem[]>([]);
 
-  const [uploadTitle, setUploadTitle] = useState("");
+  // ✅ 表单：移除中文可编辑，只保留 EN/HI/ID
   const [uploadTitleEn, setUploadTitleEn] = useState("");
-  const [uploadCategory, setUploadCategory] =
-    useState<GalleryCategory | "">("");
+  const [uploadTitleHi, setUploadTitleHi] = useState("");
+  const [uploadTitleId, setUploadTitleId] = useState("");
+
+  const [uploadCategory, setUploadCategory] = useState<GalleryCategory | "">("");
   const [uploadFileName, setUploadFileName] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadDescription, setUploadDescription] = useState("");
+
   const [uploadDescriptionEn, setUploadDescriptionEn] = useState("");
+  const [uploadDescriptionHi, setUploadDescriptionHi] = useState("");
+  const [uploadDescriptionId, setUploadDescriptionId] = useState("");
+
   const [uploadImageUrl, setUploadImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // ⭐ 冷/热选择，额外加一个 "" 用来表示「未分类」
-  const [uploadMachineTemp, setUploadMachineTemp] =
-    useState<MachineTemp | "">("");
+  const [uploadMachineTemp, setUploadMachineTemp] = useState<MachineTemp | "">(
+    ""
+  );
 
-  // ⭐ 目前正在編輯哪一筆（null = 新增模式）
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const resetForm = () => {
-    setUploadTitle("");
     setUploadTitleEn("");
+    setUploadTitleHi("");
+    setUploadTitleId("");
     setUploadCategory("");
     setUploadFileName("");
     setUploadFile(null);
-    setUploadDescription("");
     setUploadDescriptionEn("");
+    setUploadDescriptionHi("");
+    setUploadDescriptionId("");
     setUploadImageUrl("");
     setUploadMachineTemp("");
     setEditingId(null);
   };
 
-  // ✅ 讀取 Firestore 裡的 jyc_gallery
   useEffect(() => {
     async function fetchItems() {
       try {
-        const q = query(
-          collection(db, "jyc_gallery"),
-          orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, "jyc_gallery"), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
         const list: AdminGalleryItem[] = snap.docs.map((d) => {
           const data = d.data() as Omit<AdminGalleryItem, "id">;
-          return {
-            id: d.id,
-            ...data,
-          };
+          return { id: d.id, ...data };
         });
         setItems(list);
       } catch (err) {
         console.error("load gallery items from Firestore error", err);
       }
     }
-
     fetchItems();
   }, []);
 
-  // 點「編輯」時，把資料帶回表單
   const handleStartEdit = (item: AdminGalleryItem) => {
     setEditingId(item.id);
-    setUploadTitle(item.title || "");
-    setUploadTitleEn(item.titleEn || "");
+
+    // ✅ EN/HI/ID：若没填就用 legacy 预填（方便快速补齐多语言，但不等于编辑中文）
+    setUploadTitleEn(item.titleEn || item.title || "");
+    setUploadTitleHi(item.titleHi || "");
+    setUploadTitleId(item.titleId || "");
+
     setUploadCategory(item.category);
     setUploadFileName(item.filename || "");
-    setUploadDescription(item.description || "");
-    setUploadDescriptionEn(item.descriptionEn || "");
+    setUploadDescriptionEn(item.descriptionEn || item.description || "");
+    setUploadDescriptionHi(item.descriptionHi || "");
+    setUploadDescriptionId(item.descriptionId || "");
     setUploadImageUrl(item.imageUrl || "");
     setUploadMachineTemp(item.machineTemp ?? "");
-    setUploadFile(null); // 先清空，除非要重新選檔
+    setUploadFile(null);
   };
 
-  const handleCancelEdit = () => {
-    resetForm();
-  };
+  const handleCancelEdit = () => resetForm();
 
-  // 上傳圖片 + 寫入 / 更新 Firestore
   const handleUpload = async () => {
     if (!uploadCategory) {
-      alert("请选择图片类别。");
+      alert("Please select a category.");
       return;
     }
 
     if (!uploadFile && !uploadImageUrl.trim()) {
-      alert("请至少上传一张图片，或填写图片网址。");
+      alert("Please upload an image OR provide an image URL.");
+      return;
+    }
+
+    if (!uploadTitleEn.trim()) {
+      alert("Please fill Title (English).");
       return;
     }
 
@@ -133,7 +144,6 @@ export default function AdminGalleryPage() {
       let finalUrl = uploadImageUrl.trim() || "";
       let finalFilename = uploadFileName || "";
 
-      // 有檔案 → 優先上傳 Firebase Storage
       if (uploadFile) {
         const ext = uploadFile.name.split(".").pop() || "jpg";
         const storagePath = `jyc-gallery/${Date.now()}-${Math.random()
@@ -146,20 +156,30 @@ export default function AdminGalleryPage() {
       }
 
       const now = new Date().toISOString();
-      const existing = editingId
-        ? items.find((i) => i.id === editingId)
-        : undefined;
+      const existing = editingId ? items.find((i) => i.id === editingId) : undefined;
 
       const machineTempValue: MachineTemp | undefined =
         uploadMachineTemp === "" ? undefined : uploadMachineTemp;
 
+      // ✅ legacy zh：编辑时保留原值；新增时用 EN 兜底，避免旧前台空白
+      const legacyTitle = existing?.title || uploadTitleEn.trim() || finalFilename || "Untitled";
+      const legacyDesc = existing?.description || "";
+
       const payload: Omit<AdminGalleryItem, "id"> = {
-        title: uploadTitle.trim() || finalFilename || "未命名图片",
-        titleEn: uploadTitleEn.trim() || "",
+        // legacy
+        title: legacyTitle,
+        description: legacyDesc,
+
+        // EN/HI/ID
+        titleEn: uploadTitleEn.trim() || undefined,
+        titleHi: uploadTitleHi.trim() || undefined,
+        titleId: uploadTitleId.trim() || undefined,
+        descriptionEn: uploadDescriptionEn.trim() || undefined,
+        descriptionHi: uploadDescriptionHi.trim() || undefined,
+        descriptionId: uploadDescriptionId.trim() || undefined,
+
         category: uploadCategory as GalleryCategory,
-        filename: finalFilename || "（外部图片）",
-        description: uploadDescription.trim() || "",
-        descriptionEn: uploadDescriptionEn.trim() || "",
+        filename: finalFilename || "external-image",
         imageUrl: finalUrl || "",
         showOnHome: existing?.showOnHome ?? true,
         createdAt: existing?.createdAt || now,
@@ -167,77 +187,50 @@ export default function AdminGalleryPage() {
       };
 
       if (editingId && existing) {
-        // ⭐ 編輯模式：更新現有文件
         await updateDoc(doc(db, "jyc_gallery", editingId), payload);
-
-        setItems((prev: AdminGalleryItem[]) =>
-          prev.map(
-            (i): AdminGalleryItem =>
-              i.id === editingId ? { ...i, ...payload } : i
-          )
-        );
+        setItems((prev) => prev.map((i) => (i.id === editingId ? { ...i, ...payload } : i)));
       } else {
-        // ✅ 新增模式：新增文件
         const docRef = await addDoc(collection(db, "jyc_gallery"), payload);
-
-        const newItem: AdminGalleryItem = {
-          id: docRef.id,
-          ...payload,
-        };
-
-        // 更新本地 state，讓畫面立即顯示
-        setItems((prev) => [newItem, ...prev]);
+        setItems((prev) => [{ id: docRef.id, ...payload }, ...prev]);
       }
 
-      // 清空表單 & 退出編輯模式
       resetForm();
     } catch (err) {
       console.error("upload error", err);
-      alert("上传图片时发生错误，请稍后再试。");
+      alert("Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
     }
   };
 
-  // 切換「顯示在首頁輪播」
   const handleToggleShowOnHome = async (id: string) => {
     const target = items.find((i) => i.id === id);
     if (!target) return;
 
     const nextValue = !target.showOnHome;
-
-    // 先更新畫面
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, showOnHome: nextValue } : i))
-    );
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, showOnHome: nextValue } : i)));
 
     try {
-      await updateDoc(doc(db, "jyc_gallery", id), {
-        showOnHome: nextValue,
-      });
+      await updateDoc(doc(db, "jyc_gallery", id), { showOnHome: nextValue });
     } catch (err) {
       console.error("update showOnHome error", err);
-      alert("更新「显示在首页轮播」状态时发生错误。");
+      alert("Failed to update showOnHome.");
     }
   };
 
-  // 刪除記錄（這裡先只刪 Firestore，不刪實體檔案）
   const handleDelete = async (id: string) => {
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm("确定要删除这张图片记录吗？（不会删除 Firebase 实体档案）")
-    ) {
-      return;
+    if (typeof window !== "undefined") {
+      const ok = window.confirm("Delete this gallery record (Firestore only)?");
+      if (!ok) return;
     }
 
-    // 先更新畫面
     setItems((prev) => prev.filter((i) => i.id !== id));
 
     try {
       await deleteDoc(doc(db, "jyc_gallery", id));
     } catch (err) {
       console.error("delete gallery item error", err);
-      alert("删除记录时发生错误，请稍后再试。");
+      alert("Delete failed. Please try again.");
     }
   };
 
@@ -252,6 +245,21 @@ export default function AdminGalleryPage() {
     setUploadFileName(file.name);
   };
 
+  const categoryLabel = (c: GalleryCategory) => {
+    switch (c) {
+      case "设备展示":
+        return "Equipment";
+      case "生产线现场":
+        return "Production Line";
+      case "工程案例":
+        return "Projects";
+      case "展会与交流":
+        return "Exhibitions";
+      default:
+        return c;
+    }
+  };
+
   return (
     <main className="jyc-page">
       <Header />
@@ -259,16 +267,13 @@ export default function AdminGalleryPage() {
       <section className="jyc-section jyc-section-alt">
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>
-            图片 / Gallery 管理（内部）
+            Gallery (Admin)
           </h1>
           <p className="jyc-section-intro">
-            此页面用于管理网站上的设备照片、生产线现场与工程案例图片。
-            图片档案会上传到 Firebase Storage，而图片资讯
-            （中英文标题、说明、类别、是否显示在首页轮播）会写入 Firestore 的
-            <code> jyc_gallery </code> 集合，供首页与图片集页面共用。
+            Edit English / Hindi / Indonesian content. Legacy Chinese fields are kept for backward compatibility (not editable here).
           </p>
 
-          {/* 上传区 */}
+          {/* Upload / Edit */}
           <div
             style={{
               marginTop: 20,
@@ -280,19 +285,8 @@ export default function AdminGalleryPage() {
             }}
           >
             <h2 style={{ fontSize: 16, marginBottom: 8 }}>
-              {editingId ? "编辑图片" : "上传新图片"}
+              {editingId ? "Edit item" : "Add new item"}
             </h2>
-            <p
-              style={{
-                fontSize: 12,
-                color: "#777",
-                marginBottom: 12,
-              }}
-            >
-              建议直接选择图片档案，上传后系统会将档案存到
-              Firebase Storage 的 <code>jyc-gallery/</code> 资料夹，并取得网址做为预览。
-              若暂时没有档案，也可以只填「图片网址」作为外部图片来源。
-            </p>
 
             <div
               style={{
@@ -305,25 +299,10 @@ export default function AdminGalleryPage() {
               }}
             >
               <input type="file" onChange={handleFileChange} />
-              <input
-                type="text"
-                placeholder="图片标题（中文，选填）"
-                value={uploadTitle}
-                onChange={(e) => setUploadTitle(e.target.value)}
-                style={{
-                  flex: 1,
-                  minWidth: 140,
-                  padding: "6px 8px",
-                  borderRadius: 4,
-                  border: "1px solid #ccc",
-                  fontSize: 13,
-                }}
-              />
+
               <select
                 value={uploadCategory}
-                onChange={(e) =>
-                  setUploadCategory(e.target.value as GalleryCategory | "")
-                }
+                onChange={(e) => setUploadCategory(e.target.value as GalleryCategory | "")}
                 style={{
                   padding: "6px 10px",
                   borderRadius: 4,
@@ -331,24 +310,19 @@ export default function AdminGalleryPage() {
                   fontSize: 13,
                 }}
               >
-                <option value="">请选择类别</option>
-                <option value="设备展示">设备展示</option>
-                <option value="生产线现场">生产线现场</option>
-                <option value="工程案例">工程案例</option>
-                <option value="展会与交流">展会与交流</option>
+                <option value="">Select category</option>
+                <option value="设备展示">Equipment</option>
+                <option value="生产线现场">Production Line</option>
+                <option value="工程案例">Projects</option>
+                <option value="展会与交流">Exhibitions</option>
               </select>
             </div>
 
-            {/* 英文標題 */}
-            <div
-              style={{
-                marginBottom: 8,
-                fontSize: 13,
-              }}
-            >
+            {/* Titles */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
               <input
                 type="text"
-                placeholder="Image title (English, optional)"
+                placeholder="Title (English) *"
                 value={uploadTitleEn}
                 onChange={(e) => setUploadTitleEn(e.target.value)}
                 style={{
@@ -359,9 +333,35 @@ export default function AdminGalleryPage() {
                   fontSize: 13,
                 }}
               />
+              <input
+                type="text"
+                placeholder="Title (Hindi, optional)"
+                value={uploadTitleHi}
+                onChange={(e) => setUploadTitleHi(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  fontSize: 13,
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Title (Indonesian, optional)"
+                value={uploadTitleId}
+                onChange={(e) => setUploadTitleId(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  fontSize: 13,
+                }}
+              />
             </div>
 
-            {/* 冷/热设备分类 */}
+            {/* Machine temp */}
             <div
               style={{
                 marginBottom: 8,
@@ -371,14 +371,10 @@ export default function AdminGalleryPage() {
                 gap: 8,
               }}
             >
-              <span>设备类型（冷 / 热）：</span>
+              <span>Machine type:</span>
               <select
                 value={uploadMachineTemp}
-                onChange={(e) =>
-                  setUploadMachineTemp(
-                    e.target.value as MachineTemp | ""
-                  )
-                }
+                onChange={(e) => setUploadMachineTemp(e.target.value as MachineTemp | "")}
                 style={{
                   padding: "6px 10px",
                   borderRadius: 4,
@@ -386,24 +382,17 @@ export default function AdminGalleryPage() {
                   fontSize: 13,
                 }}
               >
-                <option value="">未分类 / 不区分</option>
-                <option value="hot">热加工设备</option>
-                <option value="cold">冷加工设备</option>
+                <option value="">Unspecified</option>
+                <option value="hot">Hot processing</option>
+                <option value="cold">Cold processing</option>
               </select>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                marginBottom: 8,
-                fontSize: 13,
-              }}
-            >
+            {/* URL + Descriptions */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
               <input
                 type="text"
-                placeholder="图片网址（选填：若未上传档案，可填 Firebase 以外的 https://... 或 /gallery/xxx.jpg）"
+                placeholder="Image URL (optional if uploaded)"
                 value={uploadImageUrl}
                 onChange={(e) => setUploadImageUrl(e.target.value)}
                 style={{
@@ -415,9 +404,9 @@ export default function AdminGalleryPage() {
                 }}
               />
               <textarea
-                placeholder="图片说明 / Description（中文，选填，会显示在卡片标题下方）"
-                value={uploadDescription}
-                onChange={(e) => setUploadDescription(e.target.value)}
+                placeholder="Description (English, optional)"
+                value={uploadDescriptionEn}
+                onChange={(e) => setUploadDescriptionEn(e.target.value)}
                 rows={2}
                 style={{
                   width: "100%",
@@ -429,9 +418,23 @@ export default function AdminGalleryPage() {
                 }}
               />
               <textarea
-                placeholder="Image description (English, optional)"
-                value={uploadDescriptionEn}
-                onChange={(e) => setUploadDescriptionEn(e.target.value)}
+                placeholder="Description (Hindi, optional)"
+                value={uploadDescriptionHi}
+                onChange={(e) => setUploadDescriptionHi(e.target.value)}
+                rows={2}
+                style={{
+                  width: "100%",
+                  padding: "6px 8px",
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                  fontSize: 13,
+                  resize: "vertical",
+                }}
+              />
+              <textarea
+                placeholder="Description (Indonesian, optional)"
+                value={uploadDescriptionId}
+                onChange={(e) => setUploadDescriptionId(e.target.value)}
                 rows={2}
                 style={{
                   width: "100%",
@@ -447,11 +450,11 @@ export default function AdminGalleryPage() {
             <button
               type="button"
               className="jyc-btn-primary"
-              style={{ fontSize: 13, padding: "8px 16px", minWidth: 120 }}
+              style={{ fontSize: 13, padding: "8px 16px", minWidth: 140 }}
               onClick={handleUpload}
               disabled={isUploading}
             >
-              {isUploading ? "处理中…" : editingId ? "保存修改" : "上传图片"}
+              {isUploading ? "Working..." : editingId ? "Save changes" : "Add item"}
             </button>
 
             {editingId && (
@@ -462,37 +465,27 @@ export default function AdminGalleryPage() {
                   marginLeft: 8,
                   fontSize: 13,
                   padding: "8px 16px",
-                  minWidth: 80,
+                  minWidth: 100,
                   borderRadius: 4,
                   border: "1px solid #999",
                   background: "#fff",
                   color: "#555",
                 }}
               >
-                取消编辑
+                Cancel
               </button>
             )}
 
             {uploadFileName && (
               <div style={{ fontSize: 12, color: "#777", marginTop: 6 }}>
-                已选择档案：{uploadFileName}
+                Selected file: {uploadFileName}
               </div>
             )}
           </div>
 
-          {/* 图片列表 */}
+          {/* List */}
           <div>
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>已上传图片列表</h2>
-            <p
-              style={{
-                fontSize: 12,
-                color: "#777",
-                marginBottom: 12,
-              }}
-            >
-              下方为目前保存在 Firestore 中的图片资料，首页与图片集页面会依据
-              「显示在首页轮播」勾选状态决定是否显示。
-            </p>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>Items</h2>
 
             {items.length === 0 ? (
               <div
@@ -505,7 +498,7 @@ export default function AdminGalleryPage() {
                   color: "#666",
                 }}
               >
-                目前尚未有任何图片资料。你可以透过上方上传区新增几笔资料。
+                No items yet.
               </div>
             ) : (
               <div
@@ -515,167 +508,118 @@ export default function AdminGalleryPage() {
                   gap: 16,
                 }}
               >
-                {items.map((item) => (
-                  <article
-                    key={item.id}
-                    style={{
-                      borderRadius: 8,
-                      border: "1px solid #e5e5e5",
-                      padding: 12,
-                      background: "#fff",
-                      fontSize: 13,
-                    }}
-                  >
-                    <div
-                      className="jyc-gallery-item"
+                {items.map((item) => {
+                  const displayTitle = item.titleEn || item.title || "(untitled)";
+                  return (
+                    <article
+                      key={item.id}
                       style={{
-                        marginBottom: 8,
-                        height: 120,
-                        position: "relative",
-                        backgroundColor: "#e0e0e0",
-                        backgroundImage: item.imageUrl
-                          ? `url(${item.imageUrl})`
-                          : undefined,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
+                        borderRadius: 8,
+                        border: "1px solid #e5e5e5",
+                        padding: 12,
+                        background: "#fff",
+                        fontSize: 13,
                       }}
                     >
-                      <span
-                        style={{
-                          position: "absolute",
-                          left: 8,
-                          bottom: 8,
-                          fontSize: 11,
-                          color: "#555",
-                          background: "rgba(255,255,255,0.9)",
-                          padding: "2px 6px",
-                          borderRadius: 4,
-                        }}
-                      >
-                        {item.filename}
-                      </span>
-                    </div>
-
-                    <div style={{ marginBottom: 2, fontWeight: 600 }}>
-                      {item.title}
-                    </div>
-                    {item.titleEn && (
                       <div
                         style={{
-                          marginBottom: 4,
-                          fontSize: 12,
-                          color: "#777",
+                          marginBottom: 8,
+                          height: 120,
+                          position: "relative",
+                          backgroundColor: "#e0e0e0",
+                          backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
                         }}
                       >
-                        EN：{item.titleEn}
-                      </div>
-                    )}
-
-                    {item.description && (
-                      <div
-                        style={{
-                          marginBottom: 2,
-                          color: "#555",
-                          fontSize: 12,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {item.description}
-                      </div>
-                    )}
-                    {item.descriptionEn && (
-                      <div
-                        style={{
-                          marginBottom: 4,
-                          color: "#777",
-                          fontSize: 12,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        EN：{item.descriptionEn}
-                      </div>
-                    )}
-
-                    <div style={{ marginBottom: 6, color: "#777" }}>
-                      类别：{item.category}
-                    </div>
-
-                    {/* 冷/热显示 */}
-                    {item.machineTemp && (
-                      <div
-                        style={{
-                          marginBottom: 6,
-                          color: "#777",
-                          fontSize: 12,
-                        }}
-                      >
-                        设备类型：
-                        {item.machineTemp === "hot"
-                          ? "热加工设备"
-                          : "冷加工设备"}
-                      </div>
-                    )}
-
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 8,
-                        marginTop: 4,
-                      }}
-                    >
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 4,
-                          fontSize: 12,
-                          color: "#555",
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={item.showOnHome}
-                          onChange={() => handleToggleShowOnHome(item.id)}
-                        />
-                        <span>显示在首页轮播</span>
-                      </label>
-
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button
-                          type="button"
-                          onClick={() => handleStartEdit(item)}
+                        <span
                           style={{
-                            fontSize: 12,
-                            padding: "4px 8px",
+                            position: "absolute",
+                            left: 8,
+                            bottom: 8,
+                            fontSize: 11,
+                            color: "#555",
+                            background: "rgba(255,255,255,0.9)",
+                            padding: "2px 6px",
                             borderRadius: 4,
-                            border: "1px solid #888",
-                            background: "#fff",
-                            color: "#333",
                           }}
                         >
-                          编辑
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item.id)}
-                          style={{
-                            fontSize: 12,
-                            padding: "4px 8px",
-                            borderRadius: 4,
-                            border: "1px solid #c33",
-                            background: "#fff",
-                            color: "#c33",
-                          }}
-                        >
-                          删除
-                        </button>
+                          {item.filename}
+                        </span>
                       </div>
-                    </div>
-                  </article>
-                ))}
+
+                      <div style={{ marginBottom: 2, fontWeight: 600 }}>
+                        {displayTitle}
+                      </div>
+
+                      {(item.titleHi || item.titleId) && (
+                        <div style={{ marginBottom: 4, fontSize: 12, color: "#777" }}>
+                          {item.titleHi ? `HI: ${item.titleHi} ` : ""}
+                          {item.titleId ? `ID: ${item.titleId}` : ""}
+                        </div>
+                      )}
+
+                      {(item.descriptionEn || item.description) && (
+                        <div style={{ marginBottom: 4, color: "#555", fontSize: 12, lineHeight: 1.5 }}>
+                          {item.descriptionEn || item.description}
+                        </div>
+                      )}
+
+                      <div style={{ marginBottom: 6, color: "#777" }}>
+                        Category: {categoryLabel(item.category)}
+                      </div>
+
+                      {item.machineTemp && (
+                        <div style={{ marginBottom: 6, color: "#777", fontSize: 12 }}>
+                          Machine: {item.machineTemp === "hot" ? "Hot" : "Cold"}
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#555" }}>
+                          <input
+                            type="checkbox"
+                            checked={item.showOnHome}
+                            onChange={() => handleToggleShowOnHome(item.id)}
+                          />
+                          <span>Show on home</span>
+                        </label>
+
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(item)}
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderRadius: 4,
+                              border: "1px solid #888",
+                              background: "#fff",
+                              color: "#333",
+                            }}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item.id)}
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderRadius: 4,
+                              border: "1px solid #c33",
+                              background: "#fff",
+                              color: "#c33",
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>

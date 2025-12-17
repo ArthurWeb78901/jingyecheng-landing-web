@@ -18,6 +18,7 @@ import {
   ArchiveMessage,
   archiveChatSessionToLocalStorage,
   ChatTexts,
+  LangCode,
 } from "./chatShared";
 
 type RemoteMessage = ArchiveMessage & {
@@ -35,7 +36,7 @@ type AdminSession = {
 
 type Props = {
   texts: ChatTexts;
-  isEnglish: boolean;
+  lang: LangCode;
   pathname: string;
   onHasUnreadChange?: (hasUnread: boolean) => void;
 };
@@ -51,19 +52,13 @@ function sanitizeAdminText(raw: string): string {
   return s;
 }
 
-export function AdminChatPanel({
-  texts,
-  isEnglish,
-  pathname,
-  onHasUnreadChange,
-}: Props) {
+export function AdminChatPanel({ texts, lang, pathname, onHasUnreadChange }: Props) {
   const [remoteMessages, setRemoteMessages] = useState<RemoteMessage[]>([]);
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [adminInput, setAdminInput] = useState("");
   const [liveNoticeSessions, setLiveNoticeSessions] = useState<string[]>([]);
 
-  // 👉 手动添加客人信息用的表单状态
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [leadName, setLeadName] = useState("");
   const [leadCompany, setLeadCompany] = useState("");
@@ -72,22 +67,14 @@ export function AdminChatPanel({
 
   const [lastAdminSendAt, setLastAdminSendAt] = useState<number>(0);
 
-  const hasUnread = useMemo(
-    () => sessions.some((s) => s.unreadCount > 0),
-    [sessions]
-  );
+  const hasUnread = useMemo(() => sessions.some((s) => s.unreadCount > 0), [sessions]);
 
-  // 把 hasUnread 回傳給 ChatBubble，讓泡泡顯示紅點
   useEffect(() => {
     onHasUnreadChange?.(hasUnread);
   }, [hasUnread, onHasUnreadChange]);
 
-  // 訂閱所有聊天室訊息
   useEffect(() => {
-    const q = query(
-      collection(db, "jyc_chat_messages"),
-      orderBy("createdAt", "asc")
-    );
+    const q = query(collection(db, "jyc_chat_messages"), orderBy("createdAt", "asc"));
 
     const unsub = onSnapshot(
       q,
@@ -96,11 +83,9 @@ export function AdminChatPanel({
           const data = d.data() as any;
           const c = data.createdAt;
           let ts = Date.now();
-          if (c && typeof c.toMillis === "function") {
-            ts = c.toMillis();
-          } else if (c && typeof c.seconds === "number") {
-            ts = c.seconds * 1000;
-          }
+          if (c && typeof c.toMillis === "function") ts = c.toMillis();
+          else if (c && typeof c.seconds === "number") ts = c.seconds * 1000;
+
           return {
             id: d.id,
             sessionId: data.sessionId || "unknown",
@@ -128,22 +113,15 @@ export function AdminChatPanel({
               g.lastAt = m.createdAt;
               g.lastText = m.text;
             }
-            if (!m.read && m.from === "user") {
-              g.unreadCount += 1;
-            }
+            if (!m.read && m.from === "user") g.unreadCount += 1;
           }
         }
 
-        const list = Object.values(grouped).sort(
-          (a, b) => b.lastAt - a.lastAt
-        );
+        const list = Object.values(grouped).sort((a, b) => b.lastAt - a.lastAt);
         setSessions(list);
-
         setActiveSessionId((prev) => prev || list[0]?.sessionId || null);
       },
-      (err) => {
-        console.error("listen chat messages error", err);
-      }
+      (err) => console.error("listen chat messages error", err)
     );
 
     return () => unsub();
@@ -159,7 +137,6 @@ export function AdminChatPanel({
     [remoteMessages, activeSessionId]
   );
 
-  // 👉 每当切换会话时，预填「需求」= 当前会话所有访客留言合并
   useEffect(() => {
     if (!activeSessionId) {
       setShowLeadForm(false);
@@ -176,12 +153,7 @@ export function AdminChatPanel({
     setLeadNeed(joined);
   }, [activeSessionId, remoteMessages]);
 
-  async function saveChatMessage(
-    from: "user" | "bot",
-    text: string,
-    sessionId: string,
-    read: boolean
-  ) {
+  async function saveChatMessage(from: "user" | "bot", text: string, sessionId: string, read: boolean) {
     try {
       await addDoc(collection(db, "jyc_chat_messages"), {
         sessionId,
@@ -203,9 +175,7 @@ export function AdminChatPanel({
 
     for (const m of toUpdate) {
       try {
-        await updateDoc(doc(db, "jyc_chat_messages", m.id), {
-          read: true,
-        });
+        await updateDoc(doc(db, "jyc_chat_messages", m.id), { read: true });
       } catch (err) {
         console.error("markSessionRead error", err);
       }
@@ -224,25 +194,15 @@ export function AdminChatPanel({
     let text = sanitizeAdminText(adminInput);
     if (!text) return;
 
-    // 長度限制
     if (text.length > MAX_ADMIN_MESSAGE_LENGTH) {
-      if (typeof window !== "undefined") {
-        window.alert(
-          isEnglish
-            ? `Message is too long. Please keep it within ${MAX_ADMIN_MESSAGE_LENGTH} characters.`
-            : `讯息内容过长，请控制在 ${MAX_ADMIN_MESSAGE_LENGTH} 个字以内。`
-        );
-      }
+      window.alert(texts.errTooLong(MAX_ADMIN_MESSAGE_LENGTH));
       text = text.slice(0, MAX_ADMIN_MESSAGE_LENGTH);
       setAdminInput(text);
       return;
     }
 
-    // 發送頻率限制（避免誤觸連點）
     const now = Date.now();
-    if (now - lastAdminSendAt < MIN_ADMIN_INTERVAL_MS) {
-      return;
-    }
+    if (now - lastAdminSendAt < MIN_ADMIN_INTERVAL_MS) return;
     setLastAdminSendAt(now);
 
     setAdminInput("");
@@ -255,81 +215,61 @@ export function AdminChatPanel({
   const handleSendTakeoverNotice = () => {
     if (!activeSessionId || liveSentForActive) return;
 
-    const msg = isEnglish
-      ? "You are now connected with a live operator. We will respond to your questions in real time."
-      : "现在由真人客服接管，我们会实时回复您的问题。";
+    const msg =
+      lang === "zh"
+        ? "现在由真人客服接管，我们会实时回复您的问题。"
+        : lang === "hi"
+        ? "अब आप लाइव ऑपरेटर से जुड़े हैं। हम रीयल-टाइम में उत्तर देंगे।"
+        : lang === "id"
+        ? "Sekarang Anda terhubung dengan operator. Kami akan membalas secara real-time."
+        : "You are now connected with a live operator. We will respond in real time.";
 
     void saveChatMessage("bot", msg, activeSessionId, true);
-    setLiveNoticeSessions((prev) =>
-      prev.includes(activeSessionId) ? prev : [...prev, activeSessionId]
-    );
+    setLiveNoticeSessions((prev) => (prev.includes(activeSessionId) ? prev : [...prev, activeSessionId]));
   };
 
-  // 👉 手动添加客人信息：写入 Firestore jyc_leads
   const handleSaveLeadManually = async () => {
     if (!activeSessionId) return;
 
     try {
       await addDoc(collection(db, "jyc_leads"), {
         sessionId: activeSessionId,
-        name: leadName || (isEnglish ? "Visitor" : "访客"),
+        name: leadName || texts.visitorLabel,
         company: leadCompany || "",
         contact: leadContact || "",
         need: leadNeed || "",
         createdAt: serverTimestamp(),
-        lang: isEnglish ? "en" : "zh",
+        lang,
+        language: lang,
         source: "admin-manual",
       });
 
-      if (typeof window !== "undefined") {
-        window.alert(
-          isEnglish
-            ? "Customer lead has been saved to the database."
-            : "已将该访客信息保存到后台客户列表。"
-        );
-      }
-
+      window.alert(lang === "zh" ? "已保存到客户列表。" : "Lead saved.");
       setShowLeadForm(false);
     } catch (err) {
       console.error("save lead manually error", err);
-      if (typeof window !== "undefined") {
-        window.alert(
-          isEnglish
-            ? "Failed to save customer lead. Please try again."
-            : "保存客人信息失败，请稍后重试。"
-        );
-      }
+      window.alert(lang === "zh" ? "保存失败，请稍后重试。" : "Failed to save lead.");
     }
   };
 
   const handleDeleteSession = async (sid: string | null) => {
     if (!sid) return;
 
-    if (typeof window !== "undefined") {
-      const ok = window.confirm(
-        isEnglish
-          ? "End this conversation, archive it to the customer list, and delete chat messages?"
-          : "确定要结束并清除此对话吗？会话记录将归档到客户资料页，同时从聊天室中删除。"
-      );
-      if (!ok) return;
-    }
-
-    const msgsForSession = remoteMessages.filter(
-      (m) => m.sessionId === sid
+    const ok = window.confirm(
+      lang === "zh"
+        ? "确定要结束并清除此对话吗？会话记录将归档到客户资料页，同时从聊天室中删除。"
+        : "End this conversation, archive it to leads, and delete chat messages?"
     );
+    if (!ok) return;
 
-    // 1) 归档到 localStorage（/admin/customers 会读取）
+    const msgsForSession = remoteMessages.filter((m) => m.sessionId === sid);
+
     archiveChatSessionToLocalStorage(
       sid,
-      msgsForSession.map((m) => ({
-        from: m.from,
-        text: m.text,
-        createdAt: m.createdAt,
-      })),
-      isEnglish
+      msgsForSession.map((m) => ({ from: m.from, text: m.text, createdAt: m.createdAt })),
+      lang
     );
 
-    // 2) Firestore 刪除
     for (const m of msgsForSession) {
       try {
         await deleteDoc(doc(db, "jyc_chat_messages", m.id));
@@ -338,13 +278,10 @@ export function AdminChatPanel({
       }
     }
 
-    // 3) 更新本地 state
     setRemoteMessages((prev) => prev.filter((m) => m.sessionId !== sid));
     setSessions((prev) => {
       const next = prev.filter((s) => s.sessionId !== sid);
-      setActiveSessionId((cur) =>
-        cur === sid ? next[0]?.sessionId || null : cur
-      );
+      setActiveSessionId((cur) => (cur === sid ? next[0]?.sessionId || null : cur));
       return next;
     });
     setLiveNoticeSessions((prev) => prev.filter((x) => x !== sid));
@@ -356,22 +293,13 @@ export function AdminChatPanel({
         <div>
           <div className="jyc-chat-title">{texts.adminTitle}</div>
           <div className="jyc-chat-status" style={{ fontSize: 11 }}>
-            {isEnglish
-              ? "You are logged in as admin. New visitor messages will appear here."
-              : "您目前已登入后台，新访客留言会出现在此视窗中。"}
+            {texts.adminLoggedInHint}
           </div>
         </div>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flex: 1,
-          minHeight: 260,
-          borderTop: "1px solid #eee",
-        }}
-      >
-        {/* 左側：會話列表 */}
+      <div style={{ display: "flex", flex: 1, minHeight: 260, borderTop: "1px solid #eee" }}>
+        {/* Sessions */}
         <div
           style={{
             width: 180,
@@ -382,9 +310,7 @@ export function AdminChatPanel({
           }}
         >
           {sessions.length === 0 && (
-            <div style={{ color: "#999", padding: "8px 4px" }}>
-              {texts.adminEmpty}
-            </div>
+            <div style={{ color: "#999", padding: "8px 4px" }}>{texts.adminEmpty}</div>
           )}
 
           {sessions.map((s) => (
@@ -396,8 +322,7 @@ export function AdminChatPanel({
                 width: "100%",
                 textAlign: "left",
                 border: "none",
-                background:
-                  s.sessionId === activeSessionId ? "#f0f0f0" : "white",
+                background: s.sessionId === activeSessionId ? "#f0f0f0" : "white",
                 borderRadius: 6,
                 padding: "6px 6px",
                 marginBottom: 4,
@@ -415,7 +340,7 @@ export function AdminChatPanel({
                 }}
               >
                 <span>
-                  {isEnglish ? "Visitor" : "访客"} {s.sessionId.slice(-4)}
+                  {texts.visitorLabel} {s.sessionId.slice(-4)}
                 </span>
                 {s.unreadCount > 0 && (
                   <span
@@ -442,34 +367,18 @@ export function AdminChatPanel({
                   overflow: "hidden",
                 }}
               >
-                {s.lastText || (isEnglish ? "(no text)" : "（无内容）")}
+                {s.lastText || texts.noTextPlaceholder}
               </div>
             </button>
           ))}
         </div>
 
-        {/* 右側：訊息 + 回覆區 */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        {/* Messages + input */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <div className="jyc-chat-messages">
             {activeMsgs.length === 0 ? (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#999",
-                  padding: "8px 4px",
-                }}
-              >
-                {sessions.length === 0
-                  ? texts.adminEmpty
-                  : isEnglish
-                  ? "Select a visitor session on the left."
-                  : "请在左侧选择一位访客的会话。"}
+              <div style={{ fontSize: 12, color: "#999", padding: "8px 4px" }}>
+                {sessions.length === 0 ? texts.adminEmpty : texts.adminSelectSessionHint}
               </div>
             ) : (
               activeMsgs.map((m) => (
@@ -477,9 +386,7 @@ export function AdminChatPanel({
                   key={m.id}
                   className={
                     "jyc-chat-message " +
-                    (m.from === "user"
-                      ? "jyc-chat-message-user"
-                      : "jyc-chat-message-bot")
+                    (m.from === "user" ? "jyc-chat-message-user" : "jyc-chat-message-bot")
                   }
                 >
                   {m.text}
@@ -490,12 +397,7 @@ export function AdminChatPanel({
 
           <form
             onSubmit={handleAdminSend}
-            style={{
-              padding: 8,
-              borderTop: "1px solid #eee",
-              display: "flex",
-              gap: 6,
-            }}
+            style={{ padding: 8, borderTop: "1px solid #eee", display: "flex", gap: 6 }}
           >
             <input
               type="text"
@@ -519,33 +421,21 @@ export function AdminChatPanel({
                 padding: "6px 10px",
                 borderRadius: 6,
                 border: "none",
-                background:
-                  !activeSessionId || !adminInput.trim() ? "#ccc" : "#333",
+                background: !activeSessionId || !adminInput.trim() ? "#ccc" : "#333",
                 color: "#fff",
                 fontSize: 13,
-                cursor:
-                  !activeSessionId || !adminInput.trim()
-                    ? "not-allowed"
-                    : "pointer",
+                cursor: !activeSessionId || !adminInput.trim() ? "not-allowed" : "pointer",
               }}
             >
               {texts.sendLabel}
             </button>
           </form>
 
-          {/* 底部說明 + 操作按鈕 + 手动添加客人信息 */}
-          <div
-            style={{
-              padding: "4px 10px 8px",
-              fontSize: 11,
-              color: "#777",
-            }}
-          >
+          <div style={{ padding: "4px 10px 8px", fontSize: 11, color: "#777" }}>
             <div style={{ marginBottom: 4 }}>{texts.adminHint}</div>
 
             {activeSessionId && (
               <>
-                {/* 手动添加客人信息表单 */}
                 {showLeadForm && (
                   <div
                     style={{
@@ -559,80 +449,38 @@ export function AdminChatPanel({
                       gap: 6,
                     }}
                   >
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: 11,
-                      }}
-                    >
-                      {isEnglish
-                        ? "Add customer lead manually"
-                        : "手动添加客人信息"}
+                    <div style={{ fontWeight: 600, fontSize: 11 }}>
+                      {lang === "zh" ? "手动添加客人信息" : "Add lead manually"}
                     </div>
                     <input
                       type="text"
                       value={leadName}
                       onChange={(e) => setLeadName(e.target.value)}
-                      placeholder={isEnglish ? "Name" : "姓名"}
-                      style={{
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        border: "1px solid #ccc",
-                        fontSize: 12,
-                      }}
+                      placeholder={lang === "zh" ? "姓名" : "Name"}
+                      style={{ padding: "4px 6px", borderRadius: 4, border: "1px solid #ccc", fontSize: 12 }}
                     />
                     <input
                       type="text"
                       value={leadCompany}
                       onChange={(e) => setLeadCompany(e.target.value)}
-                      placeholder={isEnglish ? "Company" : "公司 / 单位"}
-                      style={{
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        border: "1px solid #ccc",
-                        fontSize: 12,
-                      }}
+                      placeholder={lang === "zh" ? "公司 / 单位" : "Company"}
+                      style={{ padding: "4px 6px", borderRadius: 4, border: "1px solid #ccc", fontSize: 12 }}
                     />
                     <input
                       type="text"
                       value={leadContact}
                       onChange={(e) => setLeadContact(e.target.value)}
-                      placeholder={
-                        isEnglish
-                          ? "Contact (phone / email)"
-                          : "联系方式（手机 / 邮箱）"
-                      }
-                      style={{
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        border: "1px solid #ccc",
-                        fontSize: 12,
-                      }}
+                      placeholder={lang === "zh" ? "联系方式（手机 / 邮箱）" : "Contact (phone/email)"}
+                      style={{ padding: "4px 6px", borderRadius: 4, border: "1px solid #ccc", fontSize: 12 }}
                     />
                     <textarea
                       value={leadNeed}
                       onChange={(e) => setLeadNeed(e.target.value)}
-                      placeholder={
-                        isEnglish
-                          ? "Requirement / notes"
-                          : "需求说明 / 备注（可自动带入聊天内容）"
-                      }
+                      placeholder={lang === "zh" ? "需求说明 / 备注" : "Requirement / notes"}
                       rows={3}
-                      style={{
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        border: "1px solid #ccc",
-                        fontSize: 12,
-                        resize: "vertical",
-                      }}
+                      style={{ padding: "4px 6px", borderRadius: 4, border: "1px solid #ccc", fontSize: 12, resize: "vertical" }}
                     />
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 6,
-                      }}
-                    >
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
                       <button
                         type="button"
                         onClick={() => setShowLeadForm(false)}
@@ -645,54 +493,35 @@ export function AdminChatPanel({
                           cursor: "pointer",
                         }}
                       >
-                        {isEnglish ? "Cancel" : "取消"}
+                        {lang === "zh" ? "取消" : "Cancel"}
                       </button>
                       <button
                         type="button"
                         onClick={handleSaveLeadManually}
-                        disabled={
-                          !leadName.trim() &&
-                          !leadCompany.trim() &&
-                          !leadContact.trim() &&
-                          !leadNeed.trim()
-                        }
+                        disabled={!leadName.trim() && !leadCompany.trim() && !leadContact.trim() && !leadNeed.trim()}
                         style={{
                           borderRadius: 999,
                           border: "none",
                           padding: "2px 10px",
                           background:
-                            !leadName.trim() &&
-                            !leadCompany.trim() &&
-                            !leadContact.trim() &&
-                            !leadNeed.trim()
+                            !leadName.trim() && !leadCompany.trim() && !leadContact.trim() && !leadNeed.trim()
                               ? "#ccc"
                               : "#333",
                           color: "#fff",
                           fontSize: 11,
                           cursor:
-                            !leadName.trim() &&
-                            !leadCompany.trim() &&
-                            !leadContact.trim() &&
-                            !leadNeed.trim()
+                            !leadName.trim() && !leadCompany.trim() && !leadContact.trim() && !leadNeed.trim()
                               ? "not-allowed"
                               : "pointer",
                         }}
                       >
-                        {isEnglish ? "Save lead" : "保存客人信息"}
+                        {lang === "zh" ? "保存" : "Save"}
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* 底部按钮行 */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 8,
-                    flexWrap: "wrap",
-                  }}
-                >
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
                   <button
                     type="button"
                     onClick={() => setShowLeadForm((v) => !v)}
@@ -706,9 +535,7 @@ export function AdminChatPanel({
                       cursor: "pointer",
                     }}
                   >
-                    {isEnglish
-                      ? "Add customer manually"
-                      : "手动添加客人信息"}
+                    {lang === "zh" ? "手动添加客人信息" : "Add lead"}
                   </button>
 
                   <button
@@ -726,12 +553,12 @@ export function AdminChatPanel({
                     }}
                   >
                     {liveSentForActive
-                      ? isEnglish
-                        ? "Live mode notified"
-                        : "已通知真人接管"
-                      : isEnglish
-                      ? "Notify live operator"
-                      : "真人接管提示"}
+                      ? lang === "zh"
+                        ? "已通知真人接管"
+                        : "Live notified"
+                      : lang === "zh"
+                      ? "真人接管提示"
+                      : "Notify live"}
                   </button>
 
                   <button
@@ -746,7 +573,7 @@ export function AdminChatPanel({
                       cursor: "pointer",
                     }}
                   >
-                    {isEnglish ? "Close & clear chat" : "结束并清除此对话"}
+                    {lang === "zh" ? "结束并清除此对话" : "Close & clear chat"}
                   </button>
                 </div>
               </>
