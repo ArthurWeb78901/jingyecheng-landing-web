@@ -6,7 +6,14 @@ import { Footer } from "@/components/Footer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { ContactFormHi } from "@/components/ContactFormHi";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, orderBy, query, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 
 type HomeGalleryItem = {
   id: string;
@@ -72,7 +79,10 @@ export default function HomeHi() {
   useEffect(() => {
     async function loadHomeGallery() {
       try {
-        const q = query(collection(db, "jyc_gallery"), orderBy("createdAt", "desc"));
+        const q = query(
+          collection(db, "jyc_gallery"),
+          orderBy("createdAt", "desc")
+        );
         const snap = await getDocs(q);
 
         const all: HomeGalleryItem[] = snap.docs.map((d) => {
@@ -108,7 +118,10 @@ export default function HomeHi() {
           .map((d) => {
             const data = d.data() as any;
             const homeOrderRaw = data.homeOrder;
-            const homeOrder = typeof homeOrderRaw === "number" ? homeOrderRaw : Number.MAX_SAFE_INTEGER;
+            const homeOrder =
+              typeof homeOrderRaw === "number"
+                ? homeOrderRaw
+                : Number.MAX_SAFE_INTEGER;
 
             return {
               id: d.id,
@@ -129,8 +142,14 @@ export default function HomeHi() {
           .filter((p) => p.enabled);
 
         raw.sort((a, b) => {
-          const ao = typeof a.homeOrder === "number" ? a.homeOrder : Number.MAX_SAFE_INTEGER;
-          const bo = typeof b.homeOrder === "number" ? b.homeOrder : Number.MAX_SAFE_INTEGER;
+          const ao =
+            typeof a.homeOrder === "number"
+              ? a.homeOrder
+              : Number.MAX_SAFE_INTEGER;
+          const bo =
+            typeof b.homeOrder === "number"
+              ? b.homeOrder
+              : Number.MAX_SAFE_INTEGER;
           if (ao !== bo) return ao - bo;
 
           const aName = pickTextHi(a.nameHi, a.nameEn, a.name);
@@ -148,7 +167,10 @@ export default function HomeHi() {
 
   useEffect(() => {
     if (homeItems.length <= 1) return;
-    const timer = setInterval(() => setCurrentSlide((prev) => (prev + 1) % homeItems.length), 5000);
+    const timer = setInterval(
+      () => setCurrentSlide((prev) => (prev + 1) % homeItems.length),
+      5000
+    );
     return () => clearInterval(timer);
   }, [homeItems.length]);
 
@@ -175,15 +197,14 @@ export default function HomeHi() {
       <section className="jyc-hero jyc-hero-en">
         <div className="jyc-hero-inner">
           <div className="jyc-hero-text">
-            <h1>Seamless Pipe Mills और Rolling Equipment के लिए Turn-key Solutions</h1>
+            <h1>सीमलेस पाइप मिल्स और रोलिंग उपकरण के लिए टर्न-की समाधान</h1>
             <p>
-              1993 में स्थापित, Taiyuan Jingyecheng Steel Equip Ltd. hot-rolled
-              seamless steel pipe production के उपकरणों में विशेषज्ञ है—जैसे
-              piercing mills, pipe rolling mills, sizing / reducing mills,
-              straightening machines, cooling beds, hot centering machines और
-              cold drawing machines। हम professional design, manufacturing और
-              service capabilities के साथ विश्वसनीय production lines और तकनीकी
-              समर्थन प्रदान करते हैं।
+              1993 में स्थापित, Taiyuan Jingyecheng Steel Equip Ltd. हॉट-रोल्ड
+              सीमलेस स्टील पाइप उत्पादन उपकरणों में विशेषज्ञ है—जैसे पियर्सिंग
+              मिल्स, पाइप रोलिंग मिल्स, साइजिंग/रिड्यूसिंग मिल्स, स्ट्रेटनिंग
+              मशीनें, कूलिंग बेड्स, हॉट सेंट्रिंग मशीनें और कोल्ड ड्रॉइंग
+              मशीनें। हम पेशेवर डिज़ाइन, निर्माण और सेवा क्षमताओं के साथ
+              विश्वसनीय प्रोडक्शन लाइन्स और तकनीकी समर्थन प्रदान करते हैं।
             </p>
 
             <div className="jyc-hero-actions">
@@ -204,8 +225,8 @@ export default function HomeHi() {
 
         <p className="jyc-section-intro">
           {products.length === 0
-            ? 'अभी admin के "Product Management" पेज में कोई उत्पाद कॉन्फ़िगर नहीं है। जैसे ही आप उत्पाद जोड़कर "Show on website" सक्षम करेंगे, वे यहाँ दिखेंगे।'
-            : "नीचे मुख्य उत्पाद श्रेणियाँ दी गई हैं। विस्तृत line configurations और technical specifications Products पेज पर उपलब्ध हैं।"}
+            ? 'अभी एडमिन के "उत्पाद प्रबंधन" पेज में कोई उत्पाद कॉन्फ़िगर नहीं है। जैसे ही आप उत्पाद जोड़कर "वेबसाइट पर दिखाएँ" सक्षम करेंगे, वे यहाँ दिखाई देंगे।'
+            : "नीचे मुख्य उत्पाद श्रेणियाँ दी गई हैं। विस्तृत लाइन कॉन्फ़िगरेशन और तकनीकी विनिर्देश (Technical Specifications) उत्पाद पेज पर उपलब्ध हैं।"}
         </p>
 
         {products.length > 0 && (
@@ -235,7 +256,11 @@ export default function HomeHi() {
               ‹
             </button>
 
-            <div className="jyc-home-products-row" ref={productsRowRef} aria-label="Main products horizontal list">
+            <div
+              className="jyc-home-products-row"
+              ref={productsRowRef}
+              aria-label="मुख्य उत्पादों की क्षैतिज सूची"
+            >
               {products.map((p, index) => {
                 const thumb = productThumbs[index];
                 const bgUrl = p.imageUrl || thumb?.imageUrl || "";
@@ -245,7 +270,12 @@ export default function HomeHi() {
 
                 return (
                   <article key={p.id} className="jyc-card">
-                    <div className="jyc-card-image" style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined} />
+                    <div
+                      className="jyc-card-image"
+                      style={
+                        bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined
+                      }
+                    />
                     <h3>{displayName}</h3>
                     <p>{displayBrief}</p>
                     <button
@@ -305,18 +335,24 @@ export default function HomeHi() {
         <div className="jyc-about-header">
           {siteConfig.logoImageUrl && (
             <div className="jyc-about-logo-wrap">
-              <img src={siteConfig.logoImageUrl} alt="Company logo" className="jyc-about-logo" />
+              <img
+                src={siteConfig.logoImageUrl}
+                alt="कंपनी का लोगो"
+                className="jyc-about-logo"
+              />
             </div>
           )}
           <h2>हमारे बारे में</h2>
         </div>
         <p>
-          Taiyuan Jingyecheng Heavy Equipment Ltd. ताइयुआन, शानक्सी प्रांत में स्थित है,
-          जिसका साइट क्षेत्र लगभग 70,000 m² है। कंपनी seamless steel pipes के लिए
-          rolling equipment में विशेषज्ञ है—piercing mills, pipe rolling mills, sizing / reducing mills,
-          straightening machines, cooling beds, hot centering machines और cold drawing machines सहित।
-          हम design, manufacturing और sales को एकीकृत करते हैं, और line planning से लेकर installation,
-          commissioning और after-sales support तक पूर्ण सेवाएँ प्रदान करते हैं।
+          Taiyuan Jingyecheng Heavy Equipment Ltd. ताइयुआन, शानक्सी प्रांत में
+          स्थित है, जिसका साइट क्षेत्र लगभग 70,000 m² है। कंपनी सीमलेस स्टील
+          पाइप्स के लिए रोलिंग उपकरण में विशेषज्ञ है—जिसमें पियर्सिंग मिल्स, पाइप
+          रोलिंग मिल्स, साइजिंग/रिड्यूसिंग मिल्स, स्ट्रेटनिंग मशीनें, कूलिंग
+          बेड्स, हॉट सेंट्रिंग मशीनें और कोल्ड ड्रॉइंग मशीनें शामिल हैं। हम
+          डिज़ाइन, निर्माण और बिक्री को एकीकृत करते हैं, और लाइन प्लानिंग से लेकर
+          इंस्टॉलेशन, कमीशनिंग और बिक्री-पश्चात (After-sales) सपोर्ट तक पूर्ण
+          सेवाएँ प्रदान करते हैं।
         </p>
       </section>
 
@@ -324,9 +360,10 @@ export default function HomeHi() {
       <section id="gallery" className="jyc-section">
         <h2>गैलरी</h2>
         <p className="jyc-section-intro">
-          प्रमुख उपकरणों और प्रोडक्शन लाइनों की तस्वीरें—जैसे piercing mills, pipe rolling mills,
-          sizing / reducing mills, straightening machines, cooling beds, hot centering machines और
-          cold drawing machines—साथ ही typical project references।
+          प्रमुख उपकरणों और प्रोडक्शन लाइनों की तस्वीरें—जैसे पियर्सिंग मिल्स, पाइप
+          रोलिंग मिल्स, साइजिंग/रिड्यूसिंग मिल्स, स्ट्रेटनिंग मशीनें, कूलिंग
+          बेड्स, हॉट सेंट्रिंग मशीनें और कोल्ड ड्रॉइंग मशीनें—साथ ही प्रतिनिधि
+          प्रोजेक्ट रेफ़रेंसेज़।
         </p>
 
         {homeItems.length > 0 && (
@@ -334,20 +371,33 @@ export default function HomeHi() {
             <div className="jyc-home-slideshow-main">
               <div
                 className="jyc-home-slideshow-main-inner"
-                style={currentItem?.imageUrl ? { backgroundImage: `url(${currentItem.imageUrl})` } : undefined}
+                style={
+                  currentItem?.imageUrl
+                    ? { backgroundImage: `url(${currentItem.imageUrl})` }
+                    : undefined
+                }
               />
             </div>
             <div className="jyc-home-slideshow-caption">
-              {pickTextHi(currentItem?.titleHi, currentItem?.titleEn, currentItem?.title)}
+              {pickTextHi(
+                currentItem?.titleHi,
+                currentItem?.titleEn,
+                currentItem?.title
+              )}
             </div>
             <div className="jyc-home-slideshow-dots">
               {homeItems.map((_, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  className={"jyc-home-slideshow-dot" + (idx === currentSlide ? " jyc-home-slideshow-dot-active" : "")}
+                  className={
+                    "jyc-home-slideshow-dot" +
+                    (idx === currentSlide
+                      ? " jyc-home-slideshow-dot-active"
+                      : "")
+                  }
                   onClick={() => setCurrentSlide(idx)}
-                  aria-label={`Slide ${idx + 1}`}
+                  aria-label={`स्लाइड ${idx + 1}`}
                 />
               ))}
             </div>
@@ -356,12 +406,18 @@ export default function HomeHi() {
 
         <div className="jyc-gallery-grid">
           {galleryItems.length === 0
-            ? [1,2,3,4,5,6,7,8,9,10,11,12].map((i) => <div key={i} className="jyc-gallery-thumb" />)
+            ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
+                <div key={i} className="jyc-gallery-thumb" />
+              ))
             : galleryItems.map((item) => (
                 <div
                   key={item.id}
                   className="jyc-gallery-thumb"
-                  style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}
+                  style={
+                    item.imageUrl
+                      ? { backgroundImage: `url(${item.imageUrl})` }
+                      : undefined
+                  }
                   title={pickTextHi(item.titleHi, item.titleEn, item.title)}
                 />
               ))}
@@ -372,8 +428,9 @@ export default function HomeHi() {
       <section id="contact" className="jyc-section jyc-section-alt">
         <h2>संपर्क करें</h2>
         <p className="jyc-section-intro">
-          कृपया अपनी संपर्क जानकारी और परियोजना आवश्यकताएँ छोड़ें। हमारी sales टीम जल्द से जल्द आपसे संपर्क करेगी।
-          आप हमें सीधे कॉल या ईमेल भी कर सकते हैं।
+          कृपया अपनी संपर्क जानकारी और परियोजना आवश्यकताएँ छोड़ें। हमारी बिक्री
+          टीम जल्द से जल्द आपसे संपर्क करेगी। आप हमें सीधे कॉल या ईमेल भी कर सकते
+          हैं।
         </p>
 
         <ContactFormHi />

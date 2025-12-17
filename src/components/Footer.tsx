@@ -25,11 +25,11 @@ const FOOTER_DEFAULTS: Required<Pick<SiteConfigForFooter, "phone" | "email">> &
   footerHi: "",
   footerId: "",
 
-  addressEn: "Baihuagu, Taiyuan, Shanxi Province, China",
+  addressEn: "",
   addressHi: "",
   addressId: "",
 
-  phone: "0351-2028121",
+  phone: "",
   email: "wendy@jycsteelequip.com",
 };
 

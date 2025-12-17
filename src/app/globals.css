@@ -795,6 +795,13 @@ body {
     background-position: center;
     scroll-snap-align: center;
   }
+   .jyc-lang-select {
+    padding: 8px 30px 8px 12px;
+    font-size: 13px;
+  }
+  .jyc-lang-select-wrap::after {
+    right: 12px;
+  }
 }
 
 /* ✅ 全站段落：两端对齐（桌机 + 手机） */
@@ -855,6 +862,61 @@ html:lang(zh-Hans) .jyc-page p {
 .jyc-hero .jyc-btn-secondary:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
+}
+
+/* ===== Header 语言下拉美化（select） ===== */
+.jyc-lang-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 自画右侧箭头 */
+.jyc-lang-select-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: #666;
+  pointer-events: none;
+}
+
+.jyc-lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  padding: 6px 28px 6px 10px; /* 右边留空间给箭头 */
+  border-radius: 999px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #222;
+
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+}
+
+.jyc-lang-select:hover {
+  border-color: #bdbdbd;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.jyc-lang-select:active {
+  transform: translateY(1px);
+}
+
+.jyc-lang-select:focus-visible {
+  outline: none;
+  border-color: #333;
+  box-shadow: 0 0 0 3px rgba(51,51,51,0.15);
 }
 
 /* （可选）如果你也想让 Contact Us 更“高级”一点，可以打开这段

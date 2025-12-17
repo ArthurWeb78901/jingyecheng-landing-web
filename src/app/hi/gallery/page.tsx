@@ -30,13 +30,13 @@ const CATEGORY_META_HI: {
     key: "设备展示",
     title: "उपकरण अवलोकन",
     description:
-      "Seamless pipe mills और rolling mills के प्रमुख उपकरण, मुख्य यूनिट्स और संरचनात्मक विवरण सहित।",
+      "सीमलेस पाइप मिल्स और रोलिंग मिल्स के प्रमुख उपकरण—मुख्य यूनिट्स और संरचनात्मक विवरण सहित।",
   },
   {
     key: "生产线现场",
     title: "प्रोडक्शन लाइन साइट्स",
     description:
-      "पूर्ण प्रोडक्शन लाइनों की ऑन-साइट तस्वीरें—लेआउट और ऑपरेटिंग वातावरण सहित।",
+      "पूर्ण प्रोडक्शन लाइनों की ऑन-साइट तस्वीरें—लेआउट और संचालन वातावरण सहित।",
   },
   {
     key: "工程案例",
@@ -46,9 +46,9 @@ const CATEGORY_META_HI: {
   },
   {
     key: "展会与交流",
-    title: "प्रदर्शनियाँ और तकनीकी交流",
+    title: "प्रदर्शनियाँ और तकनीकी आदान-प्रदान",
     description:
-      "उद्योग प्रदर्शनियों और ग्राहकों/साझेदारों के साथ तकनीकी交流 गतिविधियों की तस्वीरें।",
+      "उद्योग प्रदर्शनियों तथा ग्राहकों/साझेदारों के साथ तकनीकी आदान-प्रदान गतिविधियों की तस्वीरें।",
   },
 ];
 
@@ -67,7 +67,10 @@ export default function GalleryHiPage() {
   useEffect(() => {
     async function loadGallery() {
       try {
-        const q = query(collection(db, "jyc_gallery"), orderBy("createdAt", "desc"));
+        const q = query(
+          collection(db, "jyc_gallery"),
+          orderBy("createdAt", "desc")
+        );
         const snap = await getDocs(q);
 
         const list: GalleryDoc[] = snap.docs.map((d) => {
@@ -114,12 +117,16 @@ export default function GalleryHiPage() {
 
   const hotSections = CATEGORY_META_HI.map((meta) => ({
     ...meta,
-    items: items.filter((it) => it.machineTemp === "hot" && it.category === meta.key),
+    items: items.filter(
+      (it) => it.machineTemp === "hot" && it.category === meta.key
+    ),
   })).filter((sec) => sec.items.length > 0);
 
   const coldSections = CATEGORY_META_HI.map((meta) => ({
     ...meta,
-    items: items.filter((it) => it.machineTemp === "cold" && it.category === meta.key),
+    items: items.filter(
+      (it) => it.machineTemp === "cold" && it.category === meta.key
+    ),
   })).filter((sec) => sec.items.length > 0);
 
   const hasHot = hotSections.length > 0;
@@ -155,7 +162,9 @@ export default function GalleryHiPage() {
               style={{
                 position: "relative",
                 backgroundColor: "#e0e0e0",
-                backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined,
+                backgroundImage: item.imageUrl
+                  ? `url(${item.imageUrl})`
+                  : undefined,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
@@ -191,8 +200,10 @@ export default function GalleryHiPage() {
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>गैलरी</h1>
           <p className="jyc-section-intro">
-            Hot और cold processing equipment, production lines और project references
-            की फोटो गैलरी।
+            प्रमुख उपकरणों और प्रोडक्शन लाइनों की तस्वीरें—जैसे पियर्सिंग मिल्स, पाइप
+            रोलिंग मिल्स, साइजिंग/रिड्यूसिंग मिल्स, स्ट्रेटनिंग मशीनें, कूलिंग बेड्स,
+            हॉट सेंट्रिंग मशीनें और कोल्ड ड्रॉइंग मशीनें—साथ ही सामान्य/प्रतिनिधि
+            प्रोजेक्ट संदर्भ।
           </p>
 
           {loading ? (
@@ -208,7 +219,7 @@ export default function GalleryHiPage() {
               {hasHot && (
                 <section style={{ marginTop: 24 }}>
                   <h2 style={{ fontSize: "20px", marginBottom: 6 }}>
-                    Hot Processing Equipment
+                    हॉट प्रोसेसिंग उपकरण
                   </h2>
                   <p
                     style={{
@@ -218,9 +229,9 @@ export default function GalleryHiPage() {
                       lineHeight: 1.6,
                     }}
                   >
-                    Hot rolling और thermal processing में उपयोग होने वाले उपकरण और
-                    प्रोडक्शन लाइनें—piercing mills, hot rolling mills और संबंधित
-                    auxiliary units सहित।
+                    हॉट रोलिंग और थर्मल प्रोसेसिंग में उपयोग होने वाले उपकरण और
+                    प्रोडक्शन लाइनें—पियर्सिंग मिल्स, हॉट रोलिंग मिल्स तथा संबंधित
+                    सहायक यूनिट्स सहित।
                   </p>
 
                   {hotSections.map(renderCategorySection)}
@@ -230,7 +241,7 @@ export default function GalleryHiPage() {
               {hasCold && (
                 <section style={{ marginTop: 32 }}>
                   <h2 style={{ fontSize: "20px", marginBottom: 6 }}>
-                    Cold Processing Equipment
+                    कोल्ड प्रोसेसिंग उपकरण
                   </h2>
                   <p
                     style={{
@@ -240,9 +251,9 @@ export default function GalleryHiPage() {
                       lineHeight: 1.6,
                     }}
                   >
-                    Cold drawing और cold finishing प्रक्रियाओं में उपयोग होने वाले
-                    उपकरण—जैसे cold drawing benches, straightening machines और संबंधित
-                    auxiliaries।
+                    कोल्ड ड्रॉइंग और कोल्ड फिनिशिंग प्रक्रियाओं में उपयोग होने वाले
+                    उपकरण—जैसे कोल्ड ड्रॉइंग बेंच, स्ट्रेटनिंग मशीनें तथा संबंधित
+                    सहायक उपकरण।
                   </p>
 
                   {coldSections.map(renderCategorySection)}
