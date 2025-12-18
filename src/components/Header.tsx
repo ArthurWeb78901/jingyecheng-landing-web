@@ -160,6 +160,7 @@ export function Header() {
             onChange={(e) => onLocaleChange(e.target.value as Locale)}
             aria-label="Language"
           >
+            <option value="hi">Hindi</option>
             <option value="en">EN</option>
           </select>
         </div>
