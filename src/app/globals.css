@@ -77,7 +77,7 @@ body {
 
 .jyc-logo-text {
   font-size: 18px;
-  font-weight: 800;      /* 原本 600 -> 700 更有力 */
+  font-weight: 700;      /* 原本 600 -> 700 更有力 */
   letter-spacing: 0.02em;/* 原本 0.03 稍微收斂更穩重 */
   white-space: nowrap;
 }
@@ -833,14 +833,9 @@ html:lang(zh-Hans) .jyc-page p {
   outline-offset: 2px;
 }
 
-/* 🔒 Force language UI behavior */
-.jyc-header-right .jyc-lang-switch {
-  display: none !important;   /* desktop/tablet: hide buttons */
-}
-
-.jyc-header-right .jyc-lang-select-wrap {
-  display: inline-flex !important; /* desktop/tablet: show select */
-}
+/* ✅ Desktop/Tablet: show select, hide buttons */
+.jyc-lang-switch { display: none; }
+.jyc-lang-select-wrap { display: inline-flex; }
 
 /* ===============================
    📱 手机与小平板（統一整合版）
@@ -852,6 +847,9 @@ html:lang(zh-Hans) .jyc-page p {
     gap: 10px;
   }
 
+  .jyc-lang-switch { display: flex; gap: 8px; flex-wrap: wrap; }
+  .jyc-lang-select-wrap { display: none; }
+  
   /* Nav：強制單行（五個項目不掉行） */
   .jyc-nav {
     order: 3;
