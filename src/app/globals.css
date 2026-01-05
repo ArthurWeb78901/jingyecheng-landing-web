@@ -52,7 +52,7 @@
 }
 
 /* ===============================
-   ✅ Industrial / Copper Design Tokens
+   ✅ Industrial / Copper Design Tokens (Unified)
    =============================== */
 :root {
   --jyc-bg: #f6f7f9;
@@ -61,7 +61,6 @@
 
   --jyc-text: #0b1220;
   --jyc-muted: #5b667a;
-
   --jyc-line: rgba(15, 23, 42, 0.10);
 
   /* Graphite / Steel */
@@ -83,6 +82,37 @@
   --jyc-shadow-md: 0 14px 36px rgba(15, 23, 42, 0.14);
 
   --jyc-max: 1120px;
+
+  /* Pro polish tokens */
+  --jyc-ring: rgba(192, 106, 44, 0.28);
+  --jyc-ring-strong: rgba(192, 106, 44, 0.44);
+
+  --jyc-glow-copper: 0 0 0 1px rgba(192, 106, 44, 0.20),
+    0 18px 40px rgba(192, 106, 44, 0.18);
+  --jyc-glow-ink: 0 0 0 1px rgba(15, 23, 42, 0.10),
+    0 18px 42px rgba(15, 23, 42, 0.16);
+
+  --jyc-ease: cubic-bezier(.2,.8,.2,1);
+  --jyc-ease-out: cubic-bezier(.16,1,.3,1);
+  --jyc-speed-1: 140ms;
+  --jyc-speed-2: 220ms;
+
+  /* very subtle tech grid */
+  --jyc-grid:
+    repeating-linear-gradient(
+      90deg,
+      rgba(15, 23, 42, 0.03) 0px,
+      rgba(15, 23, 42, 0.03) 1px,
+      transparent 1px,
+      transparent 22px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(15, 23, 42, 0.025) 0px,
+      rgba(15, 23, 42, 0.025) 1px,
+      transparent 1px,
+      transparent 22px
+    );
 }
 
 /* ===============================
@@ -93,15 +123,8 @@ body {
   margin: 0;
   padding: 0;
 
-  /* ✅ Gotham first */
   font-family: "Gotham", "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
     -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
-
-  /* ✅ Copper-friendly background (remove blue casts) */
-  background:
-    radial-gradient(1200px 600px at 12% 0%, rgba(192, 106, 44, 0.12), transparent 62%),
-    radial-gradient(900px 520px at 88% 8%, rgba(20, 26, 34, 0.10), transparent 60%),
-    var(--jyc-bg);
 
   color: var(--jyc-text);
 }
@@ -112,10 +135,72 @@ body {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Copper-friendly + subtle grid */
+  background-image:
+    var(--jyc-grid),
+    radial-gradient(1200px 600px at 12% 0%, rgba(192, 106, 44, 0.12), transparent 62%),
+    radial-gradient(900px 520px at 88% 8%, rgba(20, 26, 34, 0.10), transparent 60%);
+  background-color: var(--jyc-bg);
+}
+
+/* Selection */
+::selection {
+  background: rgba(192, 106, 44, 0.25);
+  color: var(--jyc-text);
+}
+
+/* Smooth scroll */
+html:focus-within {
+  scroll-behavior: smooth;
+}
+
+/* Focus ring: pro */
+:where(a, button, input, textarea, select):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--jyc-ring), 0 0 0 1px rgba(15, 23, 42, 0.12) inset;
+  border-radius: 12px;
+}
+
+/* Subtle scrollbar (desktop) */
+@media (pointer: fine) {
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.18);
+    border: 3px solid rgba(246, 247, 249, 0.85);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.26); }
+}
+
+/* Reduce motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Page wrapper */
 .jyc-page {
   min-height: 100vh;
   background: transparent;
+}
+
+/* Utilities */
+.jyc-container {
+  max-width: 920px;
+  margin: 0 auto;
 }
 
 /* ===============================
@@ -134,9 +219,54 @@ body {
   padding: 16px 45px;
 
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
-  border-bottom: 1px solid var(--jyc-line);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.12);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+
+  /* for ::before/::after */
+  position: sticky;
+}
+
+/* top light bar */
+.jyc-header::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(192, 106, 44, 0.85),
+    rgba(255, 255, 255, 0.35),
+    rgba(192, 106, 44, 0.85),
+    transparent
+  );
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* subtle shimmer on hover */
+.jyc-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255,255,255,0.08) 42%,
+    rgba(192,106,44,0.10) 50%,
+    rgba(255,255,255,0.06) 58%,
+    transparent 100%
+  );
+  opacity: 0.0;
+  transform: translateX(-12%);
+  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
+  pointer-events: none;
+}
+
+.jyc-header:hover::after {
+  opacity: 0.75;
+  transform: translateX(12%);
 }
 
 /* Logo */
@@ -149,6 +279,7 @@ body {
 }
 
 .jyc-logo-mark {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -169,6 +300,35 @@ body {
   overflow: hidden;
 
   box-shadow: 0 12px 26px rgba(192, 106, 44, 0.22);
+  transition: transform var(--jyc-speed-2) var(--jyc-ease-out), box-shadow var(--jyc-speed-2) var(--jyc-ease);
+}
+
+.jyc-logo:hover .jyc-logo-mark {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.26);
+}
+
+.jyc-logo-mark::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 180deg,
+    rgba(192,106,44,0.0),
+    rgba(192,106,44,0.65),
+    rgba(15,23,42,0.25),
+    rgba(192,106,44,0.65),
+    rgba(192,106,44,0.0)
+  );
+  filter: blur(8px);
+  opacity: 0.0;
+  transition: opacity var(--jyc-speed-2) var(--jyc-ease);
+  z-index: -1;
+}
+
+.jyc-logo:hover .jyc-logo-mark::before {
+  opacity: 0.55;
 }
 
 .jyc-logo-mark-img {
@@ -188,7 +348,7 @@ body {
 .jyc-logo-main {
   font-family: "Gotham", system-ui, sans-serif;
   font-size: 30px;
-  font-weight: 800;           /* Black / Bold */
+  font-weight: 800;
   letter-spacing: 0.08em;
   color: #0b1220;
 }
@@ -197,18 +357,17 @@ body {
 .jyc-logo-sub {
   font-family: "Gotham", system-ui, sans-serif;
   font-size: 18px;
-  font-weight: 500;           /* Medium */
-  letter-spacing: 0.18em;     /* ⬅ 很重要 */
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(11, 18, 32, 0.65);
 }
-
 
 /* Nav */
 .jyc-nav {
   display: flex;
   gap: 16px;
-  font-size: 25px; /* 你剛要的 +20% */
+  font-size: 25px; /* per your current setup */
 }
 
 .jyc-nav-link {
@@ -222,17 +381,20 @@ body {
   padding: 9px 8px;
   border-radius: 12px;
 
-  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    background var(--jyc-speed-1) var(--jyc-ease),
+    color var(--jyc-speed-1) var(--jyc-ease),
+    transform var(--jyc-speed-1) var(--jyc-ease),
+    box-shadow var(--jyc-speed-1) var(--jyc-ease);
 }
 
-/* hover */
 .jyc-nav-link:hover {
   color: var(--jyc-text);
-  background: rgba(192, 106, 44, 0.10); /* 銅金淡底 */
+  background: rgba(192, 106, 44, 0.10);
   transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
 }
 
-/* 底線光條：hover/active 都會顯示 */
 .jyc-nav-link::after {
   content: "";
   position: absolute;
@@ -245,7 +407,9 @@ body {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(192, 106, 44, 0.95),
+    rgba(192, 106, 44, 1),
+    rgba(255, 255, 255, 0.55),
+    rgba(192, 106, 44, 1),
     transparent
   );
 
@@ -259,11 +423,12 @@ body {
   transform: translateY(0);
 }
 
-/* ✅ Active：更明顯、更像「所在頁」 */
 .jyc-nav-link.is-active {
   color: var(--jyc-text);
   background: rgba(192, 106, 44, 0.14);
-  box-shadow: 0 10px 22px rgba(192, 106, 44, 0.12);
+  box-shadow:
+    0 12px 26px rgba(192, 106, 44, 0.14),
+    0 0 0 1px rgba(192, 106, 44, 0.16) inset;
 }
 
 .jyc-nav-link.is-active::after {
@@ -279,55 +444,101 @@ body {
 }
 
 /* ===============================
-   🌐 Language: buttons on ALL devices
+   🌐 Language Switch — Premium Segmented Control (Unified)
    =============================== */
-.jyc-lang-switch {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: nowrap;
-}
-
-/* 永遠隱藏 select */
 .jyc-lang-select-wrap,
 .jyc-lang-select {
   display: none !important;
 }
 
-.jyc-lang-switch button,
-.jyc-lang-switch a {
-  font-size: 12px;
-  padding: 7px 12px;
-  border-radius: 999px;
+.jyc-lang-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
 
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
   border: 1px solid rgba(15, 23, 42, 0.14);
-  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
+
+  overflow: hidden;
+}
+
+.jyc-lang-switch::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(192, 106, 44, 0.22),
+    rgba(15, 23, 42, 0.10),
+    rgba(192, 106, 44, 0.18)
+  );
+  opacity: 0.55;
+  pointer-events: none;
+
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px;
+}
+
+.jyc-lang-switch button {
+  appearance: none;
+  border: 0;
   cursor: pointer;
 
+  height: 38px;
+  min-width: 72px;
+  padding: 0 14px;
+  border-radius: 999px;
+
+  background: transparent;
+  color: rgba(11, 18, 32, 0.80);
+
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+
+  transition:
+    transform var(--jyc-speed-1) var(--jyc-ease),
+    background var(--jyc-speed-2) var(--jyc-ease),
+    box-shadow var(--jyc-speed-2) var(--jyc-ease),
+    color var(--jyc-speed-2) var(--jyc-ease);
+}
+
+.jyc-lang-switch button:hover {
+  background: rgba(192, 106, 44, 0.08);
   color: var(--jyc-text);
-  white-space: nowrap;
-  font-weight: 500; /* Gotham Medium */
-  line-height: 1;
-
-  backdrop-filter: blur(8px);
-  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
-}
-
-.jyc-lang-switch button:hover,
-.jyc-lang-switch a:hover {
   transform: translateY(-1px);
-  border-color: rgba(192, 106, 44, 0.35);
-  background: rgba(192, 106, 44, 0.06);
+  box-shadow: var(--jyc-glow-ink);
 }
 
-.jyc-lang-active {
+.jyc-lang-switch .jyc-lang-active {
   background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent)) !important;
   color: #fff !important;
-  border-color: transparent !important;
-  box-shadow: 0 12px 26px rgba(192, 106, 44, 0.20);
+  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.22);
+  transform: translateY(-1px);
+  position: relative;
 }
 
-/* （如果你未來要顯示登入狀態） */
+.jyc-lang-switch .jyc-lang-active::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0.35) 55%, transparent 70%);
+  opacity: 0.9;
+}
+
+/* (如果你未來要顯示登入狀態) */
 .jyc-login-link,
 .jyc-login-status {
   display: none;
@@ -362,7 +573,7 @@ body {
   margin-bottom: 16px;
   color: #fff;
 
-  font-weight: 900; /* Gotham Black */
+  font-weight: 900;
   letter-spacing: 0.005em;
   text-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
@@ -389,7 +600,7 @@ body {
   opacity: 0.92;
 }
 
-/* ✅ Copper-cinematic overlay (remove blue) */
+/* Copper-cinematic overlay */
 .jyc-hero::before {
   content: "";
   position: absolute;
@@ -405,9 +616,30 @@ body {
   pointer-events: none;
 }
 
+/* Tech haze */
+.jyc-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 520px at 70% 10%, rgba(192,106,44,0.18), transparent 60%),
+    radial-gradient(1000px 620px at 30% 90%, rgba(15,23,42,0.25), transparent 62%),
+    linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.22));
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 /* ===============================
    Buttons
    =============================== */
+.jyc-btn-primary,
+.jyc-btn-secondary,
+.jyc-card-btn {
+  position: relative;
+  overflow: hidden;
+}
+
 .jyc-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -421,7 +653,7 @@ body {
   color: #fff;
 
   font-size: 14px;
-  font-weight: 500; /* Gotham Medium */
+  font-weight: 500;
   letter-spacing: 0.01em;
 
   text-decoration: none;
@@ -469,6 +701,35 @@ body {
   outline-offset: 2px;
 }
 
+/* scanline shimmer */
+.jyc-btn-primary::after,
+.jyc-btn-secondary::after,
+.jyc-card-btn::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    rgba(255,255,255,0.16) 50%,
+    transparent 60%
+  );
+  opacity: 0;
+  transform: translateX(-12%);
+  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
+  pointer-events: none;
+}
+
+.jyc-btn-primary:hover::after,
+.jyc-btn-secondary:hover::after,
+.jyc-card-btn:hover::after {
+  opacity: 1;
+  transform: translateX(12%);
+}
+
 /* ===============================
    Sections
    =============================== */
@@ -486,7 +747,7 @@ body {
 .jyc-section h2 {
   font-size: 28px;
   margin-bottom: 18px;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   font-weight: 700;
   position: relative;
 }
@@ -503,25 +764,21 @@ body {
 
 .jyc-section-intro {
   font-size: 15px;
-  color: var(--jyc-muted);
+  color: rgba(91, 102, 122, 0.92);
   max-width: 720px;
   line-height: 1.75;
   margin-bottom: 24px;
   font-weight: 400;
 }
 
-/* About header */
+/* (legacy about logo helpers - keep if used elsewhere) */
 .jyc-about-header {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
 }
-
-.jyc-about-header h2 {
-  margin: 0;
-}
-
+.jyc-about-header h2 { margin: 0; }
 .jyc-about-logo-wrap {
   width: 84px;
   height: 84px;
@@ -530,12 +787,10 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
   padding: 8px;
   border: 1px solid var(--jyc-line);
 }
-
 .jyc-about-logo {
   width: 100%;
   height: 100%;
@@ -555,6 +810,9 @@ body {
 }
 
 .jyc-card {
+  position: relative;
+  overflow: hidden;
+
   background: rgba(255, 255, 255, 0.80);
   border-radius: var(--jyc-radius);
   border: 1px solid var(--jyc-line);
@@ -566,9 +824,58 @@ body {
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
+/* energy border */
+.jyc-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--jyc-radius);
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(192,106,44,0.0),
+    rgba(192,106,44,0.22),
+    rgba(15,23,42,0.10),
+    rgba(192,106,44,0.18),
+    rgba(192,106,44,0.0)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* hover sweep */
+.jyc-card::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 160%;
+  height: 160%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255,255,255,0.10) 45%,
+    rgba(192,106,44,0.10) 52%,
+    rgba(255,255,255,0.06) 58%,
+    transparent 100%
+  );
+  transform: rotate(6deg);
+  opacity: 0;
+  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 850ms var(--jyc-ease-out);
+  pointer-events: none;
+}
+
+.jyc-card:hover::after {
+  opacity: 0.85;
+  transform: translateX(18%) rotate(6deg);
+}
+
 .jyc-card:hover {
   transform: translateY(-3px);
-  box-shadow: var(--jyc-shadow-md);
+  box-shadow: var(--jyc-glow-copper);
   border-color: rgba(192, 106, 44, 0.22);
 }
 
@@ -592,7 +899,7 @@ body {
 
 .jyc-card p {
   font-size: 14px;
-  color: var(--jyc-muted);
+  color: rgba(91, 102, 122, 0.92);
   margin-bottom: 12px;
   font-weight: 400;
 }
@@ -761,36 +1068,61 @@ body {
 .jyc-footer-sub { margin-top: 4px; font-size: 11px; }
 
 /* ===============================
-   Chat Bubble / Panel
+   💬 Chat Bubble / Panel (2x + breathing)
    =============================== */
-.jyc-chat-bubble-button {
-  /* 原本的位置保留 */
-  right: 24px;
-  bottom: 24px;
 
-  /* ⬆️ 視覺放大約 2 倍 */
-  transform: scale(2);
-  transform-origin: bottom right;
-
-  /* 點擊區域仍然準確 */
-  will-change: transform;
-
-  /* 更有科技重量感 */
-  font-size: 18px;
-  padding: 14px 24px;
-
-  box-shadow:
-    0 22px 48px rgba(192, 106, 44, 0.28),
-    0 0 0 1px rgba(192, 106, 44, 0.25);
-
-  transition:
-    transform 180ms cubic-bezier(.2,.8,.2,1),
-    box-shadow 180ms cubic-bezier(.2,.8,.2,1),
-    filter 180ms cubic-bezier(.2,.8,.2,1);
+/* breathing animation (subtle) */
+@keyframes jyc-chat-breathe {
+  0% {
+    box-shadow:
+      0 22px 48px rgba(192, 106, 44, 0.26),
+      0 0 0 0 rgba(192, 106, 44, 0.00);
+  }
+  45% {
+    box-shadow:
+      0 26px 56px rgba(192, 106, 44, 0.34),
+      0 0 0 10px rgba(192, 106, 44, 0.10);
+  }
+  100% {
+    box-shadow:
+      0 22px 48px rgba(192, 106, 44, 0.26),
+      0 0 0 0 rgba(192, 106, 44, 0.00);
+  }
 }
 
-/* Hover：更像「啟動裝置」 */
+.jyc-chat-bubble-button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+
+  padding: 14px 24px;
+  border-radius: 999px;
+  border: none;
+
+  background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
+  color: #fff;
+
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+
+  /* 2x */
+  transform: scale(2);
+  transform-origin: bottom right;
+  will-change: transform;
+
+  /* base shadow + breathe */
+  animation: jyc-chat-breathe 3.2s ease-in-out infinite;
+
+  transition:
+    transform 180ms var(--jyc-ease),
+    box-shadow 180ms var(--jyc-ease),
+    filter 180ms var(--jyc-ease);
+}
+
 .jyc-chat-bubble-button:hover {
+  animation: none;
   transform: scale(2.08) translateY(-1px);
   box-shadow:
     0 28px 60px rgba(192, 106, 44, 0.34),
@@ -798,9 +1130,13 @@ body {
   filter: brightness(1.05);
 }
 
-/* Active（點擊瞬間） */
 .jyc-chat-bubble-button:active {
+  animation: none;
   transform: scale(1.96);
+}
+
+.jyc-chat-bubble-button:focus-visible {
+  animation: none;
 }
 
 .jyc-chat-panel {
@@ -831,8 +1167,7 @@ body {
   gap: 8px;
 }
 
-.jyc-chat-title { font-size: 14px; font-weight: 700; }
-
+.jyc-chat-title { font-size: 14px; font-weight: 800; }
 .jyc-chat-status { font-size: 11px; color: rgba(11, 18, 32, 0.55); }
 
 .jyc-chat-close {
@@ -904,13 +1239,13 @@ body {
   background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
   color: #fff;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 .jyc-chat-input-row button:hover { filter: brightness(1.03); }
 
 /* ===============================
-   Text Justify Rules (keep yours)
+   Text Justify Rules
    =============================== */
 .jyc-page p,
 .jyc-page li,
@@ -945,6 +1280,230 @@ html:lang(zh-Hans) .jyc-page p {
   text-justify: inter-ideograph;
 }
 
+/* ===============================
+   About Page — Layout Upgrade
+   =============================== */
+.jyc-about-hero {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.jyc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.64);
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: rgba(11, 18, 32, 0.78);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+}
+
+.jyc-about-title {
+  margin: 12px 0 10px;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  font-weight: 900;
+}
+
+.jyc-about-lead {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.8;
+  color: rgba(91, 102, 122, 0.95);
+}
+
+.jyc-about-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.jyc-stat {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.jyc-stat-num {
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: 18px;
+  color: var(--jyc-text);
+}
+
+.jyc-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(91, 102, 122, 0.92);
+}
+
+.jyc-about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.jyc-about-photoCard {
+  margin: 0;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+  position: relative;
+}
+
+.jyc-about-photoCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(520px 280px at 20% 10%, rgba(192,106,44,0.20), transparent 60%);
+  opacity: 0.65;
+}
+
+.jyc-about-photo {
+  width: 100%;
+  display: block;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.jyc-about-caption {
+  padding: 10px 12px 12px;
+  font-size: 12px;
+  color: rgba(91, 102, 122, 0.92);
+}
+
+.jyc-about-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.jyc-panel {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.10);
+  position: relative;
+  overflow: hidden;
+}
+
+.jyc-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(192,106,44,0.0),
+    rgba(192,106,44,0.18),
+    rgba(15,23,42,0.08),
+    rgba(192,106,44,0.14),
+    rgba(192,106,44,0.0)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.jyc-panel-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.jyc-panel-note {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(91, 102, 122, 0.92);
+  line-height: 1.7;
+}
+
+.jyc-panel-accent {
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.62));
+}
+
+.jyc-list {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(91, 102, 122, 0.95);
+  font-size: 14px;
+  line-height: 1.75;
+}
+.jyc-list li { margin-bottom: 8px; }
+
+.jyc-divider {
+  height: 1px;
+  background: rgba(15, 23, 42, 0.10);
+  margin: 12px 0;
+}
+
+.jyc-contactCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.jyc-contactRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.jyc-contactKey {
+  font-size: 12px;
+  color: rgba(91, 102, 122, 0.90);
+  font-weight: 650;
+}
+
+.jyc-contactVal {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--jyc-text);
+  text-decoration: none;
+}
+.jyc-contactVal:hover { text-decoration: underline; }
+
+.jyc-contactHint {
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(91, 102, 122, 0.92);
+}
+
+.jyc-contactCta {
+  width: 100%;
+  margin-top: 2px;
+}
+
+/* ===============================
+   Responsive
+   =============================== */
+
 /* Desktop */
 @media (min-width: 1024px) {
   .jyc-card-image { height: 300px; }
@@ -967,6 +1526,20 @@ html:lang(zh-Hans) .jyc-page p {
 }
 
 /* Mobile */
+@media (max-width: 900px) {
+  .jyc-about-hero,
+  .jyc-about-grid {
+    grid-template-columns: 1fr;
+  }
+  .jyc-about-photo {
+    aspect-ratio: 16 / 9;
+  }
+  .jyc-about-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile layout */
 @media (max-width: 768px) {
   .jyc-header {
     padding: 12px 16px;
@@ -1003,11 +1576,9 @@ html:lang(zh-Hans) .jyc-page p {
   }
 
   .jyc-hero { padding: 48px 16px; }
-
   .jyc-hero-text h1 { font-size: 28px; }
 
   .jyc-section { padding: 40px 16px; }
-
   .jyc-form-row { flex-direction: column; }
 
   .jyc-chat-panel {
@@ -1016,14 +1587,15 @@ html:lang(zh-Hans) .jyc-page p {
     width: 260px;
   }
 
+  /* Chat bubble on mobile: still big, but not blocking */
   .jyc-chat-bubble-button {
     right: 12px;
     bottom: 20px;
-    padding: 14px 22px;
-
-    transform: scale(1.265);
+    transform: scale(1.6);
     transform-origin: bottom right;
-    font-size: 15.4px;
+    font-size: 18px;
+    padding: 16px 26px;
+    animation-duration: 4.2s;
   }
 
   .jyc-home-slideshow-main {
@@ -1055,354 +1627,8 @@ html:lang(zh-Hans) .jyc-page p {
     background-position: center;
     scroll-snap-align: center;
   }
-}
 
-/* =========================================================
-   ✅ JYC Pro / Tech Upgrade Layer (Integrated)
-   ========================================================= */
-
-/* ---- Design polish tokens ---- */
-:root {
-  --jyc-ring: rgba(192, 106, 44, 0.28);
-  --jyc-ring-strong: rgba(192, 106, 44, 0.44);
-
-  --jyc-glow-copper: 0 0 0 1px rgba(192, 106, 44, 0.20), 0 18px 40px rgba(192, 106, 44, 0.18);
-  --jyc-glow-ink: 0 0 0 1px rgba(15, 23, 42, 0.10), 0 18px 42px rgba(15, 23, 42, 0.16);
-
-  --jyc-ease: cubic-bezier(.2,.8,.2,1);
-  --jyc-ease-out: cubic-bezier(.16,1,.3,1);
-  --jyc-speed-1: 140ms;
-  --jyc-speed-2: 220ms;
-
-  /* very subtle tech grid */
-  --jyc-grid: repeating-linear-gradient(
-      90deg,
-      rgba(15, 23, 42, 0.03) 0px,
-      rgba(15, 23, 42, 0.03) 1px,
-      transparent 1px,
-      transparent 22px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(15, 23, 42, 0.025) 0px,
-      rgba(15, 23, 42, 0.025) 1px,
-      transparent 1px,
-      transparent 22px
-    );
-}
-
-/* Better font rendering */
-html {
-  -webkit-text-size-adjust: 100%;
-  text-rendering: optimizeLegibility;
-}
-
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  /* overlay subtle tech grid (keeps your background look) */
-  background-image: var(--jyc-grid),
-    radial-gradient(1200px 600px at 12% 0%, rgba(192, 106, 44, 0.12), transparent 62%),
-    radial-gradient(900px 520px at 88% 8%, rgba(20, 26, 34, 0.10), transparent 60%);
-  background-color: var(--jyc-bg);
-}
-
-/* Selection */
-::selection {
-  background: rgba(192, 106, 44, 0.25);
-  color: var(--jyc-text);
-}
-
-/* Smooth scroll */
-html:focus-within {
-  scroll-behavior: smooth;
-}
-
-/* Focus ring: pro */
-:where(a, button, input, textarea, select):focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--jyc-ring), 0 0 0 1px rgba(15, 23, 42, 0.12) inset;
-  border-radius: 12px;
-}
-
-/* Subtle scrollbar (desktop) */
-@media (pointer: fine) {
-  *::-webkit-scrollbar { width: 10px; height: 10px; }
-  *::-webkit-scrollbar-thumb {
-    background: rgba(15, 23, 42, 0.18);
-    border: 3px solid rgba(246, 247, 249, 0.85);
-    border-radius: 999px;
-  }
-  *::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.26); }
-}
-
-/* Reduce motion support */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* Header: top light bar + subtle shimmer */
-.jyc-header {
-  border-bottom-color: rgba(15, 23, 42, 0.12);
-  backdrop-filter: blur(12px);
-  position: sticky;
-}
-
-.jyc-header::before {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; top: 0;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(192, 106, 44, 0.85),
-    rgba(255, 255, 255, 0.35),
-    rgba(192, 106, 44, 0.85),
-    transparent
-  );
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.jyc-header::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    rgba(255,255,255,0.08) 42%,
-    rgba(192,106,44,0.10) 50%,
-    rgba(255,255,255,0.06) 58%,
-    transparent 100%
-  );
-  opacity: 0.0;
-  transform: translateX(-12%);
-  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
-  pointer-events: none;
-}
-
-.jyc-header:hover::after {
-  opacity: 0.75;
-  transform: translateX(12%);
-}
-
-/* Logo: energy ring */
-.jyc-logo-mark {
-  position: relative;
-  transition: transform var(--jyc-speed-2) var(--jyc-ease-out), box-shadow var(--jyc-speed-2) var(--jyc-ease);
-}
-
-.jyc-logo:hover .jyc-logo-mark {
-  transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.26);
-}
-
-.jyc-logo-mark::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 999px;
-  background: conic-gradient(
-    from 180deg,
-    rgba(192,106,44,0.0),
-    rgba(192,106,44,0.65),
-    rgba(15,23,42,0.25),
-    rgba(192,106,44,0.65),
-    rgba(192,106,44,0.0)
-  );
-  filter: blur(8px);
-  opacity: 0.0;
-  transition: opacity var(--jyc-speed-2) var(--jyc-ease);
-  z-index: -1;
-}
-
-.jyc-logo:hover .jyc-logo-mark::before {
-  opacity: 0.55;
-}
-
-/* Nav: smoother + micro glow */
-.jyc-nav-link {
-  transition: background var(--jyc-speed-1) var(--jyc-ease),
-    color var(--jyc-speed-1) var(--jyc-ease),
-    transform var(--jyc-speed-1) var(--jyc-ease),
-    box-shadow var(--jyc-speed-1) var(--jyc-ease);
-}
-
-.jyc-nav-link:hover {
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
-}
-
-.jyc-nav-link::after {
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(192, 106, 44, 1),
-    rgba(255, 255, 255, 0.55),
-    rgba(192, 106, 44, 1),
-    transparent
-  );
-}
-
-.jyc-nav-link.is-active {
-  box-shadow: 0 12px 26px rgba(192, 106, 44, 0.14), 0 0 0 1px rgba(192, 106, 44, 0.16) inset;
-}
-
-/* Language buttons: glass + glow */
-.jyc-lang-switch button {
-  transition: transform var(--jyc-speed-1) var(--jyc-ease),
-    border-color var(--jyc-speed-1) var(--jyc-ease),
-    background var(--jyc-speed-1) var(--jyc-ease),
-    box-shadow var(--jyc-speed-1) var(--jyc-ease);
-}
-
-.jyc-lang-switch button:hover {
-  box-shadow: var(--jyc-glow-ink);
-}
-
-.jyc-lang-active {
-  position: relative;
-}
-
-.jyc-lang-active::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 999px;
-  background: radial-gradient(12px 12px at 20% 30%, rgba(255,255,255,0.65), transparent 60%),
-    radial-gradient(18px 18px at 75% 60%, rgba(192,106,44,0.55), transparent 60%);
-  filter: blur(8px);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-/* Cards: energy border + hover sweep */
-.jyc-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.jyc-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: var(--jyc-radius);
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(192,106,44,0.0),
-    rgba(192,106,44,0.22),
-    rgba(15,23,42,0.10),
-    rgba(192,106,44,0.18),
-    rgba(192,106,44,0.0)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.jyc-card::after {
-  content: "";
-  position: absolute;
-  top: -40%;
-  left: -60%;
-  width: 160%;
-  height: 160%;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    rgba(255,255,255,0.10) 45%,
-    rgba(192,106,44,0.10) 52%,
-    rgba(255,255,255,0.06) 58%,
-    transparent 100%
-  );
-  transform: rotate(6deg);
-  opacity: 0;
-  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 850ms var(--jyc-ease-out);
-  pointer-events: none;
-}
-
-.jyc-card:hover::after {
-  opacity: 0.85;
-  transform: translateX(18%) rotate(6deg);
-}
-
-.jyc-card:hover {
-  box-shadow: var(--jyc-glow-copper);
-}
-
-/* Buttons: scanline shimmer */
-.jyc-btn-primary,
-.jyc-btn-secondary,
-.jyc-card-btn {
-  position: relative;
-  overflow: hidden;
-}
-
-.jyc-btn-primary::after,
-.jyc-btn-secondary::after,
-.jyc-card-btn::after {
-  content: "";
-  position: absolute;
-  top: -60%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    115deg,
-    transparent 40%,
-    rgba(255,255,255,0.16) 50%,
-    transparent 60%
-  );
-  opacity: 0;
-  transform: translateX(-12%);
-  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
-  pointer-events: none;
-}
-
-.jyc-btn-primary:hover::after,
-.jyc-btn-secondary:hover::after,
-.jyc-card-btn:hover::after {
-  opacity: 1;
-  transform: translateX(12%);
-}
-
-/* Hero: add tech haze */
-.jyc-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(900px 520px at 70% 10%, rgba(192,106,44,0.18), transparent 60%),
-    radial-gradient(1000px 620px at 30% 90%, rgba(15,23,42,0.25), transparent 62%),
-    linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.22));
-  mix-blend-mode: overlay;
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-/* Typography upgrades */
-.jyc-section h2 {
-  letter-spacing: 0.02em;
-}
-
-.jyc-section-intro,
-.jyc-card p {
-  color: rgba(91, 102, 122, 0.92);
-}
-
-/* Mobile: reduce heavy effects for performance */
-@media (max-width: 768px) {
+  /* Mobile performance: reduce heavy sweeps */
   .jyc-header::after,
   .jyc-card::after,
   .jyc-btn-primary::after,
@@ -1411,122 +1637,3 @@ html:focus-within {
     display: none;
   }
 }
-
-/* ===============================
-   🌐 Language Switch — Premium Segmented Control
-   (paste at END of globals.css)
-   =============================== */
-
-/* 外框：整組一顆「玻璃膠囊」 */
-.jyc-lang-switch {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px;
-
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(15, 23, 42, 0.14);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
-
-  /* 讓整組看起來更「科技」 */
-  overflow: hidden;
-}
-
-/* 微弱能量光條（很淡，不搶戲） */
-.jyc-lang-switch::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    rgba(192, 106, 44, 0.22),
-    rgba(15, 23, 42, 0.10),
-    rgba(192, 106, 44, 0.18)
-  );
-  opacity: 0.55;
-  pointer-events: none;
-
-  /* 漸層邊框效果 */
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  padding: 1px;
-}
-
-/* 按鈕：統一高度、字重、間距 */
-.jyc-lang-switch button {
-  appearance: none;
-  border: 0;
-  cursor: pointer;
-
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-
-  background: transparent;
-  color: rgba(11, 18, 32, 0.80);
-
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-
-  transition:
-    transform 140ms cubic-bezier(.2,.8,.2,1),
-    background 180ms cubic-bezier(.2,.8,.2,1),
-    box-shadow 180ms cubic-bezier(.2,.8,.2,1),
-    color 180ms cubic-bezier(.2,.8,.2,1);
-}
-
-/* Hover：玻璃底 + 微抬升 */
-.jyc-lang-switch button:hover {
-  background: rgba(192, 106, 44, 0.08);
-  color: var(--jyc-text);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
-}
-
-/* Active：更像「選中狀態」的科技膠囊 */
-.jyc-lang-switch .jyc-lang-active {
-  background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent)) !important;
-  color: #fff !important;
-  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.22);
-  transform: translateY(-1px);
-  position: relative;
-}
-
-/* Active 上的高光點（科技感小細節） */
-.jyc-lang-switch .jyc-lang-active::after {
-  content: "";
-  position: absolute;
-  top: 9px;
-  right: 10px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0.35) 55%, transparent 70%);
-  opacity: 0.9;
-}
-
-/* 讓第一顆（EN）不再看起來像小圓點：固定最小寬度 */
-.jyc-lang-switch button {
-  min-width: 72px;
-  justify-content: center;
-}
-
-/* Mobile：稍微放大，手指更好按 */
-@media (max-width: 768px) {
-  .jyc-lang-switch {
-    padding: 7px;
-    gap: 7px;
-  }
-  .jyc-lang-switch button {
-    height: 40px;
-    min-width: 84px;
-    font-size: 13.5px;
-  }
-}
-
