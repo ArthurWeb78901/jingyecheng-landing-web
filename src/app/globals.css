@@ -929,3 +929,12 @@ html:lang(zh-Hans) .jyc-page p {
   background: rgba(255, 255, 255, 0.85);
 }
 */
+
+/* 📱 Mobile only – Online Inquiry 按鈕放大 10% */
+@media (max-width: 768px) {
+  .jyc-chat-bubble-button {
+    transform: scale(1.265); /* 1.15 × 1.1 ≈ 1.265 */
+    transform-origin: bottom right;
+    font-size: 15.4px; /* 原本 14px × 1.1 */
+  }
+}
