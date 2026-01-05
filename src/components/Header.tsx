@@ -168,7 +168,10 @@ export function Header() {
             siteConfig.logoMark
           )}
         </span>
-        <span className="jyc-logo-text">{logoText}</span>
+        <span className="jyc-logo-text">
+          <span className="jyc-logo-main">JYC</span>
+          <span className="jyc-logo-sub">Steel Equipment</span>
+        </span>
       </Link>
 
       <nav className="jyc-nav" aria-label="Primary">

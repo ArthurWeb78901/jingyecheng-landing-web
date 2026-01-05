@@ -12,16 +12,6 @@ export default function AboutIdPage() {
           <h1 style={{ fontSize: "26px", marginBottom: "12px" }}>
             Taiyuan Jingyecheng Steel Equip Co.
           </h1>
-
-          <p className="jyc-section-intro">
-            Didirikan pada tahun 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
-            memiliki luas area sekitar 70.000 meter persegi dan berlokasi di
-            Taiyuan, Provinsi Shanxi—kota penting untuk industri energi dan
-            kimia berat. Perusahaan ini merupakan pelaku industri berat yang
-            berfokus pada peralatan rolling, khususnya manufaktur lini pabrik
-            pipa baja tanpa sambungan (seamless) serta mesin-mesin terkait.
-          </p>
-
           {/* ✅ Foto fasilitas perusahaan */}
           <div style={{ margin: "20px 0 28px" }}>
             <img
@@ -46,6 +36,14 @@ export default function AboutIdPage() {
               Gambaran fasilitas manufaktur dan lini produksi
             </p>
           </div>
+          <p className="jyc-section-intro">
+            Didirikan pada tahun 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
+            memiliki luas area sekitar 70.000 meter persegi dan berlokasi di
+            Taiyuan, Provinsi Shanxi—kota penting untuk industri energi dan
+            kimia berat. Perusahaan ini merupakan pelaku industri berat yang
+            berfokus pada peralatan rolling, khususnya manufaktur lini pabrik
+            pipa baja tanpa sambungan (seamless) serta mesin-mesin terkait.
+          </p>
 
           <section style={{ marginTop: 24 }}>
             <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>

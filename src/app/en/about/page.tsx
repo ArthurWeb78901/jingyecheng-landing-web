@@ -13,17 +13,7 @@ export default function AboutEnPage() {
           <h1 style={{ fontSize: "26px", marginBottom: "12px" }}>
             Taiyuan Jingyecheng Steel Equip Co.
           </h1>
-
-          <p className="jyc-section-intro">
-            Founded in 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
-            covers a total area of about 70,000 square meters and is located in
-            Taiyuan, Shanxi Province, a key city for energy and heavy chemical
-            industries. The company is a heavy industry enterprise specialized
-            in rolling equipment, focusing on the manufacturing of seamless
-            steel pipe mill lines and related machinery.
-          </p>
-
-          {/* ✅ 公司實景照片 */}
+{/* ✅ 公司實景照片 */}
           <div style={{ margin: "20px 0 28px" }}>
             <img
               src="/company.jpg"
@@ -47,6 +37,14 @@ export default function AboutEnPage() {
               Manufacturing facility and production line overview
             </p>
           </div>
+          <p className="jyc-section-intro">
+            Founded in 1993, Taiyuan Jingyecheng Steel Equip Co., Ltd.
+            covers a total area of about 70,000 square meters and is located in
+            Taiyuan, Shanxi Province, a key city for energy and heavy chemical
+            industries. The company is a heavy industry enterprise specialized
+            in rolling equipment, focusing on the manufacturing of seamless
+            steel pipe mill lines and related machinery.
+          </p>
 
           <section style={{ marginTop: 24 }}>
             <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
