@@ -73,7 +73,7 @@ body {
   justify-content: space-between;
   gap: 16px;
 
-  padding: 16px 32px;
+  padding: 16px 40px;
 
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
   border-bottom: 1px solid var(--jyc-line);
