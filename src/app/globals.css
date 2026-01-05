@@ -76,8 +76,8 @@ body {
 }
 
 .jyc-logo-text {
-  font-size: 20px;
-  font-weight: 700;      /* 原本 600 -> 700 更有力 */
+  font-size: 25px;
+  font-weight: 800;      /* 原本 600 -> 700 更有力 */
   letter-spacing: 0.02em;/* 原本 0.03 稍微收斂更穩重 */
   white-space: nowrap;
 }
