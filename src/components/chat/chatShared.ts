@@ -114,7 +114,7 @@ export const zhTexts: ChatTexts = {
 };
 
 export const enTexts: ChatTexts = {
-  bubbleLabel: "Online Inquiry",
+  bubbleLabel: "?",
   adminBubbleLabel: "Inbox",
   title: "Online Inquiry",
   adminTitle: "Visitor Inquiries",
@@ -171,7 +171,7 @@ export const enTexts: ChatTexts = {
 
 // ✅ Hindi
 export const hiTexts: ChatTexts = {
-  bubbleLabel: "ऑनलाइन पूछताछ",
+  bubbleLabel: "?",
   adminBubbleLabel: "इनबॉक्स",
   title: "ऑनलाइन पूछताछ",
   adminTitle: "आगंतुक संदेश",
@@ -224,7 +224,7 @@ export const hiTexts: ChatTexts = {
 
 // ✅ Indonesian
 export const idTexts: ChatTexts = {
-  bubbleLabel: "Konsultasi Online",
+  bubbleLabel: "?",
   adminBubbleLabel: "Kotak Masuk",
   title: "Konsultasi Online",
   adminTitle: "Pesan Pengunjung",
