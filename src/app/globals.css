@@ -66,7 +66,7 @@ body {
   overflow: hidden;
 }
 
-/* 新增：Header 裡的圖片 logo */
+/* Header 裡的圖片 logo */
 .jyc-logo-mark-img {
   width: 100%;
   height: 100%;
@@ -81,7 +81,7 @@ body {
   white-space: nowrap;
 }
 
-/* 有圖片的 Logo 外框：稍微放大 + 內邊距，避免被裁切 */
+/* 有圖片的 Logo 外框 */
 .jyc-logo-img-wrap {
   width: 36px;
   height: 36px;
@@ -95,7 +95,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Logo 圖片本身 */
 .jyc-logo-image {
   width: 100%;
   height: 100%;
@@ -103,6 +102,7 @@ body {
   border-radius: 999px;
 }
 
+/* Nav */
 .jyc-nav {
   display: flex;
   gap: 16px;
@@ -125,22 +125,86 @@ body {
   gap: 12px;
 }
 
+/* ===============================
+   ✅ Language Switch Strategy
+   Desktop/Tablet: show select only
+   Mobile: show buttons only
+   =============================== */
+
+/* 桌機/平板預設：隱藏按鈕列、顯示 select */
 .jyc-lang-switch {
-  display: flex;
+  display: none;
   gap: 8px;
 }
 
+.jyc-lang-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 自画右侧箭头 */
+.jyc-lang-select-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: #666;
+  pointer-events: none;
+}
+
+.jyc-lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  padding: 6px 28px 6px 10px; /* 右边留空间给箭头 */
+  border-radius: 999px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #222;
+
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+}
+
+.jyc-lang-select:hover {
+  border-color: #bdbdbd;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.jyc-lang-select:active {
+  transform: translateY(1px);
+}
+
+.jyc-lang-select:focus-visible {
+  outline: none;
+  border-color: #333;
+  box-shadow: 0 0 0 3px rgba(51,51,51,0.15);
+}
+
+/* 按鈕外觀（主要給手機用） */
 .jyc-lang-switch button,
 .jyc-lang-switch a {
   font-size: 12px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 999px;
   border: 1px solid #ddd;
   background: #fff;
   cursor: pointer;
   text-decoration: none;
   color: #333;
   white-space: nowrap;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .jyc-lang-switch button:hover,
@@ -191,14 +255,12 @@ body {
   color: #fff;
 }
 
-/* 左侧内容区域 */
 .jyc-hero-inner {
   position: relative;
   max-width: 640px;
   z-index: 1;
 }
 
-/* 左侧文字 */
 .jyc-hero-text h1 {
   font-size: 32px;
   line-height: 1.3;
@@ -213,7 +275,6 @@ body {
   margin-bottom: 24px;
 }
 
-/* 按钮行 */
 .jyc-hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -221,14 +282,12 @@ body {
   margin-bottom: 16px;
 }
 
-/* 图片说明（反白小字） */
 .jyc-hero-caption {
   font-size: 12px;
   color: #f5f5f5;
   opacity: 0.9;
 }
 
-/* 默认（中文）渐层：稍微深一点 */
 .jyc-hero::before {
   content: "";
   position: absolute;
@@ -243,7 +302,6 @@ body {
   pointer-events: none;
 }
 
-/* 英文首页：渐层比中文稍浅一点 */
 .jyc-hero-en::before {
   content: "";
   position: absolute;
@@ -331,7 +389,6 @@ body {
   margin: 0;
 }
 
-/* 左侧大 Logo 圆形（加大整体尺寸 + 白边） */
 .jyc-about-logo-wrap {
   width: 84px;
   height: 84px;
@@ -345,7 +402,6 @@ body {
   box-sizing: border-box;
 }
 
-/* 圖片本身填滿內圈 */
 .jyc-about-logo {
   width: 100%;
   height: 100%;
@@ -404,7 +460,7 @@ body {
   color: #fff;
 }
 
-/* ===== 首页「主要产品一览」横向滑动容器（修正版） ===== */
+/* ===== 首页「主要产品一览」横向滑动容器 ===== */
 .jyc-home-products-row {
   display: flex;
   flex-wrap: nowrap;
@@ -718,92 +774,6 @@ body {
   }
 }
 
-/* 📱 手机与小平板 */
-@media (max-width: 768px) {
-  .jyc-header {
-    padding: 12px 16px;
-    flex-wrap: wrap;
-  }
-
-  .jyc-nav {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 8px;
-  }
-
-  .jyc-hero {
-    padding: 48px 16px;
-  }
-
-  .jyc-hero-text h1 {
-    font-size: 24px;
-  }
-
-  .jyc-section {
-    padding: 32px 16px;
-  }
-
-  .jyc-form-row {
-    flex-direction: column;
-  }
-
-  .jyc-chat-panel {
-    right: 12px;
-    bottom: 72px;
-    width: 260px;
-  }
-
-  .jyc-chat-bubble-button {
-    right: 12px;
-    bottom: 20px;
-    padding: 14px 22px;
-    font-size: 14px;
-    transform: scale(1.15);
-    transform-origin: bottom right;
-  }
-
-  .jyc-home-slideshow-main {
-    padding-top: 42%;
-    max-height: 400px;
-  }
-
-  .jyc-gallery-grid {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 8px;
-    margin-top: 10px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 8px;
-  }
-
-  .jyc-gallery-grid::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .jyc-gallery-item {
-    flex: 0 0 100%;
-    max-width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 6px;
-    background: #e0e0e0;
-    background-size: cover;
-    background-position: center;
-    scroll-snap-align: center;
-  }
-   .jyc-lang-select {
-    padding: 8px 30px 8px 12px;
-    font-size: 13px;
-  }
-  .jyc-lang-select-wrap::after {
-    right: 12px;
-  }
-}
-
 /* ✅ 全站段落：两端对齐（桌机 + 手机） */
 .jyc-page p,
 .jyc-page li,
@@ -843,9 +813,7 @@ html:lang(zh-Hans) .jyc-page p {
   text-justify: inter-ideograph;
 }
 
-/* =======================================================
-   ✅ 新增：Hero 区按钮增强（让 View Products 不再看不见）
-   ======================================================= */
+/* ✅ Hero 区按钮增强（让 View Products 不再看不见） */
 .jyc-hero .jyc-btn-secondary {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.9);
@@ -864,97 +832,68 @@ html:lang(zh-Hans) .jyc-page p {
   outline-offset: 2px;
 }
 
-/* ===== Header 语言下拉美化（select） ===== */
-.jyc-lang-select-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* 自画右侧箭头 */
-.jyc-lang-select-wrap::after {
-  content: "▾";
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 11px;
-  color: #666;
-  pointer-events: none;
-}
-
-.jyc-lang-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-
-  padding: 6px 28px 6px 10px; /* 右边留空间给箭头 */
-  border-radius: 999px;
-  border: 1px solid #e5e5e5;
-  background: #fff;
-  color: #222;
-
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
-}
-
-.jyc-lang-select:hover {
-  border-color: #bdbdbd;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.jyc-lang-select:active {
-  transform: translateY(1px);
-}
-
-.jyc-lang-select:focus-visible {
-  outline: none;
-  border-color: #333;
-  box-shadow: 0 0 0 3px rgba(51,51,51,0.15);
-}
-
-/* （可选）如果你也想让 Contact Us 更“高级”一点，可以打开这段
-.jyc-hero .jyc-btn-primary {
-  background: #fff;
-  color: #111;
-  border: 1px solid #fff;
-}
-.jyc-hero .jyc-btn-primary:hover {
-  background: rgba(255, 255, 255, 0.85);
-}
-*/
-
-/* 📱 Mobile only – Online Inquiry 按鈕放大 10% */
-/* 📱 Mobile tweaks */
+/* ===============================
+   📱 手机与小平板（統一整合版）
+   =============================== */
 @media (max-width: 768px) {
-  /* Online Inquiry：整體 + 字體放大 */
-  .jyc-chat-bubble-button {
-    transform: scale(1.265); /* 1.15 × 1.1 */
-    transform-origin: bottom right;
-    font-size: 15.4px; /* 14px × 1.1 */
+  .jyc-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
-  /* Nav：強制單行 */
+  /* Nav：強制單行（五個項目不掉行） */
   .jyc-nav {
-    flex-wrap: nowrap;
-    gap: 6px;
-    white-space: nowrap;
-    overflow-x: hidden;
+    order: 3;
+    width: 100%;
     justify-content: center;
+
+    flex-wrap: nowrap;
+    gap: 4px;               /* 比 6 再更穩 */
+    white-space: nowrap;
+    overflow-x: hidden;     /* 你要可滑就改成 auto */
+    margin-top: 6px;
   }
 
   .jyc-nav a {
     font-size: 15px;
-    padding: 6px 6px;
+    padding: 6px 4px;       /* 收窄左右 padding 讓 5 個更容易塞 */
   }
 
-  /* ✅ 語言切換：手機隱藏 select，改顯示按鈕列 */
+  .jyc-hero {
+    padding: 48px 16px;
+  }
+
+  .jyc-hero-text h1 {
+    font-size: 24px;
+  }
+
+  .jyc-section {
+    padding: 32px 16px;
+  }
+
+  .jyc-form-row {
+    flex-direction: column;
+  }
+
+  .jyc-chat-panel {
+    right: 12px;
+    bottom: 72px;
+    width: 260px;
+  }
+
+  /* Online Inquiry：以你原本手機版 1.15 為基準再 +10% */
+  .jyc-chat-bubble-button {
+    right: 12px;
+    bottom: 20px;
+    padding: 14px 22px;
+
+    transform: scale(1.265); /* 1.15 × 1.1 */
+    transform-origin: bottom right;
+    font-size: 15.4px;       /* 14 × 1.1 */
+  }
+
+  /* 手機：語言顯示按鈕列、隱藏 select */
   .jyc-lang-select-wrap,
   .jyc-lang-select {
     display: none !important;
@@ -966,20 +905,42 @@ html:lang(zh-Hans) .jyc-page p {
     flex-wrap: wrap; /* 小螢幕也不會擠爆 */
   }
 
-  .jyc-lang-switch a,
-  .jyc-lang-switch button {
+  .jyc-lang-switch button,
+  .jyc-lang-switch a {
     font-size: 13px;
     padding: 6px 10px;
     border-radius: 999px;
-    border: 1px solid #ddd;
-    background: #fff;
-    font-weight: 600;
-    line-height: 1;
   }
 
-  .jyc-lang-active {
-    background: #333 !important;
-    color: #fff !important;
-    border-color: #333 !important;
+  .jyc-home-slideshow-main {
+    padding-top: 42%;
+    max-height: 400px;
+  }
+
+  .jyc-gallery-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+    margin-top: 10px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  .jyc-gallery-grid::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .jyc-gallery-item {
+    flex: 0 0 100%;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    background: #e0e0e0;
+    background-size: cover;
+    background-position: center;
+    scroll-snap-align: center;
   }
 }

@@ -22,6 +22,31 @@ export default function AboutIdPage() {
             pipa baja tanpa sambungan (seamless) serta mesin-mesin terkait.
           </p>
 
+          {/* ✅ Foto fasilitas perusahaan */}
+          <div style={{ margin: "20px 0 28px" }}>
+            <img
+              src="/company.jpg"
+              alt="Fasilitas manufaktur Taiyuan Jingyecheng Steel Equipment"
+              style={{
+                width: "100%",
+                maxWidth: 900,
+                borderRadius: 8,
+                display: "block",
+                margin: "0 auto",
+              }}
+            />
+            <p
+              style={{
+                fontSize: 12,
+                color: "#777",
+                textAlign: "center",
+                marginTop: 6,
+              }}
+            >
+              Gambaran fasilitas manufaktur dan lini produksi
+            </p>
+          </div>
+
           <section style={{ marginTop: 24 }}>
             <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
               Produk & Layanan Utama

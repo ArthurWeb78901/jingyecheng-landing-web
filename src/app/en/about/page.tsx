@@ -23,6 +23,31 @@ export default function AboutEnPage() {
             steel pipe mill lines and related machinery.
           </p>
 
+          {/* ✅ 公司實景照片 */}
+          <div style={{ margin: "20px 0 28px" }}>
+            <img
+              src="/company.jpg"
+              alt="Taiyuan Jingyecheng Steel Equipment manufacturing facility"
+              style={{
+                width: "100%",
+                maxWidth: 900,
+                borderRadius: 8,
+                display: "block",
+                margin: "0 auto",
+              }}
+            />
+            <p
+              style={{
+                fontSize: 12,
+                color: "#777",
+                textAlign: "center",
+                marginTop: 6,
+              }}
+            >
+              Manufacturing facility and production line overview
+            </p>
+          </div>
+
           <section style={{ marginTop: 24 }}>
             <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
               Main Products & Services
