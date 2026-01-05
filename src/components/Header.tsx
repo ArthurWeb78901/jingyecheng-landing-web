@@ -44,6 +44,10 @@ function stripLocalePrefix(pathname: string) {
   return pathname;
 }
 
+function isNonLocalePage(path: string) {
+  return NON_LOCALE_PATH_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
+}
+
 export function Header() {
   const pathname = usePathname() || "/";
   const router = useRouter();
@@ -99,10 +103,12 @@ export function Header() {
     ],
   };
 
-  const navLinks = navByLocale[locale].map((item) => ({
-    href: `/${locale}${item.path}`,
-    label: item.label,
-  }));
+  const navLinks = useMemo(() => {
+    return navByLocale[locale].map((item) => ({
+      href: `/${locale}${item.path}`,
+      label: item.label,
+    }));
+  }, [locale]);
 
   const logoHref = `/${locale}`;
   const logoText =
@@ -112,18 +118,16 @@ export function Header() {
         ? siteConfig.logoTextId || siteConfig.logoTextEn
         : siteConfig.logoTextEn;
 
-  function isNonLocalePage(path: string) {
-    return NON_LOCALE_PATH_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
-  }
-
-  // ✅ 只在內部頁顯示後台入口（訪客頁完全看不到）
+  // ✅ 只有在 /admin /login /logout 這些「內部頁」才顯示後台 UI
   const showAdminUi = useMemo(() => {
     const withoutLocale = stripLocalePrefix(pathname);
     return isNonLocalePage(withoutLocale);
   }, [pathname]);
 
+  // 切換語言：保留目前子路徑，例如 /hi/products -> /id/products
   function buildPathForLocale(target: Locale) {
-    if (isNonLocalePage(stripLocalePrefix(pathname))) return `/${target}`;
+    const withoutLocale = stripLocalePrefix(pathname);
+    if (isNonLocalePage(withoutLocale)) return `/${target}`;
 
     const parts = pathname.split("/");
     const first = parts[1];
@@ -140,12 +144,26 @@ export function Header() {
     router.push(buildPathForLocale(nextLocale));
   }
 
+  // ✅ Active nav：Home / About / Products / Gallery / Contact 全部支援
+  const activeChecker = (href: string) => {
+    // Home: 只在 /{locale} 或 /{locale}/ 時亮
+    if (href === `/${locale}`) {
+      return pathname === `/${locale}` || pathname === `/${locale}/`;
+    }
+    // 其他：完全相等 or 子路徑（例如 /en/products/abc）
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
   return (
     <header className="jyc-header">
       <Link href={logoHref} className="jyc-logo">
         <span className="jyc-logo-mark">
           {siteConfig.logoImageUrl ? (
-            <img src={siteConfig.logoImageUrl} alt={logoText} className="jyc-logo-mark-img" />
+            <img
+              src={siteConfig.logoImageUrl}
+              alt={logoText}
+              className="jyc-logo-mark-img"
+            />
           ) : (
             siteConfig.logoMark
           )}
@@ -153,33 +171,56 @@ export function Header() {
         <span className="jyc-logo-text">{logoText}</span>
       </Link>
 
-      <nav className="jyc-nav">
-        {navLinks.map((item) => (
-          <Link key={item.href} href={item.href}>
-            {item.label}
-          </Link>
-        ))}
+      <nav className="jyc-nav" aria-label="Primary">
+        {navLinks.map((item) => {
+          const isActive = activeChecker(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={isActive ? "jyc-nav-link is-active" : "jyc-nav-link"}
+              aria-current={isActive ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="jyc-header-right">
+        {/* ✅ 永遠顯示三顆語言按鈕（不用下拉） */}
         <div className="jyc-lang-switch" role="group" aria-label="Language">
-          <button type="button" onClick={() => onLocaleChange("en")} className={locale === "en" ? "jyc-lang-active" : ""}>
+          <button
+            type="button"
+            onClick={() => onLocaleChange("en")}
+            className={locale === "en" ? "jyc-lang-active" : ""}
+          >
             EN
           </button>
-          <button type="button" onClick={() => onLocaleChange("hi")} className={locale === "hi" ? "jyc-lang-active" : ""}>
+          <button
+            type="button"
+            onClick={() => onLocaleChange("hi")}
+            className={locale === "hi" ? "jyc-lang-active" : ""}
+          >
             Hindi
           </button>
-          <button type="button" onClick={() => onLocaleChange("id")} className={locale === "id" ? "jyc-lang-active" : ""}>
+          <button
+            type="button"
+            onClick={() => onLocaleChange("id")}
+            className={locale === "id" ? "jyc-lang-active" : ""}
+          >
             Indonesian
           </button>
         </div>
 
-        <div className="jyc-lang-select-wrap">
+        {/* ✅ 保留但永遠隱藏（避免你其他地方還有依賴） */}
+        <div className="jyc-lang-select-wrap" aria-hidden="true">
           <select
             className="jyc-lang-select"
             value={locale}
             onChange={(e) => onLocaleChange(e.target.value as Locale)}
             aria-label="Language"
+            tabIndex={-1}
           >
             <option value="en">EN</option>
             <option value="hi">Hindi</option>
@@ -187,9 +228,9 @@ export function Header() {
           </select>
         </div>
 
-        {/* ✅ 只有內部頁才顯示後台 UI */}
-        {showAdminUi && (
-          loggedIn ? (
+        {/* ✅ 只有內部頁才顯示後台 UI（訪客完全看不到） */}
+        {showAdminUi &&
+          (loggedIn ? (
             <>
               <span className="jyc-login-status">已登入（内部）</span>
               <Link href="/admin" className="jyc-login-link">
@@ -203,8 +244,7 @@ export function Header() {
             <Link href="/login" className="jyc-login-link">
               后台登入
             </Link>
-          )
-        )}
+          ))}
       </div>
     </header>
   );

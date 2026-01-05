@@ -131,7 +131,7 @@ body {
   justify-content: space-between;
   gap: 16px;
 
-  padding: 16px 40px;
+  padding: 16px 45px;
 
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
   border-bottom: 1px solid var(--jyc-line);
@@ -189,42 +189,65 @@ body {
 .jyc-nav {
   display: flex;
   gap: 16px;
-  font-size: 14px;
+  font-size: 17px; /* 你剛要的 +20% */
 }
 
-.jyc-nav a {
+.jyc-nav-link {
   position: relative;
   text-decoration: none;
+
   color: rgba(11, 18, 32, 0.72);
-  font-weight: 500; /* Gotham Medium */
+  font-weight: 650;
   letter-spacing: 0.01em;
 
-  padding: 8px 6px;
-  border-radius: 10px;
-  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  padding: 9px 8px;
+  border-radius: 12px;
+
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.jyc-nav a:hover {
+/* hover */
+.jyc-nav-link:hover {
   color: var(--jyc-text);
-  background: rgba(192, 106, 44, 0.08);
+  background: rgba(192, 106, 44, 0.10); /* 銅金淡底 */
   transform: translateY(-1px);
 }
 
-.jyc-nav a::after {
+/* 底線光條：hover/active 都會顯示 */
+.jyc-nav-link::after {
   content: "";
   position: absolute;
   left: 10px;
   right: 10px;
-  bottom: 5px;
+  bottom: 6px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(192, 106, 44, 0.85), transparent);
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(192, 106, 44, 0.95),
+    transparent
+  );
+
   opacity: 0;
   transform: translateY(2px);
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
-.jyc-nav a:hover::after {
+.jyc-nav-link:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ✅ Active：更明顯、更像「所在頁」 */
+.jyc-nav-link.is-active {
+  color: var(--jyc-text);
+  background: rgba(192, 106, 44, 0.14);
+  box-shadow: 0 10px 22px rgba(192, 106, 44, 0.12);
+}
+
+.jyc-nav-link.is-active::after {
   opacity: 1;
   transform: translateY(0);
 }
