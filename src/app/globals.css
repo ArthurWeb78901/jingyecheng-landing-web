@@ -931,32 +931,39 @@ html:lang(zh-Hans) .jyc-page p {
 */
 
 /* 📱 Mobile only – Online Inquiry 按鈕放大 10% */
+/* 📱 Mobile tweaks */
 @media (max-width: 768px) {
+  /* Online Inquiry：整體 + 字體放大 */
   .jyc-chat-bubble-button {
-    transform: scale(1.265); /* 1.15 × 1.1 ≈ 1.265 */
+    transform: scale(1.265); /* 1.15 × 1.1 */
     transform-origin: bottom right;
-    font-size: 15.4px; /* 原本 14px × 1.1 */
+    font-size: 15.4px; /* 14px × 1.1 */
   }
+
+  /* Nav：強制單行 */
   .jyc-nav {
-    flex-wrap: nowrap;          /* 不允許換行 */
-    gap: 6px;                   /* 再收 */
-    white-space: nowrap;        /* 保證文字不拆 */
-    overflow-x: hidden;         /* 不要出現橫向卷軸（想要卷軸我再給另一版） */
-    justify-content: center;    /* 保持置中 */
+    flex-wrap: nowrap;
+    gap: 6px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    justify-content: center;
   }
 
   .jyc-nav a {
-    font-size: 15px;            /* 比 14px 大，但更容易塞下 5 個 */
-    padding: 6px 6px;           /* 點擊區保留，但別太寬 */
-  }
-  .jyc-lang-select-wrap {
-    display: none;
+    font-size: 15px;
+    padding: 6px 6px;
   }
 
-  /* 顯示按鈕式語言切換 */
+  /* ✅ 語言切換：手機隱藏 select，改顯示按鈕列 */
+  .jyc-lang-select-wrap,
+  .jyc-lang-select {
+    display: none !important;
+  }
+
   .jyc-lang-switch {
-    display: flex;
+    display: flex !important;
     gap: 8px;
+    flex-wrap: wrap; /* 小螢幕也不會擠爆 */
   }
 
   .jyc-lang-switch a,
@@ -967,10 +974,12 @@ html:lang(zh-Hans) .jyc-page p {
     border: 1px solid #ddd;
     background: #fff;
     font-weight: 600;
+    line-height: 1;
   }
+
   .jyc-lang-active {
-  background: #333;
-  color: #fff;
-  border-color: #333;
-}
+    background: #333 !important;
+    color: #fff !important;
+    border-color: #333 !important;
+  }
 }
