@@ -1,15 +1,51 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap");
 
-/* 基础重设 & 全站字体 */
+/* ===============================
+   ✅ Tech Design Tokens
+   =============================== */
+:root {
+  --jyc-bg: #f6f8fc;
+  --jyc-surface: rgba(255, 255, 255, 0.86);
+  --jyc-surface-solid: #ffffff;
+
+  --jyc-text: #0b1220;
+  --jyc-muted: #5b667a;
+
+  --jyc-line: rgba(15, 23, 42, 0.10);
+
+  --jyc-blue-900: #071a3a;
+  --jyc-blue-800: #0b2a5a;
+  --jyc-blue-700: #0e3a7a;
+  --jyc-blue-600: #155ee8;
+
+  --jyc-accent: var(--jyc-blue-600);
+
+  --jyc-radius: 14px;
+  --jyc-radius-sm: 10px;
+
+  --jyc-shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --jyc-shadow-md: 0 14px 36px rgba(15, 23, 42, 0.14);
+
+  --jyc-max: 1120px;
+}
+
+/* ===============================
+   基础重设 & 全站字体
+   =============================== */
 html,
 body {
   margin: 0;
   padding: 0;
   font-family: "Inter", "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
     -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
-  background-color: #f5f5f5;
-  color: #222;
+
+  /* Tech background */
+  background: radial-gradient(1200px 600px at 15% 0%, rgba(21, 94, 232, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 85% 10%, rgba(14, 58, 122, 0.10), transparent 55%),
+    var(--jyc-bg);
+
+  color: var(--jyc-text);
 }
 
 *,
@@ -21,31 +57,38 @@ body {
 /* 页面整体布局 */
 .jyc-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: transparent;
 }
 
-/* 顶部导航 */
+/* ===============================
+   顶部导航 Header
+   =============================== */
 .jyc-header {
   position: sticky;
   top: 0;
   z-index: 20;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+
   padding: 16px 32px;
-  border-bottom: 1px solid #e5e5e5;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
+
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+  border-bottom: 1px solid var(--jyc-line);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 /* Logo：徽章 + 文字 */
 .jyc-logo {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   text-decoration: none;
-  color: #222;
+  color: var(--jyc-text);
+
   font-family: "Manrope", "Inter", "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
     -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
 }
@@ -54,17 +97,23 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: #4a148c;
+
+  background: linear-gradient(135deg, var(--jyc-blue-800), var(--jyc-accent));
   color: #fff;
+
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+
   padding: 2px;
   overflow: hidden;
+
+  box-shadow: 0 10px 22px rgba(21, 94, 232, 0.22);
 }
 
 /* Header 裡的圖片 logo */
@@ -76,9 +125,10 @@ body {
 }
 
 .jyc-logo-text {
-  font-size: 18px;
-  font-weight: 700;      /* 原本 600 -> 700 更有力 */
-  letter-spacing: 0.02em;/* 原本 0.03 稍微收斂更穩重 */
+  /* 桌機更大、更專業 */
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.015em;
   white-space: nowrap;
 }
 
@@ -111,12 +161,40 @@ body {
 }
 
 .jyc-nav a {
+  position: relative;
   text-decoration: none;
-  color: #555;
+  color: rgba(11, 18, 32, 0.72);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+
+  padding: 8px 6px;
+  border-radius: 10px;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
 .jyc-nav a:hover {
-  color: #111;
+  color: var(--jyc-text);
+  background: rgba(21, 94, 232, 0.08);
+  transform: translateY(-1px);
+}
+
+.jyc-nav a::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 5px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(21, 94, 232, 0.85), transparent);
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.jyc-nav a:hover::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* 右侧：语言切换 + 登录按钮 */
@@ -132,7 +210,7 @@ body {
    Mobile: show buttons only
    =============================== */
 
-/* 桌機/平板預設：隱藏按鈕列、顯示 select */
+/* Desktop/Tablet: hide buttons, show select */
 .jyc-lang-switch {
   display: none;
   gap: 8px;
@@ -144,7 +222,6 @@ body {
   align-items: center;
 }
 
-/* 自画右侧箭头 */
 .jyc-lang-select-wrap::after {
   content: "▾";
   position: absolute;
@@ -162,24 +239,26 @@ body {
   -moz-appearance: none;
 
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
 
-  padding: 6px 28px 6px 10px; /* 右边留空间给箭头 */
+  padding: 7px 30px 7px 12px;
   border-radius: 999px;
-  border: 1px solid #e5e5e5;
-  background: #fff;
-  color: #222;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.70);
+  color: var(--jyc-text);
 
   line-height: 1;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  backdrop-filter: blur(8px);
+
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
 }
 
 .jyc-lang-select:hover {
-  border-color: #bdbdbd;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: rgba(21, 94, 232, 0.35);
+  box-shadow: 0 8px 18px rgba(21, 94, 232, 0.10);
 }
 
 .jyc-lang-select:active {
@@ -188,60 +267,69 @@ body {
 
 .jyc-lang-select:focus-visible {
   outline: none;
-  border-color: #333;
-  box-shadow: 0 0 0 3px rgba(51,51,51,0.15);
+  border-color: rgba(21, 94, 232, 0.55);
+  box-shadow: 0 0 0 3px rgba(21, 94, 232, 0.18);
 }
 
-/* 按鈕外觀（主要給手機用） */
+/* Mobile buttons style */
 .jyc-lang-switch button,
 .jyc-lang-switch a {
   font-size: 12px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.70);
   cursor: pointer;
   text-decoration: none;
-  color: #333;
+  color: var(--jyc-text);
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
+  backdrop-filter: blur(8px);
 }
 
 .jyc-lang-switch button:hover,
 .jyc-lang-switch a:hover {
-  border-color: #999;
+  border-color: rgba(21, 94, 232, 0.35);
 }
 
 /* 当前语言高亮 */
 .jyc-lang-active {
-  background: #333 !important;
+  background: linear-gradient(135deg, var(--jyc-blue-800), var(--jyc-accent)) !important;
   color: #fff !important;
-  border-color: #333 !important;
+  border-color: transparent !important;
 }
 
 /* 登录状态 / 按钮 */
 .jyc-login-link {
   font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  border: 1px solid #333;
+  padding: 7px 12px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  background: rgba(255, 255, 255, 0.60);
+  backdrop-filter: blur(8px);
+
   text-decoration: none;
-  color: #333;
+  color: var(--jyc-text);
   white-space: nowrap;
+
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 
 .jyc-login-link:hover {
-  background: #333;
-  color: #fff;
+  background: rgba(21, 94, 232, 0.10);
+  border-color: rgba(21, 94, 232, 0.28);
+  transform: translateY(-1px);
 }
 
 .jyc-login-status {
   font-size: 11px;
   color: #0a7d32;
-  padding: 2px 6px;
+  padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid #0a7d32;
+  border: 1px solid rgba(10, 125, 50, 0.4);
+  background: rgba(255,255,255,0.6);
   white-space: nowrap;
 }
 
@@ -254,6 +342,9 @@ body {
   background-position: center center;
   background-repeat: no-repeat;
   color: #fff;
+
+  border-bottom: 1px solid var(--jyc-line);
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.18) inset;
 }
 
 .jyc-hero-inner {
@@ -263,17 +354,20 @@ body {
 }
 
 .jyc-hero-text h1 {
-  font-size: 32px;
-  line-height: 1.3;
+  font-size: 38px;
+  line-height: 1.25;
   margin-bottom: 16px;
   color: #fff;
+  letter-spacing: 0.01em;
+  text-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
 
 .jyc-hero-text p {
   font-size: 15px;
-  line-height: 1.7;
-  color: #f3f3f3;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.88);
   margin-bottom: 24px;
+  text-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
 
 .jyc-hero-actions {
@@ -285,34 +379,38 @@ body {
 
 .jyc-hero-caption {
   font-size: 12px;
-  color: #f5f5f5;
-  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.86);
+  opacity: 0.92;
 }
 
+/* Overlay: more “KEDA-like” cinematic tech */
 .jyc-hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.7),
-    rgba(0, 0, 0, 0.35),
-    rgba(0, 0, 0, 0.05)
-  );
+  background:
+    linear-gradient(90deg,
+      rgba(7, 26, 58, 0.82),
+      rgba(7, 26, 58, 0.55),
+      rgba(7, 26, 58, 0.15)
+    ),
+    radial-gradient(700px 420px at 20% 30%, rgba(21, 94, 232, 0.20), transparent 60%);
   z-index: 0;
   pointer-events: none;
 }
 
+/* 英文首页：overlay 稍浅（保留你原本的概念） */
 .jyc-hero-en::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.45),
-    rgba(0, 0, 0, 0.18),
-    rgba(0, 0, 0, 0)
-  );
+  background:
+    linear-gradient(90deg,
+      rgba(7, 26, 58, 0.70),
+      rgba(7, 26, 58, 0.42),
+      rgba(7, 26, 58, 0.12)
+    ),
+    radial-gradient(700px 420px at 20% 30%, rgba(21, 94, 232, 0.18), transparent 60%);
   z-index: 0;
   pointer-events: none;
 }
@@ -322,59 +420,96 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   padding: 10px 20px;
-  border-radius: 4px;
+  border-radius: 999px;
   border: none;
-  background: #333;
+
+  background: linear-gradient(135deg, var(--jyc-blue-800), var(--jyc-accent));
   color: #fff;
+
   font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+
   text-decoration: none;
   cursor: pointer;
+
+  box-shadow: 0 14px 26px rgba(21, 94, 232, 0.20);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
 
 .jyc-btn-primary:hover {
-  background: #111;
+  transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(21, 94, 232, 0.26);
+  filter: brightness(1.02);
 }
 
 .jyc-btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   padding: 10px 20px;
-  border-radius: 4px;
-  border: 1px solid #333;
-  background: transparent;
-  color: #333;
+  border-radius: 999px;
+
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.20);
+  color: #fff;
+
   font-size: 14px;
   text-decoration: none;
   cursor: pointer;
+
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
 }
 
 .jyc-btn-secondary:hover {
-  background: #333;
-  color: #fff;
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+.jyc-hero .jyc-btn-secondary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 /* 通用区块 */
 .jyc-section {
-  padding: 56px 32px;
-  background: #fff;
+  padding: 64px 32px;
+  background: transparent;
 }
 
 .jyc-section-alt {
-  background: #fafafa;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.25));
+  border-top: 1px solid var(--jyc-line);
+  border-bottom: 1px solid var(--jyc-line);
 }
 
 .jyc-section h2 {
-  font-size: 24px;
-  margin-bottom: 16px;
+  font-size: 28px;
+  margin-bottom: 18px;
+  letter-spacing: 0.01em;
+  position: relative;
+}
+
+.jyc-section h2::after {
+  content: "";
+  display: block;
+  width: 54px;
+  height: 3px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--jyc-accent), rgba(21, 94, 232, 0.15));
 }
 
 .jyc-section-intro {
-  font-size: 14px;
-  color: #666;
+  font-size: 15px;
+  color: var(--jyc-muted);
   max-width: 720px;
-  line-height: 1.6;
+  line-height: 1.75;
   margin-bottom: 24px;
 }
 
@@ -390,17 +525,20 @@ body {
   margin: 0;
 }
 
+/* 左侧大 Logo 圆形（加大整体尺寸 + 白边） */
 .jyc-about-logo-wrap {
   width: 84px;
   height: 84px;
   border-radius: 999px;
-  background: #fff;
+  background: rgba(255,255,255,0.9);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
   padding: 8px;
   box-sizing: border-box;
+  border: 1px solid var(--jyc-line);
 }
 
 .jyc-about-logo {
@@ -420,45 +558,63 @@ body {
 }
 
 .jyc-card {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e5e5e5;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: var(--jyc-radius);
+  border: 1px solid var(--jyc-line);
   padding: 16px;
+
+  backdrop-filter: blur(10px);
+  box-shadow: var(--jyc-shadow-sm);
+
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.jyc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--jyc-shadow-md);
+  border-color: rgba(21, 94, 232, 0.20);
 }
 
 .jyc-card-image {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 6px;
+  border-radius: 12px;
   background: #f0f0f0;
   background-size: cover;
   background-position: center;
   margin-bottom: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .jyc-card h3 {
   font-size: 16px;
   margin-bottom: 8px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .jyc-card p {
   font-size: 14px;
-  color: #666;
+  color: var(--jyc-muted);
   margin-bottom: 12px;
 }
 
 .jyc-card-btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: 1px solid #333;
-  background: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(21, 94, 232, 0.28);
+  background: rgba(255,255,255,0.8);
   cursor: pointer;
   font-size: 13px;
+  font-weight: 700;
+  color: var(--jyc-text);
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
 }
 
 .jyc-card-btn:hover {
-  background: #333;
-  color: #fff;
+  transform: translateY(-1px);
+  background: rgba(21, 94, 232, 0.10);
+  border-color: rgba(21, 94, 232, 0.40);
 }
 
 /* ===== 首页「主要产品一览」横向滑动容器 ===== */
@@ -507,9 +663,11 @@ body {
   position: relative;
   width: 85%;
   padding-top: 56.25%;
-  border-radius: 8px;
+  border-radius: var(--jyc-radius);
   overflow: hidden;
   background: #e0e0e0;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  box-shadow: var(--jyc-shadow-sm);
 }
 
 .jyc-home-slideshow-main-inner {
@@ -523,7 +681,7 @@ body {
 .jyc-home-slideshow-caption {
   margin-top: 8px;
   font-size: 13px;
-  color: #555;
+  color: var(--jyc-muted);
 }
 
 .jyc-home-slideshow-dots {
@@ -536,15 +694,15 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 1px solid #999;
+  border: 1px solid rgba(15, 23, 42, 0.25);
   background: transparent;
   padding: 0;
   cursor: pointer;
 }
 
 .jyc-home-slideshow-dot-active {
-  background: #333;
-  border-color: #333;
+  background: var(--jyc-accent);
+  border-color: var(--jyc-accent);
 }
 
 .jyc-gallery-grid {
@@ -555,18 +713,20 @@ body {
 }
 
 .jyc-gallery-item {
-  border-radius: 6px;
+  border-radius: 12px;
   background: #e0e0e0;
   background-position: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .jyc-gallery-thumb {
   width: 80%;
   aspect-ratio: 1 / 1;
-  border-radius: 6px;
+  border-radius: 12px;
   background: #e0e0e0;
   background-size: cover;
   background-position: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 /* Contact 表单 */
@@ -585,16 +745,18 @@ body {
 .jyc-contact-form input,
 .jyc-contact-form textarea {
   flex: 1;
-  padding: 8px 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
   font-size: 14px;
+  background: rgba(255,255,255,0.85);
 }
 
 .jyc-contact-form input:focus,
 .jyc-contact-form textarea:focus {
   outline: none;
-  border-color: #888;
+  border-color: rgba(21, 94, 232, 0.55);
+  box-shadow: 0 0 0 3px rgba(21, 94, 232, 0.14);
 }
 
 .jyc-contact-submit {
@@ -605,10 +767,11 @@ body {
 /* Footer */
 .jyc-footer {
   padding: 24px 32px;
-  border-top: 1px solid #e5e5e5;
-  background: #fff;
+  border-top: 1px solid var(--jyc-line);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
   font-size: 12px;
-  color: #777;
+  color: rgba(11, 18, 32, 0.55);
   text-align: center;
 }
 
@@ -623,18 +786,23 @@ body {
   right: 24px;
   bottom: 24px;
   z-index: 40;
+
   padding: 10px 16px;
   border-radius: 999px;
   border: none;
-  background: #333;
+
+  background: linear-gradient(135deg, var(--jyc-blue-800), var(--jyc-accent));
   color: #fff;
+
   font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+
+  box-shadow: 0 18px 40px rgba(21, 94, 232, 0.22);
 }
 
 .jyc-chat-bubble-button:hover {
-  background: #111;
+  filter: brightness(1.03);
 }
 
 .jyc-chat-panel {
@@ -644,18 +812,21 @@ body {
   z-index: 40;
   width: 320px;
   max-height: 420px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e5e5e5;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+
+  background: rgba(255,255,255,0.92);
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 .jyc-chat-header {
   padding: 10px 12px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.10);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -664,12 +835,12 @@ body {
 
 .jyc-chat-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .jyc-chat-status {
   font-size: 11px;
-  color: #777;
+  color: rgba(11, 18, 32, 0.55);
 }
 
 .jyc-chat-close {
@@ -678,101 +849,76 @@ body {
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  color: #777;
+  color: rgba(11, 18, 32, 0.55);
 }
 
 .jyc-chat-close:hover {
-  color: #111;
+  color: var(--jyc-text);
 }
 
 .jyc-chat-messages {
   padding: 10px 10px 8px;
   flex: 1;
   overflow-y: auto;
-  background: #fafafa;
+  background: rgba(246, 248, 252, 0.65);
 }
 
 .jyc-chat-message {
   max-width: 80%;
   margin-bottom: 6px;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   line-height: 1.6;
 }
 
 .jyc-chat-message-bot {
-  background: #fff;
-  border: 1px solid #e0e0e0;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(15, 23, 42, 0.10);
   margin-right: auto;
 }
 
 .jyc-chat-message-user {
-  background: #333;
+  background: linear-gradient(135deg, var(--jyc-blue-800), var(--jyc-accent));
   color: #fff;
   margin-left: auto;
 }
 
 .jyc-chat-input-row {
   padding: 8px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid rgba(15, 23, 42, 0.10);
   display: flex;
   gap: 6px;
 }
 
 .jyc-chat-input-row input {
   flex: 1;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
   font-size: 13px;
+  background: rgba(255,255,255,0.9);
 }
 
 .jyc-chat-input-row input:focus {
   outline: none;
-  border-color: #888;
+  border-color: rgba(21, 94, 232, 0.55);
+  box-shadow: 0 0 0 3px rgba(21, 94, 232, 0.14);
 }
 
 .jyc-chat-input-row button {
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
   border: none;
-  background: #333;
+  background: linear-gradient(135deg, var(--jyc-blue-800), var(--jyc-accent));
   color: #fff;
   font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
 }
 
 .jyc-chat-input-row button:hover {
-  background: #111;
-}
-
-/* 🖥 桌机 */
-@media (min-width: 1024px) {
-  .jyc-card-image {
-    height: 300px;
-    border-radius: 6px;
-    background-size: cover;
-    background-position: center;
-  }
-
-  .jyc-gallery-grid {
-    grid-template-columns: repeat(auto-fit, 140px);
-    gap: 10px;
-    justify-content: flex-start;
-  }
-
-  .jyc-gallery-item {
-    width: 140px;
-    height: 140px;
-    border-radius: 6px;
-    background-size: cover;
-    background-position: center;
-  }
-
-  .jyc-home-slideshow-main {
-    padding-top: 40%;
-  }
+  filter: brightness(1.03);
 }
 
 /* ✅ 全站段落：两端对齐（桌机 + 手机） */
@@ -814,28 +960,30 @@ html:lang(zh-Hans) .jyc-page p {
   text-justify: inter-ideograph;
 }
 
-/* ✅ Hero 区按钮增强（让 View Products 不再看不见） */
-.jyc-hero .jyc-btn-secondary {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.9);
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-}
+/* 🖥 桌机 */
+@media (min-width: 1024px) {
+  .jyc-card-image {
+    height: 300px;
+  }
 
-.jyc-hero .jyc-btn-secondary:hover {
-  background: #fff;
-  color: #111;
-  border-color: #fff;
-}
+  .jyc-gallery-grid {
+    grid-template-columns: repeat(auto-fit, 140px);
+    gap: 10px;
+    justify-content: flex-start;
+  }
 
-.jyc-hero .jyc-btn-secondary:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
+  .jyc-gallery-item {
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    background-size: cover;
+    background-position: center;
+  }
 
-/* ✅ Desktop/Tablet: show select, hide buttons */
-.jyc-lang-switch { display: none; }
-.jyc-lang-select-wrap { display: inline-flex; }
+  .jyc-home-slideshow-main {
+    padding-top: 40%;
+  }
+}
 
 /* ===============================
    📱 手机与小平板（統一整合版）
@@ -847,9 +995,25 @@ html:lang(zh-Hans) .jyc-page p {
     gap: 10px;
   }
 
-  .jyc-lang-switch { display: flex; gap: 8px; flex-wrap: wrap; }
-  .jyc-lang-select-wrap { display: none; }
-  
+  /* ✅ Logo 在手機縮小，避免把右側按鈕擠掉 */
+  .jyc-logo-text {
+    font-size: 18px !important;
+    max-width: 58vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ✅ Mobile: show buttons, hide select */
+  .jyc-lang-switch {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .jyc-lang-select-wrap {
+    display: none;
+  }
+
   /* Nav：強制單行（五個項目不掉行） */
   .jyc-nav {
     order: 3;
@@ -857,15 +1021,15 @@ html:lang(zh-Hans) .jyc-page p {
     justify-content: center;
 
     flex-wrap: nowrap;
-    gap: 4px;               /* 比 6 再更穩 */
+    gap: 4px;
     white-space: nowrap;
-    overflow-x: hidden;     /* 你要可滑就改成 auto */
+    overflow-x: hidden;
     margin-top: 6px;
   }
 
   .jyc-nav a {
     font-size: 15px;
-    padding: 6px 4px;       /* 收窄左右 padding 讓 5 個更容易塞 */
+    padding: 6px 4px;
   }
 
   .jyc-hero {
@@ -873,11 +1037,11 @@ html:lang(zh-Hans) .jyc-page p {
   }
 
   .jyc-hero-text h1 {
-    font-size: 24px;
+    font-size: 28px;
   }
 
   .jyc-section {
-    padding: 32px 16px;
+    padding: 40px 16px;
   }
 
   .jyc-form-row {
@@ -890,34 +1054,15 @@ html:lang(zh-Hans) .jyc-page p {
     width: 260px;
   }
 
-  /* Online Inquiry：以你原本手機版 1.15 為基準再 +10% */
+  /* Online Inquiry：放大 */
   .jyc-chat-bubble-button {
     right: 12px;
     bottom: 20px;
     padding: 14px 22px;
 
-    transform: scale(1.265); /* 1.15 × 1.1 */
+    transform: scale(1.265);
     transform-origin: bottom right;
-    font-size: 15.4px;       /* 14 × 1.1 */
-  }
-
-  /* 手機：語言顯示按鈕列、隱藏 select */
-  .jyc-lang-select-wrap,
-  .jyc-lang-select {
-    display: none !important;
-  }
-
-  .jyc-lang-switch {
-    display: flex !important;
-    gap: 8px;
-    flex-wrap: wrap; /* 小螢幕也不會擠爆 */
-  }
-
-  .jyc-lang-switch button,
-  .jyc-lang-switch a {
-    font-size: 13px;
-    padding: 6px 10px;
-    border-radius: 999px;
+    font-size: 15.4px;
   }
 
   .jyc-home-slideshow-main {
@@ -945,7 +1090,7 @@ html:lang(zh-Hans) .jyc-page p {
     flex: 0 0 100%;
     max-width: 100%;
     aspect-ratio: 1 / 1;
-    border-radius: 6px;
+    border-radius: 12px;
     background: #e0e0e0;
     background-size: cover;
     background-position: center;
