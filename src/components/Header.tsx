@@ -16,22 +16,32 @@ type SiteConfigForHeader = {
 
 const HEADER_DEFAULTS: SiteConfigForHeader = {
   logoMark: "JYC",
-  logoTextEn: "JYC Steel Equipment",
-  logoTextHi: "JYC स्टील उपकरण",
-  logoTextId: "Peralatan Baja JYC",
+  logoTextEn: "JYC Steel Equipment Ltd",
+  logoTextHi: "JYC स्टील उपकरण Ltd",
+  logoTextId: "Peralatan Baja JYC Ltd",
   logoImageUrl: "",
 };
 
 const SUPPORTED_LOCALES = ["en", "hi", "id"] as const;
 type Locale = (typeof SUPPORTED_LOCALES)[number];
 
-// 這些頁面不是語系路由，切換語言時不要拼 /hi/admin 之類
+// 這些頁面不是語系路由
 const NON_LOCALE_PATH_PREFIXES = ["/admin", "/login", "/logout"];
 
 function pickLocaleFromPath(pathname: string): Locale {
   const seg = pathname.split("/")[1];
   if (SUPPORTED_LOCALES.includes(seg as Locale)) return seg as Locale;
   return "en";
+}
+
+function stripLocalePrefix(pathname: string) {
+  const parts = pathname.split("/");
+  const first = parts[1];
+  if (SUPPORTED_LOCALES.includes(first as Locale)) {
+    const rest = "/" + parts.slice(2).join("/");
+    return rest === "/" ? "/" : rest;
+  }
+  return pathname;
 }
 
 export function Header() {
@@ -106,15 +116,18 @@ export function Header() {
     return NON_LOCALE_PATH_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
   }
 
-  // 切換語言：保留目前子路徑，例如 /hi/products -> /id/products
+  // ✅ 只在內部頁顯示後台入口（訪客頁完全看不到）
+  const showAdminUi = useMemo(() => {
+    const withoutLocale = stripLocalePrefix(pathname);
+    return isNonLocalePage(withoutLocale);
+  }, [pathname]);
+
   function buildPathForLocale(target: Locale) {
-    // 在 /admin /login /logout 這類頁面，切換語言就回到該語言首頁
-    if (isNonLocalePage(pathname)) return `/${target}`;
+    if (isNonLocalePage(stripLocalePrefix(pathname))) return `/${target}`;
 
     const parts = pathname.split("/");
     const first = parts[1];
 
-    // 已經是 /en /hi /id 開頭 -> 取後面的 path
     const rest = SUPPORTED_LOCALES.includes(first as Locale)
       ? "/" + parts.slice(2).join("/")
       : pathname;
@@ -132,11 +145,7 @@ export function Header() {
       <Link href={logoHref} className="jyc-logo">
         <span className="jyc-logo-mark">
           {siteConfig.logoImageUrl ? (
-            <img
-              src={siteConfig.logoImageUrl}
-              alt={logoText}
-              className="jyc-logo-mark-img"
-            />
+            <img src={siteConfig.logoImageUrl} alt={logoText} className="jyc-logo-mark-img" />
           ) : (
             siteConfig.logoMark
           )}
@@ -153,27 +162,14 @@ export function Header() {
       </nav>
 
       <div className="jyc-header-right">
-        {/* ✅ Mobile: show buttons / Desktop: show select (CSS 控制顯示) */}
         <div className="jyc-lang-switch" role="group" aria-label="Language">
-          <button
-            type="button"
-            onClick={() => onLocaleChange("en")}
-            className={locale === "en" ? "jyc-lang-active" : ""}
-          >
+          <button type="button" onClick={() => onLocaleChange("en")} className={locale === "en" ? "jyc-lang-active" : ""}>
             EN
           </button>
-          <button
-            type="button"
-            onClick={() => onLocaleChange("hi")}
-            className={locale === "hi" ? "jyc-lang-active" : ""}
-          >
+          <button type="button" onClick={() => onLocaleChange("hi")} className={locale === "hi" ? "jyc-lang-active" : ""}>
             Hindi
           </button>
-          <button
-            type="button"
-            onClick={() => onLocaleChange("id")}
-            className={locale === "id" ? "jyc-lang-active" : ""}
-          >
+          <button type="button" onClick={() => onLocaleChange("id")} className={locale === "id" ? "jyc-lang-active" : ""}>
             Indonesian
           </button>
         </div>
@@ -191,20 +187,23 @@ export function Header() {
           </select>
         </div>
 
-        {loggedIn ? (
-          <>
-            <span className="jyc-login-status">已登入（内部）</span>
-            <Link href="/admin" className="jyc-login-link">
-              后台首页
+        {/* ✅ 只有內部頁才顯示後台 UI */}
+        {showAdminUi && (
+          loggedIn ? (
+            <>
+              <span className="jyc-login-status">已登入（内部）</span>
+              <Link href="/admin" className="jyc-login-link">
+                后台首页
+              </Link>
+              <Link href="/logout" className="jyc-login-link">
+                登出
+              </Link>
+            </>
+          ) : (
+            <Link href="/login" className="jyc-login-link">
+              后台登入
             </Link>
-            <Link href="/logout" className="jyc-login-link">
-              登出
-            </Link>
-          </>
-        ) : (
-          <Link href="/login" className="jyc-login-link">
-            后台登入
-          </Link>
+          )
         )}
       </div>
     </header>

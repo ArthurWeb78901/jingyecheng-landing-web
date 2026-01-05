@@ -104,7 +104,7 @@ export default function ProductsEnPage() {
           </h1>
           <p className="jyc-section-intro">
             Below are the products currently provided by Taiyuan Jingyecheng
-            Steel Equip Co., Ltd. Detailed technical specifications and line
+            Steel Equipment Ltd. Detailed technical specifications and line
             configurations can be tailored to process, capacity and plant layout
             requirements, and are subject to the final technical proposal and
             quotation.

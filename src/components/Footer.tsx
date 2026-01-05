@@ -21,9 +21,9 @@ type SiteConfigForFooter = {
 
 const FOOTER_DEFAULTS: Required<Pick<SiteConfigForFooter, "phone" | "email">> &
   Omit<SiteConfigForFooter, "phone" | "email"> = {
-  footerEn: "All rights reserved: JYC Steel Equip",
-  footerHi: "",
-  footerId: "",
+  footerEn: "All rights reserved: JYC Steel Equipment Ltd",
+  footerHi: "All rights reserved: JYC Steel Equipment Ltd",
+  footerId: "All rights reserved: JYC Steel Equipment Ltd",
 
   addressEn: "",
   addressHi: "",
