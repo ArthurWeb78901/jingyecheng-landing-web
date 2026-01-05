@@ -778,6 +778,14 @@ html:focus-within {
   gap: 16px;
   margin-bottom: 16px;
 }
+
+/* About photo: show full image (no crop) */
+.jyc-about-photo {
+  object-fit: contain;
+  object-position: center;
+  background: rgba(255, 255, 255, 0.88);
+}
+
 .jyc-about-header h2 { margin: 0; }
 .jyc-about-logo-wrap {
   width: 84px;
