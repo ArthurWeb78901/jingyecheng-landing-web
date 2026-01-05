@@ -937,9 +937,11 @@ html:lang(zh-Hans) .jyc-page p {
     transform-origin: bottom right;
     font-size: 15.4px; /* 原本 14px × 1.1 */
   }
+  .jyc-nav {
+    gap: 10px; /* 原本 16px → 收到 10px */
+  }
   .jyc-nav a {
     font-size: 16px;      /* 原 14px → +14% */
     padding: 6px 8px;    /* 增加點擊舒適度，不影響排版 */
-    gap: 10px;
   }
 }
