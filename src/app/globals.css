@@ -211,16 +211,24 @@ body {
    =============================== */
 
 /* Desktop/Tablet: hide buttons, show select */
+/* ===============================
+   🌐 Language: buttons on ALL devices
+   =============================== */
+
+/* 永遠顯示按鈕 */
 .jyc-lang-switch {
-  display: none;
+  display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
-.jyc-lang-select-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
+/* 永遠隱藏 select */
+.jyc-lang-select-wrap,
+.jyc-lang-select {
+  display: none !important;
 }
+
 
 .jyc-lang-select-wrap::after {
   content: "▾";
