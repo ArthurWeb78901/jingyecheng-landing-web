@@ -77,8 +77,10 @@ body {
 
 .jyc-logo-text {
   font-size: 25px;
-  font-weight: 800;      /* 原本 600 -> 700 更有力 */
-  letter-spacing: 0.02em;/* 原本 0.03 稍微收斂更穩重 */
+  font-weight: 800;
+  /* 原本 600 -> 700 更有力 */
+  letter-spacing: 0.02em;
+  /* 原本 0.03 稍微收斂更穩重 */
   white-space: nowrap;
 }
 
@@ -165,7 +167,8 @@ body {
   font-weight: 600;
   letter-spacing: 0.02em;
 
-  padding: 6px 28px 6px 10px; /* 右边留空间给箭头 */
+  padding: 6px 28px 6px 10px;
+  /* 右边留空间给箭头 */
   border-radius: 999px;
   border: 1px solid #e5e5e5;
   background: #fff;
@@ -173,13 +176,13 @@ body {
 
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
 }
 
 .jyc-lang-select:hover {
   border-color: #bdbdbd;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .jyc-lang-select:active {
@@ -189,7 +192,7 @@ body {
 .jyc-lang-select:focus-visible {
   outline: none;
   border-color: #333;
-  box-shadow: 0 0 0 3px rgba(51,51,51,0.15);
+  box-shadow: 0 0 0 3px rgba(51, 51, 51, 0.15);
 }
 
 /* 按鈕外觀（主要給手機用） */
@@ -293,12 +296,10 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.7),
-    rgba(0, 0, 0, 0.35),
-    rgba(0, 0, 0, 0.05)
-  );
+  background: linear-gradient(to right,
+      rgba(0, 0, 0, 0.7),
+      rgba(0, 0, 0, 0.35),
+      rgba(0, 0, 0, 0.05));
   z-index: 0;
   pointer-events: none;
 }
@@ -307,12 +308,10 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.45),
-    rgba(0, 0, 0, 0.18),
-    rgba(0, 0, 0, 0)
-  );
+  background: linear-gradient(to right,
+      rgba(0, 0, 0, 0.45),
+      rgba(0, 0, 0, 0.18),
+      rgba(0, 0, 0, 0));
   z-index: 0;
   pointer-events: none;
 }
@@ -835,11 +834,13 @@ html:lang(zh-Hans) .jyc-page p {
 
 /* 🔒 Force language UI behavior */
 .jyc-header-right .jyc-lang-switch {
-  display: none !important;   /* desktop/tablet: hide buttons */
+  display: none !important;
+  /* desktop/tablet: hide buttons */
 }
 
 .jyc-header-right .jyc-lang-select-wrap {
-  display: inline-flex !important; /* desktop/tablet: show select */
+  display: inline-flex !important;
+  /* desktop/tablet: show select */
 }
 
 /* ===============================
@@ -852,6 +853,18 @@ html:lang(zh-Hans) .jyc-page p {
     gap: 10px;
   }
 
+  .jyc-logo-text {
+    font-size: 18px;
+    /* 👈 手機縮小 */
+    letter-spacing: 0.015em;
+  }
+
+  .jyc-logo-mark {
+    width: 28px;
+    /* icon 也一起縮，比例才對 */
+    height: 28px;
+  }
+
   /* Nav：強制單行（五個項目不掉行） */
   .jyc-nav {
     order: 3;
@@ -859,15 +872,18 @@ html:lang(zh-Hans) .jyc-page p {
     justify-content: center;
 
     flex-wrap: nowrap;
-    gap: 4px;               /* 比 6 再更穩 */
+    gap: 4px;
+    /* 比 6 再更穩 */
     white-space: nowrap;
-    overflow-x: hidden;     /* 你要可滑就改成 auto */
+    overflow-x: hidden;
+    /* 你要可滑就改成 auto */
     margin-top: 6px;
   }
 
   .jyc-nav a {
     font-size: 15px;
-    padding: 6px 4px;       /* 收窄左右 padding 讓 5 個更容易塞 */
+    padding: 6px 4px;
+    /* 收窄左右 padding 讓 5 個更容易塞 */
   }
 
   .jyc-hero {
@@ -898,9 +914,11 @@ html:lang(zh-Hans) .jyc-page p {
     bottom: 20px;
     padding: 14px 22px;
 
-    transform: scale(1.265); /* 1.15 × 1.1 */
+    transform: scale(1.265);
+    /* 1.15 × 1.1 */
     transform-origin: bottom right;
-    font-size: 15.4px;       /* 14 × 1.1 */
+    font-size: 15.4px;
+    /* 14 × 1.1 */
   }
 
   /* 手機：語言顯示按鈕列、隱藏 select */
@@ -912,7 +930,8 @@ html:lang(zh-Hans) .jyc-page p {
   .jyc-lang-switch {
     display: flex !important;
     gap: 8px;
-    flex-wrap: wrap; /* 小螢幕也不會擠爆 */
+    flex-wrap: wrap;
+    /* 小螢幕也不會擠爆 */
   }
 
   .jyc-lang-switch button,
