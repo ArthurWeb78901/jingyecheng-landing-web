@@ -208,7 +208,7 @@ body {
 .jyc-nav {
   display: flex;
   gap: 16px;
-  font-size: 17px; /* 你剛要的 +20% */
+  font-size: 25px; /* 你剛要的 +20% */
 }
 
 .jyc-nav-link {
@@ -1393,3 +1393,122 @@ html:focus-within {
     display: none;
   }
 }
+
+/* ===============================
+   🌐 Language Switch — Premium Segmented Control
+   (paste at END of globals.css)
+   =============================== */
+
+/* 外框：整組一顆「玻璃膠囊」 */
+.jyc-lang-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
+
+  /* 讓整組看起來更「科技」 */
+  overflow: hidden;
+}
+
+/* 微弱能量光條（很淡，不搶戲） */
+.jyc-lang-switch::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(192, 106, 44, 0.22),
+    rgba(15, 23, 42, 0.10),
+    rgba(192, 106, 44, 0.18)
+  );
+  opacity: 0.55;
+  pointer-events: none;
+
+  /* 漸層邊框效果 */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px;
+}
+
+/* 按鈕：統一高度、字重、間距 */
+.jyc-lang-switch button {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+
+  background: transparent;
+  color: rgba(11, 18, 32, 0.80);
+
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+
+  transition:
+    transform 140ms cubic-bezier(.2,.8,.2,1),
+    background 180ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 180ms cubic-bezier(.2,.8,.2,1),
+    color 180ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* Hover：玻璃底 + 微抬升 */
+.jyc-lang-switch button:hover {
+  background: rgba(192, 106, 44, 0.08);
+  color: var(--jyc-text);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+}
+
+/* Active：更像「選中狀態」的科技膠囊 */
+.jyc-lang-switch .jyc-lang-active {
+  background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent)) !important;
+  color: #fff !important;
+  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.22);
+  transform: translateY(-1px);
+  position: relative;
+}
+
+/* Active 上的高光點（科技感小細節） */
+.jyc-lang-switch .jyc-lang-active::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0.35) 55%, transparent 70%);
+  opacity: 0.9;
+}
+
+/* 讓第一顆（EN）不再看起來像小圓點：固定最小寬度 */
+.jyc-lang-switch button {
+  min-width: 72px;
+  justify-content: center;
+}
+
+/* Mobile：稍微放大，手指更好按 */
+@media (max-width: 768px) {
+  .jyc-lang-switch {
+    padding: 7px;
+    gap: 7px;
+  }
+  .jyc-lang-switch button {
+    height: 40px;
+    min-width: 84px;
+    font-size: 13.5px;
+  }
+}
+
