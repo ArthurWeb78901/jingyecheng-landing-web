@@ -938,10 +938,15 @@ html:lang(zh-Hans) .jyc-page p {
     font-size: 15.4px; /* 原本 14px × 1.1 */
   }
   .jyc-nav {
-    gap: 10px; /* 原本 16px → 收到 10px */
+    flex-wrap: nowrap;          /* 不允許換行 */
+    gap: 6px;                   /* 再收 */
+    white-space: nowrap;        /* 保證文字不拆 */
+    overflow-x: hidden;         /* 不要出現橫向卷軸（想要卷軸我再給另一版） */
+    justify-content: center;    /* 保持置中 */
   }
+
   .jyc-nav a {
-    font-size: 16px;      /* 原 14px → +14% */
-    padding: 6px 8px;    /* 增加點擊舒適度，不影響排版 */
+    font-size: 15px;            /* 比 14px 大，但更容易塞下 5 個 */
+    padding: 6px 6px;           /* 點擊區保留，但別太寬 */
   }
 }
