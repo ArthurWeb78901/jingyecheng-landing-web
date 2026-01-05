@@ -940,5 +940,6 @@ html:lang(zh-Hans) .jyc-page p {
   .jyc-nav a {
     font-size: 16px;      /* 原 14px → +14% */
     padding: 6px 8px;    /* 增加點擊舒適度，不影響排版 */
+    gap: 10px;
   }
 }
