@@ -949,4 +949,28 @@ html:lang(zh-Hans) .jyc-page p {
     font-size: 15px;            /* 比 14px 大，但更容易塞下 5 個 */
     padding: 6px 6px;           /* 點擊區保留，但別太寬 */
   }
+  .jyc-lang-select-wrap {
+    display: none;
+  }
+
+  /* 顯示按鈕式語言切換 */
+  .jyc-lang-switch {
+    display: flex;
+    gap: 8px;
+  }
+
+  .jyc-lang-switch a,
+  .jyc-lang-switch button {
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-weight: 600;
+  }
+  .jyc-lang-active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
 }
