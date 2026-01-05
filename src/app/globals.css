@@ -764,26 +764,44 @@ body {
    Chat Bubble / Panel
    =============================== */
 .jyc-chat-bubble-button {
-  position: fixed;
+  /* 原本的位置保留 */
   right: 24px;
   bottom: 24px;
-  z-index: 40;
 
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: none;
+  /* ⬆️ 視覺放大約 2 倍 */
+  transform: scale(2);
+  transform-origin: bottom right;
 
-  background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
-  color: #fff;
+  /* 點擊區域仍然準確 */
+  will-change: transform;
 
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
+  /* 更有科技重量感 */
+  font-size: 18px;
+  padding: 14px 24px;
 
-  box-shadow: 0 18px 40px rgba(192, 106, 44, 0.22);
+  box-shadow:
+    0 22px 48px rgba(192, 106, 44, 0.28),
+    0 0 0 1px rgba(192, 106, 44, 0.25);
+
+  transition:
+    transform 180ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 180ms cubic-bezier(.2,.8,.2,1),
+    filter 180ms cubic-bezier(.2,.8,.2,1);
 }
 
-.jyc-chat-bubble-button:hover { filter: brightness(1.03); }
+/* Hover：更像「啟動裝置」 */
+.jyc-chat-bubble-button:hover {
+  transform: scale(2.08) translateY(-1px);
+  box-shadow:
+    0 28px 60px rgba(192, 106, 44, 0.34),
+    0 0 0 1px rgba(192, 106, 44, 0.35);
+  filter: brightness(1.05);
+}
+
+/* Active（點擊瞬間） */
+.jyc-chat-bubble-button:active {
+  transform: scale(1.96);
+}
 
 .jyc-chat-panel {
   position: fixed;
