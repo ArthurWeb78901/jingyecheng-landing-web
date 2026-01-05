@@ -153,16 +153,41 @@ export function Header() {
       </nav>
 
       <div className="jyc-header-right">
-        <div className="jyc-lang-switch">
+        {/* ✅ Mobile: show buttons / Desktop: show select (CSS 控制顯示) */}
+        <div className="jyc-lang-switch" role="group" aria-label="Language">
+          <button
+            type="button"
+            onClick={() => onLocaleChange("en")}
+            className={locale === "en" ? "jyc-lang-active" : ""}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => onLocaleChange("hi")}
+            className={locale === "hi" ? "jyc-lang-active" : ""}
+          >
+            Hindi
+          </button>
+          <button
+            type="button"
+            onClick={() => onLocaleChange("id")}
+            className={locale === "id" ? "jyc-lang-active" : ""}
+          >
+            Indonesian
+          </button>
+        </div>
+
+        <div className="jyc-lang-select-wrap">
           <select
             className="jyc-lang-select"
             value={locale}
             onChange={(e) => onLocaleChange(e.target.value as Locale)}
             aria-label="Language"
           >
+            <option value="en">EN</option>
             <option value="hi">Hindi</option>
             <option value="id">Indonesian</option>
-            <option value="en">EN</option>
           </select>
         </div>
 
