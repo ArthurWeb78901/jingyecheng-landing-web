@@ -832,6 +832,15 @@ html:lang(zh-Hans) .jyc-page p {
   outline-offset: 2px;
 }
 
+/* 🔒 Force language UI behavior */
+.jyc-header-right .jyc-lang-switch {
+  display: none !important;   /* desktop/tablet: hide buttons */
+}
+
+.jyc-header-right .jyc-lang-select-wrap {
+  display: inline-flex !important; /* desktop/tablet: show select */
+}
+
 /* ===============================
    📱 手机与小平板（統一整合版）
    =============================== */
