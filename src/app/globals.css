@@ -1680,41 +1680,37 @@ html:lang(zh-Hans) .jyc-page p {
 
   /* ✅ 強制一行：這裡是修復兩行的核心 */
   .jyc-logo-text {
-    min-width: 0;
-    flex: 1 1 auto;
-
     display: flex;
-    /* ✅ 明確宣告，避免被覆蓋 */
-    align-items: baseline;
-    gap: 6px;
-
-    white-space: nowrap;
-    /* ✅ 禁止換行 */
-    overflow: hidden;
-    /* ✅ 超出裁掉 */
-    text-overflow: ellipsis;
-    /* ✅ 省略號 */
+    flex-direction: column;   /* ← 關鍵：上下排列 */
+    align-items: flex-start;  /* 靠左對齊，專業感 */
+    gap: 2px;                 /* 行距很小，像 subtext */
+    white-space: normal;      /* 允許兩行 */
+    overflow: visible;
   }
 
+  /* JYC 主品牌：稍微上移、更聚焦 */
   .jyc-logo-main {
     font-size: 22px;
-    letter-spacing: 0.06em;
     font-weight: 900;
-    flex: 0 0 auto;
+    line-height: 1;
+    letter-spacing: 0.06em;
   }
 
-  /* ✅ 副標：手機更保守，避免爆寬 */
+  /* Steel Equipment Ltd：縮小，當副標 */
   .jyc-logo-sub {
-    font-size: 12px;
-    font-weight: 650;
+    display: block;           /* ← 不再隱藏 */
+    font-size: 11px;          /* 明顯縮小 */
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: rgba(11, 18, 32, 0.55);
 
-    letter-spacing: 0.05em;
-    /* ✅ 再降一點，更穩 */
-    flex: 1 1 auto;
-
+    /* 保險：避免太窄時撐爆 */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 160px;
   }
 
   /* ✅ 讓語言切換在同一排更穩：不換行 + 可縮 */
@@ -1875,13 +1871,6 @@ html:lang(zh-Hans) .jyc-page p {
   .jyc-btn-primary::after,
   .jyc-btn-secondary::after,
   .jyc-card-btn::after {
-    display: none;
-  }
-}
-
-/* ✅ 小螢幕最穩策略：必要時只顯示 JYC（品牌級） */
-@media (max-width: 420px) {
-  .jyc-logo-sub {
     display: none;
   }
 }
