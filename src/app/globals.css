@@ -8,7 +8,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Book.otf") format("opentype");
@@ -16,7 +15,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Medium.otf") format("opentype");
@@ -24,7 +22,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Bold.otf") format("opentype");
@@ -32,7 +29,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Black.otf") format("opentype");
@@ -40,7 +36,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Italic.otf") format("opentype");
@@ -48,7 +43,6 @@
   font-style: italic;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-BoldItalic.otf") format("opentype");
@@ -58,53 +52,67 @@
 }
 
 /* ===============================
-   ✅ Industrial / Copper Design Tokens (Unified)
+   ✅ Industrial / Copper Design Tokens (Unified + Pro)
    =============================== */
 :root {
+  /* Surfaces */
   --jyc-bg: #f6f7f9;
   --jyc-surface: rgba(255, 255, 255, 0.86);
   --jyc-surface-solid: #ffffff;
 
+  /* Text */
   --jyc-text: #0b1220;
   --jyc-muted: #5b667a;
   --jyc-line: rgba(15, 23, 42, 0.10);
 
   /* Graphite / Steel */
+  --jyc-ink-950: #070a0f;
   --jyc-ink-900: #0b0f14;
+  --jyc-ink-850: #10151c;
   --jyc-ink-800: #141a22;
   --jyc-ink-700: #1f2937;
 
   /* Copper accent */
+  --jyc-copper-800: #7f3f17;
   --jyc-copper-700: #9a4f1f;
-  --jyc-copper-600: #c06a2c;
-  /* main */
+  --jyc-copper-600: #c06a2c; /* main */
   --jyc-copper-500: #d28447;
 
   --jyc-accent: var(--jyc-copper-600);
 
+  /* Radius */
   --jyc-radius: 14px;
   --jyc-radius-sm: 10px;
+  --jyc-radius-lg: 18px;
 
-  --jyc-shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.08);
-  --jyc-shadow-md: 0 14px 36px rgba(15, 23, 42, 0.14);
-
+  /* Layout */
   --jyc-max: 1120px;
+  --jyc-gutter: 32px;
 
-  /* Pro polish tokens */
-  --jyc-ring: rgba(192, 106, 44, 0.28);
-  --jyc-ring-strong: rgba(192, 106, 44, 0.44);
+  /* Shadows (more layered, less “muddy”) */
+  --jyc-shadow-xs: 0 6px 14px rgba(15, 23, 42, 0.06);
+  --jyc-shadow-sm: 0 10px 22px rgba(15, 23, 42, 0.08);
+  --jyc-shadow-md: 0 18px 46px rgba(15, 23, 42, 0.12);
+  --jyc-shadow-lg: 0 26px 70px rgba(15, 23, 42, 0.14);
 
-  --jyc-glow-copper: 0 0 0 1px rgba(192, 106, 44, 0.20),
-    0 18px 40px rgba(192, 106, 44, 0.18);
+  /* Rings */
+  --jyc-ring: rgba(192, 106, 44, 0.26);
+  --jyc-ring-strong: rgba(192, 106, 44, 0.42);
+
+  /* Premium glows */
+  --jyc-glow-copper: 0 0 0 1px rgba(192, 106, 44, 0.18),
+    0 18px 40px rgba(192, 106, 44, 0.16);
   --jyc-glow-ink: 0 0 0 1px rgba(15, 23, 42, 0.10),
-    0 18px 42px rgba(15, 23, 42, 0.16);
+    0 18px 42px rgba(15, 23, 42, 0.14);
 
+  /* Motion */
   --jyc-ease: cubic-bezier(.2, .8, .2, 1);
   --jyc-ease-out: cubic-bezier(.16, 1, .3, 1);
   --jyc-speed-1: 140ms;
   --jyc-speed-2: 220ms;
+  --jyc-speed-3: 420ms;
 
-  /* very subtle tech grid */
+  /* Subtle tech grid */
   --jyc-grid:
     repeating-linear-gradient(90deg,
       rgba(15, 23, 42, 0.03) 0px,
@@ -116,6 +124,49 @@
       rgba(15, 23, 42, 0.025) 1px,
       transparent 1px,
       transparent 22px);
+
+  /* Typography scale (more consistent) */
+  --jyc-font-sans: "Gotham", "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+
+  --jyc-text-sm: 13px;
+  --jyc-text-md: 14px;
+  --jyc-text-lg: 16px;
+
+  /* Header sizing */
+  --jyc-header-h: 72px;
+}
+
+/* ===============================
+   Dark mode (commercial-grade, not “inverted”)
+   =============================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --jyc-bg: #070a0f;
+    --jyc-surface: rgba(16, 21, 28, 0.74);
+    --jyc-surface-solid: #10151c;
+
+    --jyc-text: rgba(255, 255, 255, 0.92);
+    --jyc-muted: rgba(255, 255, 255, 0.66);
+    --jyc-line: rgba(255, 255, 255, 0.10);
+
+    --jyc-shadow-xs: 0 10px 22px rgba(0, 0, 0, 0.35);
+    --jyc-shadow-sm: 0 14px 34px rgba(0, 0, 0, 0.38);
+    --jyc-shadow-md: 0 22px 56px rgba(0, 0, 0, 0.42);
+    --jyc-shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.48);
+
+    --jyc-grid:
+      repeating-linear-gradient(90deg,
+        rgba(255, 255, 255, 0.03) 0px,
+        rgba(255, 255, 255, 0.03) 1px,
+        transparent 1px,
+        transparent 22px),
+      repeating-linear-gradient(0deg,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 1px,
+        transparent 22px);
+  }
 }
 
 /* ===============================
@@ -125,10 +176,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-
-  font-family: "Gotham", "Microsoft YaHei", "PingFang SC", "Noto Sans SC",
-    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
-
+  font-family: var(--jyc-font-sans);
   color: var(--jyc-text);
 }
 
@@ -147,12 +195,21 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Copper-friendly + subtle grid */
   background-image:
     var(--jyc-grid),
     radial-gradient(1200px 600px at 12% 0%, rgba(192, 106, 44, 0.12), transparent 62%),
     radial-gradient(900px 520px at 88% 8%, rgba(20, 26, 34, 0.10), transparent 60%);
   background-color: var(--jyc-bg);
+}
+
+/* Make links feel premium */
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+a:hover {
+  text-decoration-thickness: 2px;
 }
 
 /* Selection */
@@ -166,10 +223,12 @@ html:focus-within {
   scroll-behavior: smooth;
 }
 
-/* Focus ring: pro */
+/* Focus ring: pro + consistent */
 :where(a, button, input, textarea, select):focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--jyc-ring), 0 0 0 1px rgba(15, 23, 42, 0.12) inset;
+  box-shadow:
+    0 0 0 3px var(--jyc-ring),
+    0 0 0 1px rgba(15, 23, 42, 0.14) inset;
   border-radius: 12px;
 }
 
@@ -179,13 +238,11 @@ html:focus-within {
     width: 10px;
     height: 10px;
   }
-
   *::-webkit-scrollbar-thumb {
     background: rgba(15, 23, 42, 0.18);
     border: 3px solid rgba(246, 247, 249, 0.85);
     border-radius: 999px;
   }
-
   *::-webkit-scrollbar-thumb:hover {
     background: rgba(15, 23, 42, 0.26);
   }
@@ -209,12 +266,13 @@ html:focus-within {
 
 /* Utilities */
 .jyc-container {
-  max-width: 920px;
+  max-width: var(--jyc-max);
   margin: 0 auto;
+  padding: 0 var(--jyc-gutter);
 }
 
 /* ===============================
-   Header
+   Header (cleaner + more “luxury”)
    =============================== */
 .jyc-header {
   position: sticky;
@@ -223,22 +281,28 @@ html:focus-within {
 
   display: grid;
   grid-template-columns: auto 1fr auto;
-  /* 左｜中｜右 */
   align-items: center;
   gap: 16px;
 
-  padding: 16px 32px;
-  /* 你要更靠邊就 24px 或 28px */
+  min-height: var(--jyc-header-h);
+  padding: 14px var(--jyc-gutter);
 
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
   border-bottom: 1px solid rgba(15, 23, 42, 0.12);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(12px);
 
-  position: sticky;
-  /* 你原本就有，留著 */
+  /* smoother rendering */
+  transform: translateZ(0);
 }
 
+@media (prefers-color-scheme: dark) {
+  .jyc-header {
+    background: linear-gradient(180deg, rgba(16, 21, 28, 0.84), rgba(16, 21, 28, 0.64));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.40);
+  }
+}
 
 /* top light bar */
 .jyc-header::before {
@@ -258,25 +322,24 @@ html:focus-within {
   pointer-events: none;
 }
 
-/* subtle shimmer on hover */
+/* subtle shimmer on hover (lighter weight) */
 .jyc-header::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(115deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.08) 42%,
-      rgba(192, 106, 44, 0.10) 50%,
-      rgba(255, 255, 255, 0.06) 58%,
+      rgba(255, 255, 255, 0.06) 42%,
+      rgba(192, 106, 44, 0.08) 50%,
+      rgba(255, 255, 255, 0.05) 58%,
       transparent 100%);
   opacity: 0.0;
   transform: translateX(-12%);
   transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
   pointer-events: none;
 }
-
 .jyc-header:hover::after {
-  opacity: 0.75;
+  opacity: 0.65;
   transform: translateX(12%);
 }
 
@@ -303,7 +366,7 @@ html:focus-within {
   background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
   color: #fff;
 
-  font-weight: 700;
+  font-weight: 800;
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -311,13 +374,16 @@ html:focus-within {
   padding: 2px;
   overflow: hidden;
 
-  box-shadow: 0 12px 26px rgba(192, 106, 44, 0.22);
-  transition: transform var(--jyc-speed-2) var(--jyc-ease-out), box-shadow var(--jyc-speed-2) var(--jyc-ease);
+  box-shadow: 0 12px 26px rgba(192, 106, 44, 0.20);
+  transition:
+    transform var(--jyc-speed-2) var(--jyc-ease-out),
+    box-shadow var(--jyc-speed-2) var(--jyc-ease),
+    filter var(--jyc-speed-2) var(--jyc-ease);
 }
-
 .jyc-logo:hover .jyc-logo-mark {
   transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.26);
+  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.24);
+  filter: brightness(1.03);
 }
 
 .jyc-logo-mark::before {
@@ -327,18 +393,17 @@ html:focus-within {
   border-radius: 999px;
   background: conic-gradient(from 180deg,
       rgba(192, 106, 44, 0.0),
-      rgba(192, 106, 44, 0.65),
-      rgba(15, 23, 42, 0.25),
-      rgba(192, 106, 44, 0.65),
+      rgba(192, 106, 44, 0.55),
+      rgba(15, 23, 42, 0.22),
+      rgba(192, 106, 44, 0.55),
       rgba(192, 106, 44, 0.0));
   filter: blur(8px);
   opacity: 0.0;
   transition: opacity var(--jyc-speed-2) var(--jyc-ease);
   z-index: -1;
 }
-
 .jyc-logo:hover .jyc-logo-mark::before {
-  opacity: 0.55;
+  opacity: 0.50;
 }
 
 .jyc-logo-mark-img {
@@ -354,32 +419,33 @@ html:focus-within {
   gap: 10px;
 }
 
-/* JYC：品牌 */
 .jyc-logo-main {
-  font-family: "Gotham", system-ui, sans-serif;
-  font-size: 30px;
-  font-weight: 800;
+  font-family: var(--jyc-font-sans);
+  font-size: clamp(24px, 2.2vw, 30px);
+  font-weight: 900;
   letter-spacing: 0.08em;
-  color: #0b1220;
+  color: var(--jyc-text);
 }
-
-/* Steel Equipment：公司屬性 */
 .jyc-logo-sub {
-  font-family: "Gotham", system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-family: var(--jyc-font-sans);
+  font-size: clamp(12px, 1.4vw, 18px);
+  font-weight: 550;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(11, 18, 32, 0.65);
+  color: rgba(11, 18, 32, 0.62);
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-logo-sub {
+    color: rgba(255, 255, 255, 0.62);
+  }
 }
 
 /* Nav */
 .jyc-nav {
   display: flex;
-  gap: 16px;
-  font-size: 20px;
-  /* per your current setup */
+  gap: 14px;
   justify-self: center;
+  align-items: center;
 }
 
 .jyc-nav-link {
@@ -390,7 +456,7 @@ html:focus-within {
   font-weight: 650;
   letter-spacing: 0.01em;
 
-  padding: 9px 8px;
+  padding: 9px 10px;
   border-radius: 12px;
 
   transition:
@@ -400,18 +466,24 @@ html:focus-within {
     box-shadow var(--jyc-speed-1) var(--jyc-ease);
 }
 
+@media (prefers-color-scheme: dark) {
+  .jyc-nav-link {
+    color: rgba(255, 255, 255, 0.72);
+  }
+}
+
 .jyc-nav-link:hover {
   color: var(--jyc-text);
   background: rgba(192, 106, 44, 0.10);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--jyc-shadow-xs);
 }
 
 .jyc-nav-link::after {
   content: "";
   position: absolute;
-  left: 10px;
-  right: 10px;
+  left: 12px;
+  right: 12px;
   bottom: 6px;
   height: 2px;
   border-radius: 999px;
@@ -427,7 +499,6 @@ html:focus-within {
   transform: translateY(2px);
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
-
 .jyc-nav-link:hover::after {
   opacity: 1;
   transform: translateY(0);
@@ -437,10 +508,9 @@ html:focus-within {
   color: var(--jyc-text);
   background: rgba(192, 106, 44, 0.14);
   box-shadow:
-    0 12px 26px rgba(192, 106, 44, 0.14),
-    0 0 0 1px rgba(192, 106, 44, 0.16) inset;
+    0 12px 26px rgba(192, 106, 44, 0.12),
+    0 0 0 1px rgba(192, 106, 44, 0.14) inset;
 }
-
 .jyc-nav-link.is-active::after {
   opacity: 1;
   transform: translateY(0);
@@ -455,7 +525,7 @@ html:focus-within {
 }
 
 /* ===============================
-   🌐 Language Switch — Premium Segmented Control (Unified)
+   🌐 Language Switch — Premium Segmented Control
    =============================== */
 .jyc-lang-select-wrap,
 .jyc-lang-select {
@@ -473,9 +543,16 @@ html:focus-within {
   background: rgba(255, 255, 255, 0.62);
   border: 1px solid rgba(15, 23, 42, 0.14);
   backdrop-filter: blur(12px);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
+  box-shadow: var(--jyc-shadow-sm);
 
   overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-lang-switch {
+    background: rgba(16, 21, 28, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-lang-switch::before {
@@ -507,10 +584,10 @@ html:focus-within {
   border-radius: 999px;
 
   background: transparent;
-  color: rgba(11, 18, 32, 0.80);
+  color: rgba(11, 18, 32, 0.82);
 
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: 0.02em;
 
   transition:
@@ -518,6 +595,12 @@ html:focus-within {
     background var(--jyc-speed-2) var(--jyc-ease),
     box-shadow var(--jyc-speed-2) var(--jyc-ease),
     color var(--jyc-speed-2) var(--jyc-ease);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-lang-switch button {
+    color: rgba(255, 255, 255, 0.78);
+  }
 }
 
 .jyc-lang-switch button:hover {
@@ -530,7 +613,7 @@ html:focus-within {
 .jyc-lang-switch .jyc-lang-active {
   background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent)) !important;
   color: #fff !important;
-  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.22);
+  box-shadow: 0 16px 34px rgba(192, 106, 44, 0.20);
   transform: translateY(-1px);
   position: relative;
 }
@@ -547,18 +630,18 @@ html:focus-within {
   opacity: 0.9;
 }
 
-/* (如果你未來要顯示登入狀態) */
+/* (future login status) */
 .jyc-login-link,
 .jyc-login-status {
   display: none;
 }
 
 /* ===============================
-   Hero
+   Hero (more cinematic, less harsh)
    =============================== */
 .jyc-hero {
   position: relative;
-  padding: 72px 40px;
+  padding: 72px clamp(16px, 4vw, 44px);
 
   background-image: url("/background-image2.png");
   background-size: cover;
@@ -572,27 +655,26 @@ html:focus-within {
 
 .jyc-hero-inner {
   position: relative;
-  max-width: 720px;
+  max-width: 760px;
   z-index: 1;
 }
 
 .jyc-hero-text h1 {
-  font-size: 40px;
-  line-height: 1.2;
-  margin-bottom: 16px;
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.12;
+  margin: 0 0 14px;
   color: #fff;
-
   font-weight: 900;
-  letter-spacing: 0.005em;
+  letter-spacing: 0.004em;
   text-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
 
 .jyc-hero-text p {
   font-size: 15px;
-  line-height: 1.75;
+  line-height: 1.8;
   color: rgba(255, 255, 255, 0.90);
-  margin-bottom: 24px;
-  font-weight: 400;
+  margin: 0 0 22px;
+  font-weight: 450;
   text-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
 
@@ -600,7 +682,7 @@ html:focus-within {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .jyc-hero-caption {
@@ -617,8 +699,8 @@ html:focus-within {
   background:
     linear-gradient(90deg,
       rgba(11, 15, 20, 0.84),
-      rgba(11, 15, 20, 0.58),
-      rgba(11, 15, 20, 0.18)),
+      rgba(11, 15, 20, 0.56),
+      rgba(11, 15, 20, 0.16)),
     radial-gradient(720px 460px at 18% 30%, rgba(192, 106, 44, 0.22), transparent 62%);
   z-index: 0;
   pointer-events: none;
@@ -632,14 +714,14 @@ html:focus-within {
   background:
     radial-gradient(900px 520px at 70% 10%, rgba(192, 106, 44, 0.18), transparent 60%),
     radial-gradient(1000px 620px at 30% 90%, rgba(15, 23, 42, 0.25), transparent 62%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.22));
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.20));
   mix-blend-mode: overlay;
   opacity: 0.55;
   pointer-events: none;
 }
 
 /* ===============================
-   Buttons
+   Buttons (smoother + more “brand”)
    =============================== */
 .jyc-btn-primary,
 .jyc-btn-secondary,
@@ -661,20 +743,23 @@ html:focus-within {
   color: #fff;
 
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 650;
   letter-spacing: 0.01em;
 
   text-decoration: none;
   cursor: pointer;
 
-  box-shadow: 0 14px 28px rgba(192, 106, 44, 0.20);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  box-shadow: 0 14px 28px rgba(192, 106, 44, 0.18);
+  transition:
+    transform var(--jyc-speed-2) var(--jyc-ease),
+    box-shadow var(--jyc-speed-2) var(--jyc-ease),
+    filter var(--jyc-speed-2) var(--jyc-ease);
 }
 
 .jyc-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 18px 36px rgba(192, 106, 44, 0.26);
-  filter: brightness(1.02);
+  box-shadow: 0 18px 40px rgba(192, 106, 44, 0.22);
+  filter: brightness(1.03);
 }
 
 .jyc-btn-secondary {
@@ -690,18 +775,23 @@ html:focus-within {
   color: #fff;
 
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 650;
   text-decoration: none;
   cursor: pointer;
 
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
-  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+  transition:
+    transform var(--jyc-speed-2) var(--jyc-ease),
+    background var(--jyc-speed-2) var(--jyc-ease),
+    border-color var(--jyc-speed-2) var(--jyc-ease),
+    filter var(--jyc-speed-2) var(--jyc-ease);
 }
 
 .jyc-btn-secondary:hover {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.10);
   border-color: rgba(255, 255, 255, 0.75);
+  filter: brightness(1.02);
 }
 
 .jyc-hero .jyc-btn-secondary:focus-visible {
@@ -709,7 +799,7 @@ html:focus-within {
   outline-offset: 2px;
 }
 
-/* scanline shimmer */
+/* scanline shimmer (kept, but lighter and faster) */
 .jyc-btn-primary::after,
 .jyc-btn-secondary::after,
 .jyc-card-btn::after {
@@ -721,11 +811,11 @@ html:focus-within {
   height: 200%;
   background: linear-gradient(115deg,
       transparent 40%,
-      rgba(255, 255, 255, 0.16) 50%,
+      rgba(255, 255, 255, 0.14) 50%,
       transparent 60%);
   opacity: 0;
   transform: translateX(-12%);
-  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
+  transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 650ms var(--jyc-ease-out);
   pointer-events: none;
 }
 
@@ -740,7 +830,7 @@ html:focus-within {
    Sections
    =============================== */
 .jyc-section {
-  padding: 64px 32px;
+  padding: 64px var(--jyc-gutter);
   background: transparent;
 }
 
@@ -750,11 +840,17 @@ html:focus-within {
   border-bottom: 1px solid var(--jyc-line);
 }
 
+@media (prefers-color-scheme: dark) {
+  .jyc-section-alt {
+    background: linear-gradient(180deg, rgba(16, 21, 28, 0.72), rgba(16, 21, 28, 0.40));
+  }
+}
+
 .jyc-section h2 {
-  font-size: 28px;
+  font-size: clamp(22px, 2.2vw, 30px);
   margin-bottom: 18px;
   letter-spacing: 0.02em;
-  font-weight: 700;
+  font-weight: 900;
   position: relative;
 }
 
@@ -771,13 +867,18 @@ html:focus-within {
 .jyc-section-intro {
   font-size: 15px;
   color: rgba(91, 102, 122, 0.92);
-  max-width: 720px;
-  line-height: 1.75;
+  max-width: 760px;
+  line-height: 1.85;
   margin-bottom: 24px;
-  font-weight: 400;
+  font-weight: 450;
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-section-intro {
+    color: rgba(255, 255, 255, 0.70);
+  }
 }
 
-/* (legacy about logo helpers - keep if used elsewhere) */
+/* legacy about logo helpers */
 .jyc-about-header {
   display: flex;
   align-items: center;
@@ -804,7 +905,7 @@ html:focus-within {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+  box-shadow: var(--jyc-shadow-sm);
   padding: 8px;
   border: 1px solid var(--jyc-line);
 }
@@ -818,7 +919,7 @@ html:focus-within {
 }
 
 /* ===============================
-   Cards
+   Cards (more “catalog / premium product”)
    =============================== */
 .jyc-card-grid {
   display: grid;
@@ -831,7 +932,7 @@ html:focus-within {
   position: relative;
   overflow: hidden;
 
-  background: rgba(255, 255, 255, 0.80);
+  background: rgba(255, 255, 255, 0.82);
   border-radius: var(--jyc-radius);
   border: 1px solid var(--jyc-line);
   padding: 16px;
@@ -839,7 +940,18 @@ html:focus-within {
   backdrop-filter: blur(10px);
   box-shadow: var(--jyc-shadow-sm);
 
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  transition:
+    transform var(--jyc-speed-2) var(--jyc-ease),
+    box-shadow var(--jyc-speed-2) var(--jyc-ease),
+    border-color var(--jyc-speed-2) var(--jyc-ease),
+    filter var(--jyc-speed-2) var(--jyc-ease);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-card {
+    background: rgba(16, 21, 28, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 /* energy border */
@@ -851,9 +963,9 @@ html:focus-within {
   padding: 1px;
   background: linear-gradient(135deg,
       rgba(192, 106, 44, 0.0),
-      rgba(192, 106, 44, 0.22),
+      rgba(192, 106, 44, 0.20),
       rgba(15, 23, 42, 0.10),
-      rgba(192, 106, 44, 0.18),
+      rgba(192, 106, 44, 0.16),
       rgba(192, 106, 44, 0.0));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -872,9 +984,9 @@ html:focus-within {
   height: 160%;
   background: linear-gradient(115deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.10) 45%,
+      rgba(255, 255, 255, 0.08) 45%,
       rgba(192, 106, 44, 0.10) 52%,
-      rgba(255, 255, 255, 0.06) 58%,
+      rgba(255, 255, 255, 0.05) 58%,
       transparent 100%);
   transform: rotate(6deg);
   opacity: 0;
@@ -883,7 +995,7 @@ html:focus-within {
 }
 
 .jyc-card:hover::after {
-  opacity: 0.85;
+  opacity: 0.80;
   transform: translateX(18%) rotate(6deg);
 }
 
@@ -891,6 +1003,7 @@ html:focus-within {
   transform: translateY(-3px);
   box-shadow: var(--jyc-glow-copper);
   border-color: rgba(192, 106, 44, 0.22);
+  filter: brightness(1.01);
 }
 
 .jyc-card-image {
@@ -904,36 +1017,62 @@ html:focus-within {
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
+@media (prefers-color-scheme: dark) {
+  .jyc-card-image {
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
 .jyc-card h3 {
   font-size: 16px;
-  margin-bottom: 8px;
-  font-weight: 700;
+  margin: 0 0 8px;
+  font-weight: 900;
   letter-spacing: 0.01em;
 }
 
 .jyc-card p {
   font-size: 14px;
   color: rgba(91, 102, 122, 0.92);
-  margin-bottom: 12px;
-  font-weight: 400;
+  margin: 0 0 12px;
+  font-weight: 450;
+  line-height: 1.75;
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-card p {
+    color: rgba(255, 255, 255, 0.70);
+  }
 }
 
 .jyc-card-btn {
   padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid rgba(192, 106, 44, 0.28);
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.88);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--jyc-text);
-  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  transition:
+    transform var(--jyc-speed-2) var(--jyc-ease),
+    background var(--jyc-speed-2) var(--jyc-ease),
+    border-color var(--jyc-speed-2) var(--jyc-ease),
+    filter var(--jyc-speed-2) var(--jyc-ease);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-card-btn {
+    background: rgba(16, 21, 28, 0.72);
+    color: rgba(255, 255, 255, 0.90);
+    border: 1px solid rgba(192, 106, 44, 0.34);
+  }
 }
 
 .jyc-card-btn:hover {
   transform: translateY(-1px);
   background: rgba(192, 106, 44, 0.08);
-  border-color: rgba(192, 106, 44, 0.42);
+  border-color: rgba(192, 106, 44, 0.46);
+  filter: brightness(1.02);
 }
 
 /* Home products row */
@@ -965,7 +1104,6 @@ html:focus-within {
     max-width: 45%;
   }
 }
-
 @media (min-width: 1200px) {
   .jyc-home-products-row .jyc-card {
     flex: 0 0 30%;
@@ -982,13 +1120,20 @@ html:focus-within {
 
 .jyc-home-slideshow-main {
   position: relative;
-  width: 85%;
+  width: min(85%, 900px);
   padding-top: 56.25%;
   border-radius: var(--jyc-radius);
   overflow: hidden;
   background: #e0e0e0;
   border: 1px solid rgba(15, 23, 42, 0.10);
   box-shadow: var(--jyc-shadow-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-home-slideshow-main {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-home-slideshow-main-inner {
@@ -1072,8 +1217,17 @@ html:focus-within {
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.14);
   font-size: 14px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.90);
   font-family: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-contact-form input,
+  .jyc-contact-form textarea {
+    background: rgba(16, 21, 28, 0.74);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.92);
+  }
 }
 
 .jyc-contact-form input:focus,
@@ -1092,13 +1246,21 @@ html:focus-within {
    Footer
    =============================== */
 .jyc-footer {
-  padding: 24px 32px;
+  padding: 24px var(--jyc-gutter);
   border-top: 1px solid var(--jyc-line);
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(10px);
   font-size: 12px;
   color: rgba(11, 18, 32, 0.55);
   text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-footer {
+    background: rgba(16, 21, 28, 0.68);
+    color: rgba(255, 255, 255, 0.60);
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-footer-sub {
@@ -1109,24 +1271,20 @@ html:focus-within {
 /* ===============================
    💬 Chat Bubble / Panel (2x + breathing)
    =============================== */
-
-/* breathing animation (subtle) */
 @keyframes jyc-chat-breathe {
   0% {
     box-shadow:
-      0 22px 48px rgba(192, 106, 44, 0.26),
+      0 22px 48px rgba(192, 106, 44, 0.24),
       0 0 0 0 rgba(192, 106, 44, 0.00);
   }
-
   45% {
     box-shadow:
-      0 26px 56px rgba(192, 106, 44, 0.34),
+      0 26px 56px rgba(192, 106, 44, 0.30),
       0 0 0 10px rgba(192, 106, 44, 0.10);
   }
-
   100% {
     box-shadow:
-      0 22px 48px rgba(192, 106, 44, 0.26),
+      0 22px 48px rgba(192, 106, 44, 0.24),
       0 0 0 0 rgba(192, 106, 44, 0.00);
   }
 }
@@ -1137,7 +1295,6 @@ html:focus-within {
   bottom: 24px;
   z-index: 40;
 
-  /* ✅ 讓它是「圓球」而不是膠囊 */
   width: 72px;
   height: 72px;
   padding: 0;
@@ -1149,18 +1306,14 @@ html:focus-within {
   justify-content: center;
 
   background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
-
-  /* ✅ 隱藏原本按鈕文字（你的 JSX 裡可能是 "?"）避免重疊 */
   color: transparent;
 
   cursor: pointer;
 
-  /* 2x */
   transform: scale(2);
   transform-origin: bottom right;
   will-change: transform;
 
-  /* base shadow + breathe */
   animation: jyc-chat-breathe 3.2s ease-in-out infinite;
 
   transition:
@@ -1169,7 +1322,6 @@ html:focus-within {
     filter 180ms var(--jyc-ease);
 }
 
-/* ✅ 球內上方：? */
 .jyc-chat-bubble-button::before {
   content: "?";
   position: absolute;
@@ -1185,7 +1337,6 @@ html:focus-within {
   pointer-events: none;
 }
 
-/* 球內下方：Questions（縮小避免溢出） */
 .jyc-chat-bubble-button::after {
   content: "QUESTIONS";
   position: absolute;
@@ -1194,10 +1345,8 @@ html:focus-within {
   transform: translate(-50%, -50%);
 
   font-size: 9px;
-  /* ✅ 原本 10px → 再小一點 */
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.05em;
-  /* ✅ 原本 0.08em → 關鍵修正 */
   text-transform: uppercase;
   white-space: nowrap;
 
@@ -1211,13 +1360,9 @@ html:focus-within {
   animation: none;
   transform: scale(2.08) translateY(-1px);
   box-shadow:
-    0 28px 60px rgba(192, 106, 44, 0.34),
-    0 0 0 1px rgba(192, 106, 44, 0.35);
+    0 28px 60px rgba(192, 106, 44, 0.32),
+    0 0 0 1px rgba(192, 106, 44, 0.32);
   filter: brightness(1.05);
-}
-
-.jyc-chat-bubble-button:hover::after {
-  opacity: 1;
 }
 
 .jyc-chat-bubble-button:active {
@@ -1240,12 +1385,19 @@ html:focus-within {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.14);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--jyc-shadow-md);
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
   backdrop-filter: blur(10px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-panel {
+    background: rgba(16, 21, 28, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-chat-header {
@@ -1257,14 +1409,25 @@ html:focus-within {
   gap: 8px;
 }
 
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  }
+}
+
 .jyc-chat-title {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .jyc-chat-status {
   font-size: 11px;
   color: rgba(11, 18, 32, 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-status {
+    color: rgba(255, 255, 255, 0.60);
+  }
 }
 
 .jyc-chat-close {
@@ -1274,6 +1437,11 @@ html:focus-within {
   line-height: 1;
   cursor: pointer;
   color: rgba(11, 18, 32, 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-close {
+    color: rgba(255, 255, 255, 0.65);
+  }
 }
 
 .jyc-chat-close:hover {
@@ -1286,6 +1454,11 @@ html:focus-within {
   overflow-y: auto;
   background: rgba(246, 247, 249, 0.65);
 }
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-messages {
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
 
 .jyc-chat-message {
   max-width: 80%;
@@ -1294,13 +1467,19 @@ html:focus-within {
   border-radius: 10px;
   font-size: 13px;
   line-height: 1.6;
-  font-weight: 400;
+  font-weight: 450;
 }
 
 .jyc-chat-message-bot {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(15, 23, 42, 0.10);
   margin-right: auto;
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-message-bot {
+    background: rgba(16, 21, 28, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-chat-message-user {
@@ -1315,6 +1494,11 @@ html:focus-within {
   display: flex;
   gap: 6px;
 }
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-input-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+  }
+}
 
 .jyc-chat-input-row input {
   flex: 1;
@@ -1324,6 +1508,13 @@ html:focus-within {
   font-size: 13px;
   background: rgba(255, 255, 255, 0.9);
   font-family: inherit;
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-chat-input-row input {
+    background: rgba(16, 21, 28, 0.74);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.92);
+  }
 }
 
 .jyc-chat-input-row input:focus {
@@ -1339,16 +1530,15 @@ html:focus-within {
   background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
   color: #fff;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
 }
-
 .jyc-chat-input-row button:hover {
   filter: brightness(1.03);
 }
 
 /* ===============================
-   Text Justify Rules
+   Text Justify Rules (keep your intent)
    =============================== */
 .jyc-page p,
 .jyc-page li,
@@ -1386,7 +1576,7 @@ html:lang(zh-Hans) .jyc-page p {
 }
 
 /* ===============================
-   About Page — Layout Upgrade
+   About Page — Layout Upgrade (kept + light polish)
    =============================== */
 .jyc-about-hero {
   display: grid;
@@ -1405,16 +1595,24 @@ html:lang(zh-Hans) .jyc-page p {
   background: rgba(255, 255, 255, 0.64);
   backdrop-filter: blur(10px);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 750;
   letter-spacing: 0.02em;
   color: rgba(11, 18, 32, 0.78);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+  box-shadow: var(--jyc-shadow-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-chip {
+    background: rgba(16, 21, 28, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.72);
+  }
 }
 
 .jyc-about-title {
   margin: 12px 0 10px;
-  font-size: 30px;
-  line-height: 1.15;
+  font-size: clamp(24px, 2.6vw, 34px);
+  line-height: 1.12;
   letter-spacing: 0.01em;
   font-weight: 900;
 }
@@ -1422,8 +1620,13 @@ html:lang(zh-Hans) .jyc-page p {
 .jyc-about-lead {
   margin: 0;
   font-size: 14.5px;
-  line-height: 1.8;
+  line-height: 1.85;
   color: rgba(91, 102, 122, 0.95);
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-about-lead {
+    color: rgba(255, 255, 255, 0.70);
+  }
 }
 
 .jyc-about-stats {
@@ -1439,7 +1642,14 @@ html:lang(zh-Hans) .jyc-page p {
   border-radius: 14px;
   padding: 12px 12px 10px;
   backdrop-filter: blur(10px);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--jyc-shadow-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-stat {
+    background: rgba(16, 21, 28, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-stat-num {
@@ -1453,6 +1663,11 @@ html:lang(zh-Hans) .jyc-page p {
   margin-top: 4px;
   font-size: 12px;
   color: rgba(91, 102, 122, 0.92);
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-stat-label {
+    color: rgba(255, 255, 255, 0.66);
+  }
 }
 
 .jyc-about-actions {
@@ -1468,8 +1683,15 @@ html:lang(zh-Hans) .jyc-page p {
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+  box-shadow: var(--jyc-shadow-md);
   position: relative;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-about-photoCard {
+    background: rgba(16, 21, 28, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-about-photoCard::before {
@@ -1477,7 +1699,7 @@ html:lang(zh-Hans) .jyc-page p {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(520px 280px at 20% 10%, rgba(192, 106, 44, 0.20), transparent 60%);
+  background: radial-gradient(520px 280px at 20% 10%, rgba(192, 106, 44, 0.18), transparent 60%);
   opacity: 0.65;
 }
 
@@ -1492,6 +1714,11 @@ html:lang(zh-Hans) .jyc-page p {
   padding: 10px 12px 12px;
   font-size: 12px;
   color: rgba(91, 102, 122, 0.92);
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-about-caption {
+    color: rgba(255, 255, 255, 0.65);
+  }
 }
 
 .jyc-about-grid {
@@ -1508,9 +1735,16 @@ html:lang(zh-Hans) .jyc-page p {
   border-radius: 16px;
   padding: 16px;
   backdrop-filter: blur(10px);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.10);
+  box-shadow: var(--jyc-shadow-sm);
   position: relative;
   overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-panel {
+    background: rgba(16, 21, 28, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-panel::before {
@@ -1521,9 +1755,9 @@ html:lang(zh-Hans) .jyc-page p {
   padding: 1px;
   background: linear-gradient(135deg,
       rgba(192, 106, 44, 0.0),
-      rgba(192, 106, 44, 0.18),
+      rgba(192, 106, 44, 0.16),
       rgba(15, 23, 42, 0.08),
-      rgba(192, 106, 44, 0.14),
+      rgba(192, 106, 44, 0.12),
       rgba(192, 106, 44, 0.0));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -1535,7 +1769,7 @@ html:lang(zh-Hans) .jyc-page p {
 .jyc-panel-title {
   margin: 0 0 10px;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.01em;
 }
 
@@ -1543,11 +1777,23 @@ html:lang(zh-Hans) .jyc-page p {
   margin: 0;
   font-size: 13px;
   color: rgba(91, 102, 122, 0.92);
-  line-height: 1.7;
+  line-height: 1.8;
+  font-weight: 450;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-panel-note {
+    color: rgba(255, 255, 255, 0.70);
+  }
 }
 
 .jyc-panel-accent {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.62));
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-panel-accent {
+    background: linear-gradient(180deg, rgba(16, 21, 28, 0.72), rgba(16, 21, 28, 0.56));
+  }
 }
 
 .jyc-list {
@@ -1555,7 +1801,13 @@ html:lang(zh-Hans) .jyc-page p {
   padding-left: 18px;
   color: rgba(91, 102, 122, 0.95);
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.85;
+  font-weight: 450;
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-list {
+    color: rgba(255, 255, 255, 0.72);
+  }
 }
 
 .jyc-list li {
@@ -1566,6 +1818,12 @@ html:lang(zh-Hans) .jyc-page p {
   height: 1px;
   background: rgba(15, 23, 42, 0.10);
   margin: 12px 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-divider {
+    background: rgba(255, 255, 255, 0.10);
+  }
 }
 
 .jyc-contactCard {
@@ -1584,12 +1842,17 @@ html:lang(zh-Hans) .jyc-page p {
 .jyc-contactKey {
   font-size: 12px;
   color: rgba(91, 102, 122, 0.90);
-  font-weight: 650;
+  font-weight: 750;
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-contactKey {
+    color: rgba(255, 255, 255, 0.62);
+  }
 }
 
 .jyc-contactVal {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 900;
   color: var(--jyc-text);
   text-decoration: none;
 }
@@ -1600,8 +1863,13 @@ html:lang(zh-Hans) .jyc-page p {
 
 .jyc-contactHint {
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.8;
   color: rgba(91, 102, 122, 0.92);
+}
+@media (prefers-color-scheme: dark) {
+  .jyc-contactHint {
+    color: rgba(255, 255, 255, 0.70);
+  }
 }
 
 .jyc-contactCta {
@@ -1640,7 +1908,6 @@ html:lang(zh-Hans) .jyc-page p {
 
 /* Mobile */
 @media (max-width: 900px) {
-
   .jyc-about-hero,
   .jyc-about-grid {
     grid-template-columns: 1fr;
@@ -1657,38 +1924,38 @@ html:lang(zh-Hans) .jyc-page p {
 
 /* Mobile layout */
 @media (max-width: 768px) {
+  :root {
+    --jyc-gutter: 16px;
+    --jyc-header-h: 68px;
+  }
+
   .jyc-header {
-    padding: 12px 16px;
+    padding: 12px var(--jyc-gutter);
     gap: 10px;
 
     display: grid;
     grid-template-columns: 1fr auto;
-    /* 上排：左 Logo / 右 Language */
     grid-template-areas:
       "logo lang"
       "nav  nav";
-    /* 下排：Nav 全寬 */
     align-items: center;
   }
 
-  /* ✅ 第一排：Logo 要能縮、不要被擠爆 */
   .jyc-logo {
     min-width: 0;
     flex: 1 1 60%;
     grid-area: logo;
   }
 
-  /* ✅ 強制一行：這裡是修復兩行的核心 */
   .jyc-logo-text {
     display: flex;
-    flex-direction: column;   /* ← 關鍵：上下排列 */
-    align-items: flex-start;  /* 靠左對齊，專業感 */
-    gap: 2px;                 /* 行距很小，像 subtext */
-    white-space: normal;      /* 允許兩行 */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    white-space: normal;
     overflow: visible;
   }
 
-  /* JYC 主品牌：稍微上移、更聚焦 */
   .jyc-logo-main {
     font-size: 22px;
     font-weight: 900;
@@ -1696,24 +1963,27 @@ html:lang(zh-Hans) .jyc-page p {
     letter-spacing: 0.06em;
   }
 
-  /* Steel Equipment Ltd：縮小，當副標 */
   .jyc-logo-sub {
-    display: block;           /* ← 不再隱藏 */
-    font-size: 11px;          /* 明顯縮小 */
-    font-weight: 600;
+    display: block;
+    font-size: 11px;
+    font-weight: 650;
     letter-spacing: 0.08em;
     line-height: 1.1;
     text-transform: uppercase;
     color: rgba(11, 18, 32, 0.55);
 
-    /* 保險：避免太窄時撐爆 */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 160px;
   }
 
-  /* ✅ 讓語言切換在同一排更穩：不換行 + 可縮 */
+  @media (prefers-color-scheme: dark) {
+    .jyc-logo-sub {
+      color: rgba(255, 255, 255, 0.60);
+    }
+  }
+
   .jyc-header-right {
     flex: 0 0 auto;
     min-width: 0;
@@ -1724,38 +1994,30 @@ html:lang(zh-Hans) .jyc-page p {
     flex-wrap: nowrap;
     gap: 6px;
 
-    /* ✅ 不要裁切，改成可滑動 */
     max-width: 60vw;
-    /* 48vw 太小，會砍掉 Indonesian */
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
 
-    /* ✅ 讓陰影不被切掉（視覺更完整） */
     padding: 6px;
   }
 
-  /* 手機上把 scrollbar 變更不明顯（可選） */
   .jyc-lang-switch::-webkit-scrollbar {
     height: 4px;
   }
-
   .jyc-lang-switch::-webkit-scrollbar-thumb {
     background: rgba(15, 23, 42, 0.18);
     border-radius: 999px;
   }
 
+  .jyc-lang-switch button {
+    height: 34px;
+    padding: 0 10px;
+    min-width: 64px;
+    font-size: 12px;
+    letter-spacing: 0.01em;
+  }
 
-  /* 語言按鈕在手機微縮：看起來仍高級，但更省寬 */
-.jyc-lang-switch button {
-  height: 34px;
-  padding: 0 10px;
-  min-width: 64px;   /* ✅ 76 -> 64，三個語言更容易塞下 */
-  font-size: 12px;
-  letter-spacing: 0.01em;
-}
-
-  /* ✅ 第二排：nav */
   .jyc-nav {
     order: 3;
     width: 100%;
@@ -1772,20 +2034,15 @@ html:lang(zh-Hans) .jyc-page p {
   .jyc-nav a {
     font-size: 15px;
     padding: 6px 4px;
-    font-weight: 800;
-    /* ✅ 你要的加粗感 */
+    font-weight: 900;
   }
 
   .jyc-hero {
-    padding: 48px 16px;
-  }
-
-  .jyc-hero-text h1 {
-    font-size: 28px;
+    padding: 48px var(--jyc-gutter);
   }
 
   .jyc-section {
-    padding: 40px 16px;
+    padding: 40px var(--jyc-gutter);
   }
 
   .jyc-form-row {
@@ -1798,37 +2055,28 @@ html:lang(zh-Hans) .jyc-page p {
     width: 260px;
   }
 
-  /* Chat bubble on mobile: still big, but not blocking */
   .jyc-chat-bubble-button {
     right: 12px;
     bottom: 20px;
     transform: scale(1.6);
     transform-origin: bottom right;
-    font-size: 18px;
-    padding: 16px 26px;
     animation-duration: 4.2s;
   }
 
-  /* ? 上半部 */
   .jyc-chat-bubble-button::before {
     font-size: 22px;
     top: 40%;
   }
 
-  /* QUESTIONS 下半部（重點修正） */
   .jyc-chat-bubble-button::after {
     font-size: 8px;
-    /* ✅ 手機一定要更小 */
     letter-spacing: 0.04em;
-    /* ✅ 再縮，避免撐爆 */
     top: 68%;
 
     max-width: 70%;
-    /* ✅ 關鍵：限制文字寬度 */
     text-align: center;
 
     overflow: hidden;
-    /* ✅ 保底 */
     text-overflow: ellipsis;
     white-space: nowrap;
   }
