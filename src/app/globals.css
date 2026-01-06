@@ -2124,6 +2124,7 @@ html:lang(zh-Hans) .jyc-page p {
 }
 
 .jyc-about-photo {
-  object-fit: cover;
-  object-position: center top;   /* 重點：往上對齊，保留上緣 */
+  object-fit: contain !important;     /* 不裁切 */
+  object-position: center !important; /* 置中 */
+  background: rgba(255, 255, 255, 0.92); /* 留白用乾淨底 */
 }
