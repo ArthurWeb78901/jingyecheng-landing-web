@@ -2122,3 +2122,19 @@ html:lang(zh-Hans) .jyc-page p {
     display: none;
   }
 }
+
+/* ✅ About collage: prevent top cropping */
+.jyc-about-photoCard {
+  overflow: visible;           /* 讓拼貼不會被卡片裁掉 */
+  padding-top: 10px;           /* 給上方一點安全邊界 */
+}
+
+/* 讓卡片本體的圓角「由內層」維持（不靠 overflow hidden） */
+.jyc-about-photoCard > * {
+  border-radius: 16px;
+}
+
+/* 如果你的拼貼圖片是 img 或 next/image 產出的 img */
+.jyc-about-photoCard img {
+  border-radius: 12px;
+}
