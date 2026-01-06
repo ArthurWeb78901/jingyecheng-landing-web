@@ -2124,7 +2124,87 @@ html:lang(zh-Hans) .jyc-page p {
 }
 
 .jyc-about-photo {
-  object-fit: contain !important;     /* 不裁切 */
-  object-position: center !important; /* 置中 */
-  background: rgba(255, 255, 255, 0.92); /* 留白用乾淨底 */
+  object-fit: contain !important;
+  object-position: center !important;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+/* ===============================
+   ✅ Products Page — Pro Catalog Layout
+   =============================== */
+
+/* 1) 讓 products 內容更接近滿版（左右留白縮小） */
+.jyc-products-page .jyc-container {
+  max-width: 1320px;              /* 1120 -> 1320 更商業 */
+  padding-left: clamp(16px, 2.4vw, 32px);
+  padding-right: clamp(16px, 2.4vw, 32px);
+}
+
+/* 如果 Products 頁沒用 jyc-container 包住，這條也能救 */
+.jyc-products-page .jyc-section {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* 2) Products 的標題區塊：左對齊、更像 catalog header */
+.jyc-products-page .jyc-section h2 {
+  text-align: left;
+}
+
+.jyc-products-page .jyc-section-intro {
+  max-width: 860px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* 3) 真正型錄 grid：桌機 4 欄 / 1200↓ 3 欄 / 900↓ 2 欄 / 手機 1 欄 */
+.jyc-products-page .jyc-card-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+/* 4) 卡片視覺：更乾淨、更像型錄 */
+.jyc-products-page .jyc-card {
+  padding: 14px;
+  border-radius: 16px;
+}
+
+/* 5) 圖片統一比例（你現在 16/9 太像影片封面，產品更適合 4/3） */
+.jyc-products-page .jyc-card-image {
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
+/* 6) 標題更像 “產品名” */
+.jyc-products-page .jyc-card h3 {
+  font-size: 15px;
+  line-height: 1.25;
+  margin: 0 0 6px;
+}
+
+/* 7) 內文限制行數：避免每張卡長短不一（型錄的關鍵） */
+.jyc-products-page .jyc-card p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.65;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4; /* 3~5都可以，你先用4 */
+  overflow: hidden;
+}
+
+/* 8) category 那行（你現在是 “Category (CN): …”）降低存在感，變成輕標籤感 */
+.jyc-products-page .jyc-card p:first-of-type {
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+
+/* 9) 按鈕更像詢價 CTA */
+.jyc-products-page .jyc-card-btn {
+  width: 100%;
+  justify-content: center;
 }

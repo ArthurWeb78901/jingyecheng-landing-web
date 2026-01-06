@@ -94,7 +94,7 @@ export default function ProductsEnPage() {
   const MAX_CHARS = 300;
 
   return (
-    <main className="jyc-page">
+    <main className="jyc-page jyc-products-page">
       <Header />
 
       <section className="jyc-section jyc-section-alt">
