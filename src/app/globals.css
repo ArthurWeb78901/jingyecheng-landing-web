@@ -2011,10 +2011,10 @@ html:lang(zh-Hans) .jyc-page p {
   }
 
   .jyc-lang-switch button {
-    height: 26px;
+    height: 23px;
     padding: 0 8px;
-    min-width: 48px;
-    font-size: 10.5px;
+    min-width: 36px;
+    font-size: 9px;
     letter-spacing: 0.01em;
   }
 
