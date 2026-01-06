@@ -2129,3 +2129,68 @@ html:lang(zh-Hans) .jyc-page p {
   background: rgba(255, 255, 255, 0.92);
 }
 
+/* ===============================
+   Contact — 2-column layout + Map
+   =============================== */
+
+.jyc-contact-layout {
+  display: grid;
+  grid-template-columns: minmax(520px, 1fr) minmax(360px, 520px);
+  gap: 22px;
+  align-items: start;
+}
+
+/* 右側地圖卡片（跟你 About/Panel 同質感） */
+.jyc-map-card {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  box-shadow: var(--jyc-shadow-sm);
+  overflow: hidden;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-map-card {
+    background: rgba(16, 21, 28, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
+}
+
+/* 地圖容器：用 aspect-ratio 保證不變形 */
+.jyc-map-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;  /* 你要更扁可以改 16 / 10 */
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* next/image fill 對應 */
+.jyc-map-media :global(img) {
+  object-fit: cover; /* ✅ 地圖通常用 cover 比較好看 */
+  object-position: center;
+}
+
+.jyc-map-caption {
+  padding: 10px 12px 12px;
+  font-size: 12px;
+  color: rgba(91, 102, 122, 0.92);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jyc-map-caption {
+    color: rgba(255, 255, 255, 0.65);
+  }
+}
+
+/* Tablet / Mobile：改成上下堆疊 */
+@media (max-width: 900px) {
+  .jyc-contact-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .jyc-map-media {
+    aspect-ratio: 16 / 9;
+  }
+}
