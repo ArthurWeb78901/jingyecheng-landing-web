@@ -170,7 +170,7 @@ export function Header() {
         </span>
         <span className="jyc-logo-text">
           <span className="jyc-logo-main">JYC</span>
-          <span className="jyc-logo-sub">Steel Equipment</span>
+          <span className="jyc-logo-sub">Steel Equipment Ltd</span>
         </span>
       </Link>
 

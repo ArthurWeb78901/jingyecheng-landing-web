@@ -16,7 +16,7 @@ export default function AboutEnPage() {
               <div className="jyc-chip">Since 1993 • Heavy Industry</div>
 
               <h1 className="jyc-about-title">
-                Taiyuan Jingyecheng Steel Equip Co.
+                Taiyuan JingYeCheng Steel Equipment Ltd.
               </h1>
 
               <p className="jyc-about-lead">

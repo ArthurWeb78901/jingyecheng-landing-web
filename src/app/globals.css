@@ -8,6 +8,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Book.otf") format("opentype");
@@ -15,6 +16,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Medium.otf") format("opentype");
@@ -22,6 +24,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Bold.otf") format("opentype");
@@ -29,6 +32,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Black.otf") format("opentype");
@@ -36,6 +40,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-Italic.otf") format("opentype");
@@ -43,6 +48,7 @@
   font-style: italic;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Gotham";
   src: url("/fonts/Gotham-BoldItalic.otf") format("opentype");
@@ -70,7 +76,8 @@
 
   /* Copper accent */
   --jyc-copper-700: #9a4f1f;
-  --jyc-copper-600: #c06a2c; /* main */
+  --jyc-copper-600: #c06a2c;
+  /* main */
   --jyc-copper-500: #d28447;
 
   --jyc-accent: var(--jyc-copper-600);
@@ -92,27 +99,23 @@
   --jyc-glow-ink: 0 0 0 1px rgba(15, 23, 42, 0.10),
     0 18px 42px rgba(15, 23, 42, 0.16);
 
-  --jyc-ease: cubic-bezier(.2,.8,.2,1);
-  --jyc-ease-out: cubic-bezier(.16,1,.3,1);
+  --jyc-ease: cubic-bezier(.2, .8, .2, 1);
+  --jyc-ease-out: cubic-bezier(.16, 1, .3, 1);
   --jyc-speed-1: 140ms;
   --jyc-speed-2: 220ms;
 
   /* very subtle tech grid */
   --jyc-grid:
-    repeating-linear-gradient(
-      90deg,
+    repeating-linear-gradient(90deg,
       rgba(15, 23, 42, 0.03) 0px,
       rgba(15, 23, 42, 0.03) 1px,
       transparent 1px,
-      transparent 22px
-    ),
-    repeating-linear-gradient(
-      0deg,
+      transparent 22px),
+    repeating-linear-gradient(0deg,
       rgba(15, 23, 42, 0.025) 0px,
       rgba(15, 23, 42, 0.025) 1px,
       transparent 1px,
-      transparent 22px
-    );
+      transparent 22px);
 }
 
 /* ===============================
@@ -172,13 +175,20 @@ html:focus-within {
 
 /* Subtle scrollbar (desktop) */
 @media (pointer: fine) {
-  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
   *::-webkit-scrollbar-thumb {
     background: rgba(15, 23, 42, 0.18);
     border: 3px solid rgba(246, 247, 249, 0.85);
     border-radius: 999px;
   }
-  *::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.26); }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.26);
+  }
 }
 
 /* Reduce motion support */
@@ -231,16 +241,16 @@ html:focus-within {
 .jyc-header::before {
   content: "";
   position: absolute;
-  left: 0; right: 0; top: 0;
+  left: 0;
+  right: 0;
+  top: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(192, 106, 44, 0.85),
-    rgba(255, 255, 255, 0.35),
-    rgba(192, 106, 44, 0.85),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(192, 106, 44, 0.85),
+      rgba(255, 255, 255, 0.35),
+      rgba(192, 106, 44, 0.85),
+      transparent);
   opacity: 0.65;
   pointer-events: none;
 }
@@ -250,14 +260,12 @@ html:focus-within {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    rgba(255,255,255,0.08) 42%,
-    rgba(192,106,44,0.10) 50%,
-    rgba(255,255,255,0.06) 58%,
-    transparent 100%
-  );
+  background: linear-gradient(115deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 42%,
+      rgba(192, 106, 44, 0.10) 50%,
+      rgba(255, 255, 255, 0.06) 58%,
+      transparent 100%);
   opacity: 0.0;
   transform: translateX(-12%);
   transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
@@ -313,14 +321,12 @@ html:focus-within {
   position: absolute;
   inset: -2px;
   border-radius: 999px;
-  background: conic-gradient(
-    from 180deg,
-    rgba(192,106,44,0.0),
-    rgba(192,106,44,0.65),
-    rgba(15,23,42,0.25),
-    rgba(192,106,44,0.65),
-    rgba(192,106,44,0.0)
-  );
+  background: conic-gradient(from 180deg,
+      rgba(192, 106, 44, 0.0),
+      rgba(192, 106, 44, 0.65),
+      rgba(15, 23, 42, 0.25),
+      rgba(192, 106, 44, 0.65),
+      rgba(192, 106, 44, 0.0));
   filter: blur(8px);
   opacity: 0.0;
   transition: opacity var(--jyc-speed-2) var(--jyc-ease);
@@ -367,7 +373,8 @@ html:focus-within {
 .jyc-nav {
   display: flex;
   gap: 16px;
-  font-size: 25px; /* per your current setup */
+  font-size: 20px;
+  /* per your current setup */
 }
 
 .jyc-nav-link {
@@ -404,14 +411,12 @@ html:focus-within {
   height: 2px;
   border-radius: 999px;
 
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(192, 106, 44, 1),
-    rgba(255, 255, 255, 0.55),
-    rgba(192, 106, 44, 1),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(192, 106, 44, 1),
+      rgba(255, 255, 255, 0.55),
+      rgba(192, 106, 44, 1),
+      transparent);
 
   opacity: 0;
   transform: translateY(2px);
@@ -472,12 +477,10 @@ html:focus-within {
   position: absolute;
   inset: -1px;
   border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    rgba(192, 106, 44, 0.22),
-    rgba(15, 23, 42, 0.10),
-    rgba(192, 106, 44, 0.18)
-  );
+  background: linear-gradient(135deg,
+      rgba(192, 106, 44, 0.22),
+      rgba(15, 23, 42, 0.10),
+      rgba(192, 106, 44, 0.18));
   opacity: 0.55;
   pointer-events: none;
 
@@ -534,7 +537,7 @@ html:focus-within {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0.35) 55%, transparent 70%);
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(255, 255, 255, 0.35) 55%, transparent 70%);
   opacity: 0.9;
 }
 
@@ -609,8 +612,7 @@ html:focus-within {
     linear-gradient(90deg,
       rgba(11, 15, 20, 0.84),
       rgba(11, 15, 20, 0.58),
-      rgba(11, 15, 20, 0.18)
-    ),
+      rgba(11, 15, 20, 0.18)),
     radial-gradient(720px 460px at 18% 30%, rgba(192, 106, 44, 0.22), transparent 62%);
   z-index: 0;
   pointer-events: none;
@@ -622,9 +624,9 @@ html:focus-within {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(900px 520px at 70% 10%, rgba(192,106,44,0.18), transparent 60%),
-    radial-gradient(1000px 620px at 30% 90%, rgba(15,23,42,0.25), transparent 62%),
-    linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.22));
+    radial-gradient(900px 520px at 70% 10%, rgba(192, 106, 44, 0.18), transparent 60%),
+    radial-gradient(1000px 620px at 30% 90%, rgba(15, 23, 42, 0.25), transparent 62%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.22));
   mix-blend-mode: overlay;
   opacity: 0.55;
   pointer-events: none;
@@ -711,12 +713,10 @@ html:focus-within {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(
-    115deg,
-    transparent 40%,
-    rgba(255,255,255,0.16) 50%,
-    transparent 60%
-  );
+  background: linear-gradient(115deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.16) 50%,
+      transparent 60%);
   opacity: 0;
   transform: translateX(-12%);
   transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 700ms var(--jyc-ease-out);
@@ -786,12 +786,15 @@ html:focus-within {
   background: rgba(255, 255, 255, 0.88);
 }
 
-.jyc-about-header h2 { margin: 0; }
+.jyc-about-header h2 {
+  margin: 0;
+}
+
 .jyc-about-logo-wrap {
   width: 84px;
   height: 84px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.92);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -799,6 +802,7 @@ html:focus-within {
   padding: 8px;
   border: 1px solid var(--jyc-line);
 }
+
 .jyc-about-logo {
   width: 100%;
   height: 100%;
@@ -839,14 +843,12 @@ html:focus-within {
   inset: 0;
   border-radius: var(--jyc-radius);
   padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(192,106,44,0.0),
-    rgba(192,106,44,0.22),
-    rgba(15,23,42,0.10),
-    rgba(192,106,44,0.18),
-    rgba(192,106,44,0.0)
-  );
+  background: linear-gradient(135deg,
+      rgba(192, 106, 44, 0.0),
+      rgba(192, 106, 44, 0.22),
+      rgba(15, 23, 42, 0.10),
+      rgba(192, 106, 44, 0.18),
+      rgba(192, 106, 44, 0.0));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -862,14 +864,12 @@ html:focus-within {
   left: -60%;
   width: 160%;
   height: 160%;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    rgba(255,255,255,0.10) 45%,
-    rgba(192,106,44,0.10) 52%,
-    rgba(255,255,255,0.06) 58%,
-    transparent 100%
-  );
+  background: linear-gradient(115deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.10) 45%,
+      rgba(192, 106, 44, 0.10) 52%,
+      rgba(255, 255, 255, 0.06) 58%,
+      transparent 100%);
   transform: rotate(6deg);
   opacity: 0;
   transition: opacity var(--jyc-speed-2) var(--jyc-ease), transform 850ms var(--jyc-ease-out);
@@ -916,7 +916,7 @@ html:focus-within {
   padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid rgba(192, 106, 44, 0.28);
-  background: rgba(255,255,255,0.86);
+  background: rgba(255, 255, 255, 0.86);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
@@ -942,23 +942,37 @@ html:focus-within {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
-.jyc-home-products-row::-webkit-scrollbar { height: 8px; }
+
+.jyc-home-products-row::-webkit-scrollbar {
+  height: 8px;
+}
+
 .jyc-home-products-row .jyc-card {
   flex: 0 0 80%;
   max-width: 80%;
   scroll-snap-align: start;
 }
+
 @media (min-width: 768px) {
-  .jyc-home-products-row .jyc-card { flex: 0 0 45%; max-width: 45%; }
+  .jyc-home-products-row .jyc-card {
+    flex: 0 0 45%;
+    max-width: 45%;
+  }
 }
+
 @media (min-width: 1200px) {
-  .jyc-home-products-row .jyc-card { flex: 0 0 30%; max-width: 30%; }
+  .jyc-home-products-row .jyc-card {
+    flex: 0 0 30%;
+    max-width: 30%;
+  }
 }
 
 /* ===============================
    Gallery / Slideshow
    =============================== */
-.jyc-home-slideshow { margin-bottom: 24px; }
+.jyc-home-slideshow {
+  margin-bottom: 24px;
+}
 
 .jyc-home-slideshow-main {
   position: relative;
@@ -1000,6 +1014,7 @@ html:focus-within {
   padding: 0;
   cursor: pointer;
 }
+
 .jyc-home-slideshow-dot-active {
   background: var(--jyc-accent);
   border-color: var(--jyc-accent);
@@ -1039,7 +1054,10 @@ html:focus-within {
   gap: 12px;
 }
 
-.jyc-form-row { display: flex; gap: 12px; }
+.jyc-form-row {
+  display: flex;
+  gap: 12px;
+}
 
 .jyc-contact-form input,
 .jyc-contact-form textarea {
@@ -1048,7 +1066,7 @@ html:focus-within {
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.14);
   font-size: 14px;
-  background: rgba(255,255,255,0.88);
+  background: rgba(255, 255, 255, 0.88);
   font-family: inherit;
 }
 
@@ -1059,7 +1077,10 @@ html:focus-within {
   box-shadow: 0 0 0 3px rgba(192, 106, 44, 0.14);
 }
 
-.jyc-contact-submit { margin-top: 4px; align-self: flex-start; }
+.jyc-contact-submit {
+  margin-top: 4px;
+  align-self: flex-start;
+}
 
 /* ===============================
    Footer
@@ -1073,7 +1094,11 @@ html:focus-within {
   color: rgba(11, 18, 32, 0.55);
   text-align: center;
 }
-.jyc-footer-sub { margin-top: 4px; font-size: 11px; }
+
+.jyc-footer-sub {
+  margin-top: 4px;
+  font-size: 11px;
+}
 
 /* ===============================
    💬 Chat Bubble / Panel (2x + breathing)
@@ -1086,11 +1111,13 @@ html:focus-within {
       0 22px 48px rgba(192, 106, 44, 0.26),
       0 0 0 0 rgba(192, 106, 44, 0.00);
   }
+
   45% {
     box-shadow:
       0 26px 56px rgba(192, 106, 44, 0.34),
       0 0 0 10px rgba(192, 106, 44, 0.10);
   }
+
   100% {
     box-shadow:
       0 22px 48px rgba(192, 106, 44, 0.26),
@@ -1138,6 +1165,32 @@ html:focus-within {
   filter: brightness(1.05);
 }
 
+/* 文字標籤 */
+.jyc-chat-bubble-button::after {
+  content: "Questions";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  text-shadow: 0 2px 6px rgba(192, 106, 44, 0.25);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  color: rgba(11, 18, 32, 0.75);
+  white-space: nowrap;
+
+  pointer-events: none;
+  /* 不影響點擊 */
+}
+
+/* Hover 時更清楚一點（專業細節） */
+.jyc-chat-bubble-button:hover::after {
+  color: var(--jyc-text);
+}
+
 .jyc-chat-bubble-button:active {
   animation: none;
   transform: scale(1.96);
@@ -1155,7 +1208,7 @@ html:focus-within {
   width: 320px;
   max-height: 420px;
 
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.14);
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
@@ -1175,8 +1228,15 @@ html:focus-within {
   gap: 8px;
 }
 
-.jyc-chat-title { font-size: 14px; font-weight: 800; }
-.jyc-chat-status { font-size: 11px; color: rgba(11, 18, 32, 0.55); }
+.jyc-chat-title {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.jyc-chat-status {
+  font-size: 11px;
+  color: rgba(11, 18, 32, 0.55);
+}
 
 .jyc-chat-close {
   border: none;
@@ -1186,7 +1246,10 @@ html:focus-within {
   cursor: pointer;
   color: rgba(11, 18, 32, 0.55);
 }
-.jyc-chat-close:hover { color: var(--jyc-text); }
+
+.jyc-chat-close:hover {
+  color: var(--jyc-text);
+}
 
 .jyc-chat-messages {
   padding: 10px 10px 8px;
@@ -1206,7 +1269,7 @@ html:focus-within {
 }
 
 .jyc-chat-message-bot {
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(15, 23, 42, 0.10);
   margin-right: auto;
 }
@@ -1230,7 +1293,7 @@ html:focus-within {
   border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.14);
   font-size: 13px;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   font-family: inherit;
 }
 
@@ -1250,7 +1313,10 @@ html:focus-within {
   font-weight: 800;
   cursor: pointer;
 }
-.jyc-chat-input-row button:hover { filter: brightness(1.03); }
+
+.jyc-chat-input-row button:hover {
+  filter: brightness(1.03);
+}
 
 /* ===============================
    Text Justify Rules
@@ -1269,7 +1335,9 @@ html:focus-within {
 }
 
 .jyc-contact-form input,
-.jyc-contact-form textarea { text-align: left; }
+.jyc-contact-form textarea {
+  text-align: left;
+}
 
 html:lang(en) .jyc-page p,
 html:lang(en) .jyc-page li,
@@ -1380,7 +1448,7 @@ html:lang(zh-Hans) .jyc-page p {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(520px 280px at 20% 10%, rgba(192,106,44,0.20), transparent 60%);
+  background: radial-gradient(520px 280px at 20% 10%, rgba(192, 106, 44, 0.20), transparent 60%);
   opacity: 0.65;
 }
 
@@ -1422,14 +1490,12 @@ html:lang(zh-Hans) .jyc-page p {
   inset: 0;
   border-radius: 16px;
   padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(192,106,44,0.0),
-    rgba(192,106,44,0.18),
-    rgba(15,23,42,0.08),
-    rgba(192,106,44,0.14),
-    rgba(192,106,44,0.0)
-  );
+  background: linear-gradient(135deg,
+      rgba(192, 106, 44, 0.0),
+      rgba(192, 106, 44, 0.18),
+      rgba(15, 23, 42, 0.08),
+      rgba(192, 106, 44, 0.14),
+      rgba(192, 106, 44, 0.0));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -1452,7 +1518,7 @@ html:lang(zh-Hans) .jyc-page p {
 }
 
 .jyc-panel-accent {
-  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.62));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.62));
 }
 
 .jyc-list {
@@ -1462,7 +1528,10 @@ html:lang(zh-Hans) .jyc-page p {
   font-size: 14px;
   line-height: 1.75;
 }
-.jyc-list li { margin-bottom: 8px; }
+
+.jyc-list li {
+  margin-bottom: 8px;
+}
 
 .jyc-divider {
   height: 1px;
@@ -1495,7 +1564,10 @@ html:lang(zh-Hans) .jyc-page p {
   color: var(--jyc-text);
   text-decoration: none;
 }
-.jyc-contactVal:hover { text-decoration: underline; }
+
+.jyc-contactVal:hover {
+  text-decoration: underline;
+}
 
 .jyc-contactHint {
   font-size: 13px;
@@ -1514,7 +1586,9 @@ html:lang(zh-Hans) .jyc-page p {
 
 /* Desktop */
 @media (min-width: 1024px) {
-  .jyc-card-image { height: 300px; }
+  .jyc-card-image {
+    height: 300px;
+  }
 
   .jyc-gallery-grid {
     grid-template-columns: repeat(auto-fit, 140px);
@@ -1530,18 +1604,23 @@ html:lang(zh-Hans) .jyc-page p {
     background-position: center;
   }
 
-  .jyc-home-slideshow-main { padding-top: 40%; }
+  .jyc-home-slideshow-main {
+    padding-top: 40%;
+  }
 }
 
 /* Mobile */
 @media (max-width: 900px) {
+
   .jyc-about-hero,
   .jyc-about-grid {
     grid-template-columns: 1fr;
   }
+
   .jyc-about-photo {
     aspect-ratio: 16 / 9;
   }
+
   .jyc-about-stats {
     grid-template-columns: 1fr;
   }
@@ -1555,11 +1634,45 @@ html:lang(zh-Hans) .jyc-page p {
     gap: 10px;
   }
 
+  /* 讓 logo 區塊可以縮小，不要把自己撐爆 */
+  .jyc-logo {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
   .jyc-logo-text {
-    font-size: 18px !important;
-    max-width: 58vw;
+    min-width: 0;
+    flex: 1 1 auto;
+
+    /* ✅ 永遠單行 */
+    flex-wrap: nowrap;
+    white-space: nowrap;
+
+    /* ✅ 超出就省略 */
     overflow: hidden;
     text-overflow: ellipsis;
+
+    /* 手機間距縮小 */
+    gap: 8px;
+  }
+
+  /* 主標縮小一點 */
+  .jyc-logo-main {
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    flex: 0 0 auto;
+  }
+
+  /* 副標最容易把版面撐爆：縮小 + 降低字距 + 可省略 */
+  .jyc-logo-sub {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    /* 原本 0.18em 在手機太寬 */
+    flex: 1 1 auto;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .jyc-lang-switch {
@@ -1583,11 +1696,21 @@ html:lang(zh-Hans) .jyc-page p {
     padding: 6px 4px;
   }
 
-  .jyc-hero { padding: 48px 16px; }
-  .jyc-hero-text h1 { font-size: 28px; }
+  .jyc-hero {
+    padding: 48px 16px;
+  }
 
-  .jyc-section { padding: 40px 16px; }
-  .jyc-form-row { flex-direction: column; }
+  .jyc-hero-text h1 {
+    font-size: 28px;
+  }
+
+  .jyc-section {
+    padding: 40px 16px;
+  }
+
+  .jyc-form-row {
+    flex-direction: column;
+  }
 
   .jyc-chat-panel {
     right: 12px;
@@ -1623,7 +1746,9 @@ html:lang(zh-Hans) .jyc-page p {
     padding-bottom: 8px;
   }
 
-  .jyc-gallery-grid::-webkit-scrollbar { height: 4px; }
+  .jyc-gallery-grid::-webkit-scrollbar {
+    height: 4px;
+  }
 
   .jyc-gallery-item {
     flex: 0 0 100%;
