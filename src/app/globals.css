@@ -1170,7 +1170,7 @@ html:focus-within {
   transform: translate(-50%, -50%);
 
   color: #fff;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
   line-height: 1;
 
@@ -1767,7 +1767,7 @@ html:lang(zh-Hans) .jyc-page p {
   }
 
     .jyc-chat-bubble-button::before {
-    font-size: 24px;
+    font-size: 18px;
   }
   .jyc-chat-bubble-button::after {
     font-size: 11px;
