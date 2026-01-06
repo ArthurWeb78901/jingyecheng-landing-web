@@ -1111,13 +1111,11 @@ html:focus-within {
       0 22px 48px rgba(192, 106, 44, 0.26),
       0 0 0 0 rgba(192, 106, 44, 0.00);
   }
-
   45% {
     box-shadow:
       0 26px 56px rgba(192, 106, 44, 0.34),
       0 0 0 10px rgba(192, 106, 44, 0.10);
   }
-
   100% {
     box-shadow:
       0 22px 48px rgba(192, 106, 44, 0.26),
@@ -1131,15 +1129,22 @@ html:focus-within {
   bottom: 24px;
   z-index: 40;
 
-  padding: 14px 24px;
+  /* ✅ 讓它是「圓球」而不是膠囊 */
+  width: 72px;
+  height: 72px;
+  padding: 0;
   border-radius: 999px;
   border: none;
 
-  background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
-  font-size: 18px;
-  font-weight: 800;
+  background: linear-gradient(135deg, var(--jyc-ink-800), var(--jyc-accent));
+
+  /* ✅ 隱藏原本按鈕文字（你的 JSX 裡可能是 "?"）避免重疊 */
+  color: transparent;
+
   cursor: pointer;
 
   /* 2x */
@@ -1156,6 +1161,43 @@ html:focus-within {
     filter 180ms var(--jyc-ease);
 }
 
+/* ✅ 球內上方：? */
+.jyc-chat-bubble-button::before {
+  content: "?";
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+
+  pointer-events: none;
+}
+
+/* ✅ 球內下方：Questions */
+.jyc-chat-bubble-button::after {
+  content: "Questions";
+  position: absolute;
+  left: 50%;
+  top: 70%;
+  transform: translate(-50%, -50%);
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+
+  pointer-events: none;
+  opacity: 0.95;
+}
+
 .jyc-chat-bubble-button:hover {
   animation: none;
   transform: scale(2.08) translateY(-1px);
@@ -1165,30 +1207,8 @@ html:focus-within {
   filter: brightness(1.05);
 }
 
-/* 文字標籤 */
-.jyc-chat-bubble-button::after {
-  content: "Questions";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-  text-shadow: 0 2px 6px rgba(192, 106, 44, 0.25);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-
-  color: rgba(11, 18, 32, 0.75);
-  white-space: nowrap;
-
-  pointer-events: none;
-  /* 不影響點擊 */
-}
-
-/* Hover 時更清楚一點（專業細節） */
 .jyc-chat-bubble-button:hover::after {
-  color: var(--jyc-text);
+  opacity: 1;
 }
 
 .jyc-chat-bubble-button:active {
@@ -1634,58 +1654,74 @@ html:lang(zh-Hans) .jyc-page p {
     gap: 10px;
   }
 
-  /* 讓 logo 區塊可以縮小，不要把自己撐爆 */
+  /* ✅ 第一排：Logo 要能縮、不要被擠爆 */
   .jyc-logo {
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 1 60%;
   }
 
+  /* ✅ 強制一行：這裡是修復兩行的核心 */
   .jyc-logo-text {
     min-width: 0;
     flex: 1 1 auto;
 
-    /* ✅ 永遠單行 */
-    flex-wrap: nowrap;
-    white-space: nowrap;
+    display: flex;           /* ✅ 明確宣告，避免被覆蓋 */
+    align-items: baseline;
+    gap: 6px;
 
-    /* ✅ 超出就省略 */
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    /* 手機間距縮小 */
-    gap: 8px;
+    white-space: nowrap;     /* ✅ 禁止換行 */
+    overflow: hidden;        /* ✅ 超出裁掉 */
+    text-overflow: ellipsis; /* ✅ 省略號 */
   }
 
-  /* 主標縮小一點 */
   .jyc-logo-main {
     font-size: 22px;
     letter-spacing: 0.06em;
+    font-weight: 900;
     flex: 0 0 auto;
   }
 
-  /* 副標最容易把版面撐爆：縮小 + 降低字距 + 可省略 */
+  /* ✅ 副標：手機更保守，避免爆寬 */
   .jyc-logo-sub {
     font-size: 12px;
-    letter-spacing: 0.08em;
-    /* 原本 0.18em 在手機太寬 */
+    font-weight: 650;
+
+    letter-spacing: 0.05em;  /* ✅ 再降一點，更穩 */
     flex: 1 1 auto;
 
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+  }
+
+  /* ✅ 讓語言切換在同一排更穩：不換行 + 可縮 */
+  .jyc-header-right {
+    flex: 0 0 auto;
+    min-width: 0;
   }
 
   .jyc-lang-switch {
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;       /* ✅ 不要自己換行造成擠壓 */
+    gap: 6px;
+    max-width: 48vw;         /* ✅ 保留給 logo 的空間 */
+    overflow: hidden;
   }
 
+  /* 語言按鈕在手機微縮：看起來仍高級，但更省寬 */
+  .jyc-lang-switch button {
+    height: 36px;
+    padding: 0 12px;
+    min-width: 76px;
+    font-size: 12.5px;
+  }
+
+  /* ✅ 第二排：nav */
   .jyc-nav {
     order: 3;
     width: 100%;
     justify-content: center;
     flex-wrap: nowrap;
-    gap: 4px;
+    gap: 10px;
     white-space: nowrap;
     overflow-x: hidden;
     margin-top: 6px;
@@ -1694,6 +1730,7 @@ html:lang(zh-Hans) .jyc-page p {
   .jyc-nav a {
     font-size: 15px;
     padding: 6px 4px;
+    font-weight: 800; /* ✅ 你要的加粗感 */
   }
 
   .jyc-hero {
@@ -1727,6 +1764,14 @@ html:lang(zh-Hans) .jyc-page p {
     font-size: 18px;
     padding: 16px 26px;
     animation-duration: 4.2s;
+  }
+
+    .jyc-chat-bubble-button::before {
+    font-size: 24px;
+  }
+  .jyc-chat-bubble-button::after {
+    font-size: 11px;
+    top: 74%;
   }
 
   .jyc-home-slideshow-main {
@@ -1767,6 +1812,13 @@ html:lang(zh-Hans) .jyc-page p {
   .jyc-btn-primary::after,
   .jyc-btn-secondary::after,
   .jyc-card-btn::after {
+    display: none;
+  }
+}
+
+/* ✅ 小螢幕最穩策略：必要時只顯示 JYC（品牌級） */
+@media (max-width: 420px) {
+  .jyc-logo-sub {
     display: none;
   }
 }
