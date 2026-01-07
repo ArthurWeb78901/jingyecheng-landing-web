@@ -2166,12 +2166,6 @@ html:lang(zh-Hans) .jyc-page p {
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* next/image fill 對應 */
-.jyc-map-media :global(img) {
-  object-fit: cover; /* ✅ 地圖通常用 cover 比較好看 */
-  object-position: center;
-}
-
 .jyc-map-caption {
   padding: 10px 12px 12px;
   font-size: 12px;
